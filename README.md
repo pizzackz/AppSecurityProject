@@ -1,5 +1,9 @@
   <h2>Guidelines</h2>
   <ol>
+      <li><b>[IMPORTANT]</b> Before you run <code>app.py</code>, 
+                            make sure to run <code>init_database</code> first to create your databases and fill it up with sample data 
+                            </li>
+      <br />  
       <li>Do not commit &amp; push your own virtual environments</li>
       <br />
       <li>
