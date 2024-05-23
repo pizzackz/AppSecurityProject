@@ -3,203 +3,178 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 import shelve
 import os
-# from ..forms import CreateRecipeForm
 import pymysql
 import cryptography
 from datetime import datetime
-import sqlite3
-
-app = Flask(__name__)
 
 
+admin_recipe_bp = Blueprint("admin_recipe_bp", __name__)
 
-# mydb = pymysql.connect(
-#     host='localhost',
-#     user='root',
-#     password='password123'
-# )
-# print(mydb)
-#
-# my_cursor = mydb.cursor()
-# my_cursor.execute("SHOW DATABASES")
-#
-# for db in my_cursor:
-#     print(db) # Prints all the databases in the server
+db = pymysql.connect(
+    host='localhost',
+    user='root',
+    password='password123',
+    database='recipes_db'
+)
+print(db)
 
+my_cursor = db.cursor()
+my_cursor.execute("SHOW DATABASES")
 
-
+# Testing out the index route
 
 # Recipe Pages
-# @admin_bp.route('/<string:id>/admin/recipe_database', methods=['GET', 'POST'])
-# @admin_login_required
-# def recipe_database(id):
-#     db = shelve.open('recipes.db', 'c')
-#
-#     try:
-#         recipe_dict = db['recipes']
-#     except:
-#         print('Error in retrieving recipes')
-#         recipe_dict = {}
-#
-#     recipes = []
-#     for key in recipe_dict:
-#         recipe = recipe_dict.get(key)
-#         recipes.append(recipe)
-#         # For debugging
-#         print(recipe.get_name(), recipe.get_id())
-#
-#     print(recipes)
-#     if request.method == 'POST':
-#         ingredients = request.form.get('ingredient')
-#         ingredients = ingredients.split(',')
-#         print(ingredients)
-#         recipe2 = []
-#         for i in range(0, len(ingredients)):
-#             for s in range(0, len(recipes)):
-#                 name = (recipes[s]).get_name()
-#                 name = name.lower()
-#                 if ingredients[i] in (recipes[s]).get_ingredients() or ingredients[i] in name:
-#                     if recipes[s] not in recipe2:
-#                         recipe2.append(recipes[s])
-#
-#         db.close()
-#         return render_template('admin/recipe_database.html', recipes=recipe2, id=id)
-#
-#     db.close()
-#     return render_template('admin/recipe_database.html', recipes=recipes, id=id)
+@admin_recipe_bp.route('/', methods=['GET', 'POST'])
+def recipe_database():
+    try:
+        with db.cursor() as cursor:
+            # Retrieve recipes from the database
+            cursor.execute("SELECT * FROM recipes")
+            recipes = cursor.fetchall()
+    except Exception as e:
+        print('Error in retrieving recipes:', str(e))
+        recipes = []
+
+    if request.method == 'POST':
+        ingredients = request.form.get('ingredient')
+        ingredients = ingredients.split(',')
+
+        try:
+            with db.cursor() as cursor:
+                recipe2 = []
+                for ingredient in ingredients:
+                    # Search for recipes containing the given ingredients
+                    cursor.execute("SELECT * FROM recipes WHERE ingredients LIKE %s", ("%" + ingredient + "%",))
+                    recipes_with_ingredient = cursor.fetchall()
+                    recipe2.extend(recipes_with_ingredient)
+
+            return render_template('admin/recipe_database.html', recipes=recipe2)
+
+        except Exception as e:
+            print('Error in searching recipes:', str(e))
+            return render_template('admin/recipe_database.html', recipes=[])
+
+    return render_template('admin/recipe_database.html', recipes=recipes)
 #
 #
-# @admin_bp.route('/<string:id>/admin/create_recipe', methods=['GET', 'POST'])
-# @admin_login_required
+# @admin_recipe_bp.route('/admin/create_recipe', methods=['GET', 'POST'])
 # def create_recipe(id):
-#     create_recipe_form = CreateRecipeForm(request.form)
 #     if request.method == 'POST':
-#         db = shelve.open('recipes.db', 'c')
-#         recipe_dict = db.setdefault('recipes', {})  # Initialize if 'recipes' doesn't exist
-#         recipe_dict = db['recipes']
+#         create_recipe_form = request.form
 #
-#         name = create_recipe_form.name.data
+#         name = create_recipe_form['name']
 #         picture = request.files['picture']
-#         print(picture.filename)
-#
 #         picture_filename = picture.filename
-#         picture_filename = picture_filename.split('.')
-#         print(picture_filename[1])
 #
-#         if picture_filename[1] != 'jpg' and picture_filename[1] != 'png':
-#             return render_template('admin/create_recipe.html', alert_error='Images are only allowed',
-#                                    form=create_recipe_form, id=id)
+#         if not picture_filename.endswith(('jpg', 'png')):
+#             return render_template('admin/recipe_create.html', alert_error='Images are only allowed', id=id)
 #
-#         picture_filename = name + '.' + picture_filename[1]
+#         # Save the image file
+#         picture_filename = secure_filename(picture_filename)
 #         picture.save(os.path.join('static/images_recipe', picture_filename))
 #
-#         name = create_recipe_form.name.data
+#         ingredients = create_recipe_form['ingredients'].split(',')
+#         if not ingredients:
+#             return render_template('admin/recipe_create.html', alert_error='Please add ingredients.', id=id)
 #
-#         ingredients = create_recipe_form.ingredients.data
-#         ingredients = ingredients.split(',')
-#         print(ingredients)
-#         if ingredients == ['']:
-#             return render_template('admin/create_recipe.html', alert_error='Please add ingredients.',
-#                                    form=create_recipe_form, id=id)
+#         instructions = create_recipe_form['instructions']
 #
-#         new_recipe = Recipe(create_recipe_form.name.data, ingredients, create_recipe_form.instructions.data,
-#                             picture_filename)
+#         try:
+#             with db.cursor() as cursor:
+#                 # Insert the new recipe into the database
+#                 cursor.execute("INSERT INTO recipes (name, ingredients, instructions, picture) VALUES (%s, %s, %s, %s)",
+#                                (name, ','.join(ingredients), instructions, picture_filename))
+#                 db.commit()
+#                 flash(f'{name} has been created', 'success')
+#                 return redirect(url_for('admin.recipe_database', id=id))
+#         except Exception as e:
+#             print('Error in creating recipe:', str(e))
+#             flash('An error occurred while creating the recipe. Please try again.', 'danger')
 #
-#         print(new_recipe.get_instructions())
+#     return render_template('admin/recipe_create.html', id=id)
 #
-#         for key in recipe_dict:
-#             recipe = recipe_dict.get(key)
-#             if name == recipe.get_name():
-#                 return render_template('admin/create_recipe.html', alert_error='Recipe exists in Database.',
-#                                        form=create_recipe_form, id=id)
 #
-#         recipe_dict[new_recipe.get_id()] = new_recipe
-#         db['recipes'] = recipe_dict
 #
-#         db.close()
+# @admin_recipe_bp.route('/admin/view_recipe/<recipe_id>', methods=['GET', 'POST'])
+# def view_recipe(recipe_id, id):
+#     try:
+#         with db.cursor() as cursor:
+#             # Retrieve the recipe from the database using its ID
+#             cursor.execute("SELECT * FROM recipes WHERE id=%s", (recipe_id,))
+#             recipe = cursor.fetchone()
+#             if not recipe:
+#                 return "Recipe not found"
+#             return render_template('admin/recipe_view.html', recipe=recipe, id=id)
+#     except Exception as e:
+#         print('Error in viewing recipe:', str(e))
+#         return "An error occurred while viewing the recipe"
 #
-#         flash(f'{name} has been created', 'success')
 #
+# @admin_recipe_bp.route('/admin/edit_recipe/<recipe_id>', methods=['GET', 'POST'])
+# def edit_recipe(recipe_id, id):
+#     try:
+#         with db.cursor() as cursor:
+#             # Retrieve the recipe from the database using its ID
+#             cursor.execute("SELECT * FROM recipes WHERE id=%s", (recipe_id,))
+#             recipe = cursor.fetchone()
+#             if not recipe:
+#                 return "Recipe not found"
+#
+#             if request.method == 'POST':
+#                 name = request.form.get('name')
+#                 ingredients = request.form.get('ingredients').split(',')
+#                 instructions = request.form.get('instructions')
+#                 picture = request.files.get('picture')
+#
+#                 # Update recipe data in the database
+#                 if picture.filename:
+#                     old_picture = recipe['picture']
+#                     if old_picture:
+#                         os.remove(os.path.join('static/images_recipe', old_picture))
+#                     picture_filename = secure_filename(picture.filename)
+#                     picture.save(os.path.join('static/images_recipe', picture_filename))
+#                     cursor.execute("UPDATE recipes SET picture=%s WHERE id=%s", (picture_filename, recipe_id))
+#
+#                 if name:
+#                     cursor.execute("UPDATE recipes SET name=%s WHERE id=%s", (name, recipe_id))
+#                 if ingredients:
+#                     cursor.execute("UPDATE recipes SET ingredients=%s WHERE id=%s", (','.join(ingredients), recipe_id))
+#                 if instructions:
+#                     cursor.execute("UPDATE recipes SET instructions=%s WHERE id=%s", (instructions, recipe_id))
+#
+#                 db.commit()
+#                 flash(f'{recipe["name"]} has been updated', 'info')
+#                 return redirect(url_for('admin.recipe_database', id=id))
+#
+#             return render_template('admin/recipe_update.html', recipe=recipe, id=id)
+#     except Exception as e:
+#         print('Error in editing recipe:', str(e))
+#         flash('An error occurred while editing the recipe', 'danger')
 #         return redirect(url_for('admin.recipe_database', id=id))
 #
-#     return render_template('admin/create_recipe.html', form=create_recipe_form, id=id)
 #
+# @admin_recipe_bp.route('/admin/delete_recipe/<recipe_id>')
+# def delete_recipe(recipe_id, id):
+#     try:
+#         with db.cursor() as cursor:
+#             # Retrieve the recipe from the database using its ID
+#             cursor.execute("SELECT * FROM recipes WHERE id=%s", (recipe_id,))
+#             recipe = cursor.fetchone()
+#             if not recipe:
+#                 return "Recipe not found"
 #
-# @admin_bp.route('/<string:id>/admin/view_recipe/<recipe_id>', methods=['GET', 'POST'])
-# @admin_login_required
-# def view_recipe(recipe_id, id):
-#     print(recipe_id)
-#     db = shelve.open('recipes.db', 'c')
-#     recipe_dict = db['recipes']
-#     recipe = recipe_dict.get(recipe_id)
-#     print(recipe.get_instructions())
-#     db.close()
-#     return render_template('admin/view_recipe.html', recipe=recipe, id=id)
+#             # Delete the recipe from the database
+#             cursor.execute("DELETE FROM recipes WHERE id=%s", (recipe_id,))
+#             db.commit()
 #
-#
-# @admin_bp.route('/<string:id>/admin/edit_recipe/<recipe_id>', methods=['GET', 'POST'])
-# @admin_login_required
-# def edit_recipe(recipe_id, id):
-#     db = shelve.open('recipes.db', 'c')
-#     recipe_dict = db['recipes']
-#     recipe = recipe_dict.get(recipe_id)
-#
-#     update_recipe_form = CreateRecipeForm(request.form)
-#
-#     if request.method == 'POST':
-#         name = update_recipe_form.name.data
-#         ingredients = update_recipe_form.ingredients.data
-#         ingredients = ingredients.split(',')
-#         instructions = update_recipe_form.instructions.data
-#         picture = request.files['picture']
-#
-#         if picture.filename != '':
-#             old_picture = recipe.get_picture()
+#             # Delete the recipe's picture file
+#             old_picture = recipe['picture']
 #             if old_picture:
 #                 os.remove(os.path.join('static/images_recipe', old_picture))
-#             recipe.set_picture(picture.filename)
-#             picture.save(os.path.join('static/images_recipe', picture.filename))
 #
-#         if name != '':
-#             recipe.set_name(name)
-#         if ingredients != []:
-#             recipe.set_ingredients(ingredients)
-#         if instructions != '':
-#             recipe.set_instructions(instructions)
-#
-#         db['recipes'] = recipe_dict
-#         db.close()
-#
-#         flash(f'{recipe.get_name()} has been updated', 'info')
-#
+#             flash(f'{recipe["name"]} has been deleted', 'info')
+#             return redirect(url_for('admin.recipe_database', id=id))
+#     except Exception as e:
+#         print('Error in deleting recipe:', str(e))
+#         flash('An error occurred while deleting the recipe', 'danger')
 #         return redirect(url_for('admin.recipe_database', id=id))
-#
-#     update_recipe_form.name.data = recipe.get_name()
-#     print(recipe.get_name())
-#     update_recipe_form.instructions.data = recipe.get_instructions()
-#
-#     ingredients = recipe.get_ingredients()
-#
-#     return render_template('admin/update_recipe.html', form=update_recipe_form, ingredients=ingredients, id=id)
-#
-#
-# @admin_bp.route('/<string:id>/admin/delete_recipe/<recipe_id>')
-# @admin_login_required
-# def delete_recipe(recipe_id, id):
-#     db = shelve.open('recipes.db', 'c')
-#     recipe_dict = db['recipes']
-#
-#     recipe = recipe_dict.get(recipe_id)
-#     old_picture = recipe.get_picture()
-#     if old_picture:
-#         os.remove(os.path.join('static/images_recipe', old_picture))
-#
-#     name = recipe.get_name()
-#
-#     recipe_dict.pop(recipe_id)
-#     db['recipes'] = recipe_dict
-#     db.close()
-#
-#     flash(f'{name} has been deleted', 'info')
-#
-#     return redirect(url_for('admin.recipe_database', id=id))

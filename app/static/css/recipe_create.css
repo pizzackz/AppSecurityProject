@@ -1,0 +1,101 @@
+@font-face {
+    font-family: 'Helvetica Neue Medium';
+    src: url('..//fonts/Helvetica\ Neue\ 67\ Medium\ Condensed.otf') format('opentype');
+  }
+  @font-face {
+    font-family: 'Inter Semi';
+    src: url('..//fonts/Inter-SemiBold.ttf') format('truetype');
+  }
+
+body {
+    height: 100%;
+    width: 100%;
+    font-family: 'Inter Semi';
+}
+
+
+/* Ingredient Panel (Copied from recipe_database) */
+#control_panel {
+    margin: auto;
+    padding:10px;
+    max-width: 50vh;
+    min-width: 50vh;
+}
+
+h1 {
+    font-size: 5.2vh;
+}
+
+#ingredient {
+    display:inline-block;
+    max-width: fit-content;
+}
+.input_ingredient input {
+    margin:2px;
+}
+.input_ingredient {
+    margin:auto;
+    position:relative;
+    width:fit-content
+}
+label {
+    margin-bottom:0.3rem;
+    margin-left:0.1rem;
+}
+
+.autocomplete {
+    position: absolute;
+    margin: 0.1rem;
+    z-index: 1000;
+    list-style-type: none;
+    width: 20.7rem;
+}
+.autocomplete ul {
+    border-radius: 5px;
+    list-style-type: none;
+    background-color: white;
+    text-align: left;
+    padding-left: 0rem;
+}
+.autocomplete ul li {
+    padding: 0.5rem;
+    padding-left:1rem;
+}
+.autocomplete ul li:hover {
+    background-color: #f2f2f2;
+}
+
+
+#ingredient_items_list {
+    min-height: 25vh;
+    margin:0px;
+    text-align: left;
+    padding-top: 0.5rem;
+    background-color: rgb(249, 249, 249);
+    border-radius: 10px;
+    margin-bottom:1rem;
+}
+.ingredient_item {
+    display: inline-flex;
+    align-items: center;
+    background-color: rgb(232, 232, 232);
+    border: 1.5px solid;
+    border-color: #898989;
+    border-radius: 10px;
+    padding: 0.2rem;
+    padding-right: 0.35rem;
+    color:#4e4e4e;
+    margin:0.1rem;
+    text-align: center;
+}
+.remove_ingredient {
+    font-size: 1.4rem;
+}
+.remove_ingredient:hover {
+    color:#7d7d7d;
+}
+
+
+.ingredient_item span{
+    margin-right:0.3rem;
+}

@@ -1,0 +1,21 @@
+p {
+    white-space:pre-line;
+    font-size:1.2em;
+}
+ingredient-and-img {
+    display:block;
+    width:30rem;
+    border: black solid 1px;
+    height:20rem;;
+}
+
+
+.recipe-details {
+    max-width:70rem;
+    margin:auto;
+}
+.recipe-details p {
+    display:block;
+    margin:5rem;
+    margin-top:1rem;
+}

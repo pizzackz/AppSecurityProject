@@ -1,0 +1,139 @@
+
+
+/* Control Panel CSS */
+#control_panel {
+    margin: 4vh;
+    margin-top:0.2rem;;
+    padding:10px;
+    width: 28rem;
+    height:fit-content;
+}
+
+#text {
+    text-align: center;
+}
+
+
+#text ul {
+    display: block;
+    width: 29rem;
+    margin:auto;
+}
+#text ul li {
+    text-align: left;
+}
+
+#ingredient {
+    display:inline-block;
+    max-width: fit-content;
+}
+.input_ingredient {
+    margin:auto;
+    position:relative;
+    width:fit-content
+}
+
+.input_ingredient input {
+    margin:1px;
+}
+
+.autocomplete {
+    position: absolute;
+    margin: 0.1rem;
+    z-index: 1000;
+    list-style-type: none;
+    margin-top: -0.67rem;
+    width: 16.5rem;
+}
+.autocomplete ul {
+    border-radius: 5px;
+    list-style-type: none;
+    background-color: white;
+    text-align: left;
+    padding-left: 0rem;
+}
+.autocomplete ul li {
+    padding: 0.5rem;
+    padding-left:1rem;
+}
+.autocomplete ul li:hover {
+    background-color: #f2f2f2;
+}
+
+
+#ingredient_items_list {
+    height: 13rem;
+    width: 23rem;
+    max-height: 13rem;
+    overflow-y: auto;
+    margin:auto;
+    background-color: rgb(235, 245, 245);
+    border-radius: 10px;
+    margin-bottom: 2rem;
+    text-align: center;
+    padding-top: 0.5rem;
+}
+.ingredient_item {
+    display: inline-flex;
+    align-items: center;
+    background-color: rgb(232, 232, 232);
+    border: 1.5px solid;
+    border-color: #898989;
+    border-radius: 10px;
+    padding: 0.2rem;
+    padding-right: 0.35rem;
+    color:#4e4e4e;
+    margin:0.1rem;
+}
+.remove_ingredient {
+    font-size: 1.4rem;
+}
+.remove_ingredient:hover {
+    color:#7d7d7d;
+}
+.ingredient_item span{
+    margin-right:0.3rem;
+}
+
+/* Recipe Items */
+#parent2 {
+    text-align: center;
+}
+
+
+#recipe_items {
+    display: inline-flex;
+    margin-top: 3vh;
+    min-width: 100%;
+    text-align: center;
+}
+.card {
+    border: 1px black solid;
+}
+.card-title {
+    font-weight: bold;
+
+}
+
+.card-text {
+    color:rgb(92, 92, 92);
+}
+
+
+/* Confirmation button */
+#confirm {
+    position: fixed;
+    display: block;
+    border: black solid 1px;
+    border-radius: 10px;
+    margin:auto;
+    height: 20rem;
+    width: 40rem;
+    background-color: whitesmoke;
+    z-index: 100;
+}
+
+/* Modal text */
+.modal-body {
+    font-size: 1.7rem;
+}

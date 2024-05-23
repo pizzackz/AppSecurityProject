@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}tastefully | {{ recipe.get_name() }}{% endblock %}
+
+<!-- To replace nav bar with jinja later on-->
+{% block css %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/view_recipe.css') }}">
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}
+
+{% block navbar %} {% include "includes/_admin_navbar.html" %} {% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <div class="card border-light mb-3" style="margin:auto;margin-top:4rem;max-width: 1000px;">
+    <div class="row g-0">
+      <div class="col-6">
+        <img style="width:97%" src="{{ url_for('static', filename='images_recipe/' + recipe.get_picture()) }}"
+          class="img-fluid rounded-start" alt="...">
+      </div>
+      <div class="col-6">
+        <div class="card-body">
+          <h5 class="card-title" style="font-size:3rem;">{{ recipe.get_name() }}</h5>
+          <h4 class="card-text" style="margin-top:1.5rem;">Ingredients:</h4>
+          <ul class="card-text" style="font-size:1.1rem;">
+            {% for ingredient in recipe.get_ingredients() %}
+            <li>{{ ingredient }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="recipe-details" style="background-color:white;margin-top:1rem;text-align:left;">
+      <h3 style="text-align:center;font-size:2rem;">Instructions</h3>
+      <p style="margin-top:2rem;text-align:left;">{{ recipe.get_instructions()|safe }}</p>
+    </div>
+  </div>
+
+
+
+  <div style="text-align:center;">
+    <a href="{{ url_for('admin.recipe_database', id=id) }}" class="btn btn-secondary mt-3 mb-4">Back to Home</a>
+  </div>
+</div>
+
+{% endblock %}

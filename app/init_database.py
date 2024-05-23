@@ -12,7 +12,7 @@ mydb = pymysql.connect(
 )
 
 my_cursor = mydb.cursor()
-my_cursor.execute("CREATE DATABASE recipes")
+my_cursor.execute("CREATE DATABASE recipes_db")
 
 
 
