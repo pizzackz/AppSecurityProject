@@ -13,6 +13,9 @@ mydb = pymysql.connect(
 
 my_cursor = mydb.cursor()
 
+# Create database
+my_cursor.execute("CREATE DATABASE IF NOT EXISTS mydb")
+my_cursor.execute("USE mydb")
 
 
 
