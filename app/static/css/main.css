@@ -1,0 +1,61 @@
+@font-face {
+    font-family: 'Inter-SemiBold';
+    src: url("../fonts/Inter-SemiBold.ttf") format("truetype");
+}
+
+body {
+    height: 100%;
+    width: 100%;
+    font-family: 'Inter-SemiBold';
+    overflow-x: hidden;
+    overflow-y: auto;
+    background-color: #f3f3f3;
+    margin: 0;
+}
+
+/* Media Classes  */
+.media1 {
+    width: auto;
+    max-height: 30px;
+}
+
+.media2 {
+    width: 50px;
+    max-height: auto;
+}
+
+.link1 {
+    color: rgb(138, 180, 248);
+    text-decoration: underline;
+}
+
+.stantable {
+    margin-right: auto;
+    margin-left: auto;
+    border-collapse: collapse;
+    box-shadow: 5px 5px 20px black;
+    border-radius: 20px;
+    background-color: rgb(45, 56, 68);
+    width: 25%;
+}
+
+.tabletext {
+    color: white;
+    text-align: center;
+    padding: 20px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.stantable td {
+    padding-top: 15px;
+    padding-bottom: 15px;
+    padding-left: 25px;
+    padding-right: 25px;
+}
+
+.center1 {
+    margin-right: auto;
+    margin-left: auto;
+    text-align: center;
+} 

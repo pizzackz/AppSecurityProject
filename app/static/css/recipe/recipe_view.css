@@ -19,3 +19,12 @@ ingredient-and-img {
     margin:5rem;
     margin-top:1rem;
 }
+
+.items h3 {
+    font-size: 1.2rem;
+    color:rgb(124, 124, 124)
+}
+.items h2 {
+    padding-top: 0.2rem;
+    font-size: 2rem;
+}

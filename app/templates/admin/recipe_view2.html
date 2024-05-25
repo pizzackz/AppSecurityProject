@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}tastefully | {{ recipe.get_name() }}{% endblock %}
+
+<!-- To replace nav bar with jinja later on-->
+{% block css %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/view_recipe.css') }}">
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}
+
+{% block navbar %} {% include "includes/_admin_navbar.html" %} {% endblock %}
+
+{% block content %}
+   <div class="container">
+        <div class="card mb-3" style="margin:auto;">
+            <div class="row g-0">
+                <div class="col-md">
+                    <img src="mixed_paella.jpg" class="img-fluid rounded-start" alt="...">
+                </div>
+                <div class="col-md">
+                    <div class="card-body align-items-center" style="text-align:center;height:100%;display:grid;align-content: center;">
+                        <h6 style="font-size:small">PREMIUM</h6>
+                        <h1 class="card-title">Mixed Parmesan Cheese Pizza</h1>
+                        <p class="card-text"><small class="text-muted">Created by JohnDoe</small></p>
+                        <p class="card-text"><small class="text-muted">Last Edited: 31 June 2024</small></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" style="padding:1rem;margin:0;margin-bottom:1rem;border:rgb(212, 212, 212) 0.5px solid;border-radius:10px;text-align:center;">
+            <div class="col items">
+                <h3>PREP TIME</h3>
+                <h2>30 mins</h2>
+            </div>
+            <div class="col items">
+                <h3>CALORIES</h3>
+                <h2>390 kcal</h2>
+            </div>
+            <div class="col items">
+                <h3>INGREDIENTS</h3>
+                <h2>8</h2>
+            </div>
+        </div>
+        <div class='row'>
+            <div class="col-md-4">
+                <div style="padding:1rem;margin:0.2rem;border:rgb(212, 212, 212) 0.5px solid;border-radius:10px;">
+                    <h2 style="text-align:center">Ingredients</h2>
+                    <div style="max-width:fit-content;margin-left:8%">
+                        <ul style="width: 50%;text-align:center;padding-top:1rem;font-size:1.2rem;">
+                            <li>tomatoes</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div style="padding:1rem;margin:0.2rem;border:rgb(212, 212, 212) 0.5px solid;border-radius:10px;text-align:center">
+                    <h2>Description</h2>
+                    <p style="padding-top:1rem;">A dish to celebrate blah blah blah lorjeihandifuhhosidhuhsfiuvhiufsd asfuiaushfhwae iuawhiufh iuawehihaewf i</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
