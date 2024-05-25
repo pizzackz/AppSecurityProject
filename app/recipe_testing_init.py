@@ -1,5 +1,5 @@
 from flask import Flask
-from blueprints.admin_recipe_bp import admin_recipe_bp
+from blueprints.admin.admin_recipe_bp import admin_recipe_bp
 import os
 
 app = Flask(__name__)

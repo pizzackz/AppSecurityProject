@@ -55,8 +55,8 @@ def recipe_database():
             return render_template('admin/recipe_database.html', recipes=[])
 
     return render_template('admin/recipe_database.html', recipes=recipes)
-#
-#
+
+
 # @admin_recipe_bp.route('/admin/create_recipe', methods=['GET', 'POST'])
 # def create_recipe(id):
 #     if request.method == 'POST':
