@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Article Database{% endblock %}
+
+    {% block navbar %} {% include "includes/_admin_navbar.html" %} {% endblock %}
+
+{% block content %}
+
+
+<script>
+    // Confirmation button
+function confirmdelete(content, id) {
+    console.log(content);
+    document.getElementById('modal-body').innerHTML = 'Are you sure you want to delete ' + content + '?';
+    document.getElementById('delete').onclick = function() {
+        window.location.href = "delete_article/" + id;
+    }
+}
+</script>
+    <header class="py-5">
+        <div style="background-color:#ffffff" class="py-5">
+            <div class="text-center text-white">
+                <h1 style="color: #595959; font-style: italic;" class="display-3 fw-bolder">Food waste movement</h1>
+                <div style="height: 30px"></div>
+                <p class="lead fw-bold text-black-50 mb-0">Plan meals, use leftovers creatively, and support local initiatives to share surplus food. Every action counts towards a more sustainable future.</p>
+            </div>
+        </div>
+    </header>
+
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+{% endblock %}

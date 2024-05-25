@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Article Database{% endblock %}
+
+    {% block navbar %} {% include "includes/_admin_navbar.html" %} {% endblock %}
+
+{% block content %}
+
+
+<script>
+    // Confirmation button
+function confirmdelete(content, id) {
+    console.log(content);
+    document.getElementById('modal-body').innerHTML = 'Are you sure you want to delete ' + content + '?';
+    document.getElementById('delete').onclick = function() {
+        window.location.href = "delete_article/" + id;
+    }
+}
+</script>
+    <header class="py-5">
+        <div style="background-color:#ffffff" class="py-5">
+            <div class="text-center text-white">
+                <h1 style="color: #595959; font-style: italic;" class="display-3 fw-bolder">Food waste movement</h1>
+                <div style="height: 30px"></div>
+                <p class="lead fw-bold text-black-50 mb-0">Plan meals, use leftovers creatively, and support local initiatives to share surplus food. Every action counts towards a more sustainable future.</p>
+            </div>
+        </div>
+    </header>
+    <div id="article_item">
+    <div class="container px-4 px-lg-5 mt-5">
+        <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
+            {% for article_item in articles %}
+            <div class="col mb-5">
+                <div class="card h-100">
+                    <!-- Product image-->
+                    <figure class="mb-4"><img class="img-fluid rounded" src="{{ url_for('static', filename='images_articles/' + article_item.get_image()) }}" class="card-img-top" alt="..."></figure>
+                    <!-- Product details-->
+                    <div class="card-body p-4">
+                        <div class="text-center">
+                            <!-- Product name-->
+                            <h5 class="card-title">{{ article_item.get_title() }}</h5>
+                            <!-- Product price-->
+                            <a href="{{ url_for('admin.view_article', article_id=article_item.get_id(), id=id ) }}" class="view btn btn-success m-1">View</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+{% endblock %}
