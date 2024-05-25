@@ -5,12 +5,12 @@
 <!-- To replace nav bar with jinja later on-->
 {% block css %}
 {{ super() }}
-<link rel="stylesheet" href="../../static/css/recipe_database.css">
+<link rel="stylesheet" href="../../static/css/recipe/recipe_database.css">
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
-<script src="../../static/js/recipe_database.js"></script>
+<script src="{{ url_for('static', filename='js/recipe/recipe_database.js' ) }}"></script>
 {% endblock %}
 
 {% block navbar %} {% include "includes/_admin_navbar.html" %} {% endblock %}
