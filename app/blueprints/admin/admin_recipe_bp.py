@@ -6,7 +6,9 @@ import os
 import pymysql
 import cryptography
 from datetime import datetime
-
+import html
+import re
+import random
 
 admin_recipe_bp = Blueprint("admin_recipe_bp", __name__)
 
@@ -23,9 +25,23 @@ my_cursor.execute("SHOW DATABASES")
 
 # Testing out the index route
 
+
+def clean_input(html):
+    cleaned = html.unescape(html)
+    return cleaned
+
+
+pattern = r'^[A-Z][0-9]'  # Regex pattern for uppercase letter followed by digits
+string = 'A123'
+
+if not re.fullmatch(pattern, string):
+    print(f"'{string}' exactly matches the pattern.")
+    # return redirect
+
 # Recipe Pages
-@admin_recipe_bp.route('/', methods=['GET', 'POST'])
+@admin_recipe_bp.route('/admin/recipe_database', methods=['GET', 'POST'])
 def recipe_database():
+    """Searching using wildcard * for recipes"""
     try:
         with db.cursor() as cursor:
             # Retrieve recipes from the database
@@ -36,10 +52,38 @@ def recipe_database():
         recipes = []
 
     if request.method == 'POST':
+        # Getting input from forms
         ingredients = request.form.get('ingredient')
-        ingredients = ingredients.split(',')
+        print(ingredients)
 
         try:
+            ingredients = ingredients.split(',')
+        except:
+            flash('Error processing ingredients', 'error')
+            return redirect(url_for('admin_recipe_bp.recipe_database'))
+
+        if ingredients == []: # If empty, redirect
+            flash('Ingredients are empty!', 'error')
+            return redirect(url_for('admin_recipe_bp.recipe_database'))
+            # return redirect
+
+        # If not pass regex, redirect
+        regex = r'^[a-zA-Z ]+$'  # Regex pattern for uppercase letter followed by digits
+        for ingredient in ingredients:
+            if not re.fullmatch(regex, ingredient):
+                flash('Only letters and spaces allowed', 'error')
+                return redirect(url_for('admin_recipe_bp.recipe_database'))
+            if len(ingredient) > 20:
+                flash('Ingredient cannot be more than 20 characters', 'error')
+                return redirect(url_for('admin_recipe_bp.recipe_database'))
+
+        # Clean input, remove spaces at front and end
+        for i in range(len(ingredients)):
+            ingredients[i] = (ingredients[i]).strip()
+            ingredients[i] = (ingredients[i]).lower()
+
+        try:
+            # Searching for recipes using ingredients
             with db.cursor() as cursor:
                 recipe2 = []
                 for ingredient in ingredients:

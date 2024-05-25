@@ -1,6 +1,15 @@
 class Recipe:
     count_id = 0
 
+    """
+    Attributes to be added:
+    - Date created
+    - User created
+    - Type (Standard or Premium)
+    - Calories
+    - Prep time
+    """
+
     def __init__(self, name, ingredients, instructions, picture):
         Recipe.count_id += 1
         self.__id = str(Recipe.count_id)
