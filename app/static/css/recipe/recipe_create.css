@@ -4,7 +4,7 @@
   }
   @font-face {
     font-family: 'Inter Semi';
-    src: url('..//fonts/Inter-SemiBold.ttf') format('truetype');
+    src: url('../../fonts/Inter-SemiBold.ttf') format('truetype');
   }
 
 body {
@@ -98,4 +98,32 @@ label {
 
 .ingredient_item span{
     margin-right:0.3rem;
+}
+
+#add_recipe_title{
+    text-align:center;
+    margin-top:1.5rem;
+    font-size:3rem;
+}
+
+#general_information_title {
+    text-align:center;
+    font-size:2rem;
+    margin-bottom:-1rem;
+    margin-top:1rem;
+}
+
+#ingredients_title {
+    font-size:2rem;margin-bottom:-0.5rem;margin-top:1rem;
+}
+
+.recipe-form-input {
+    width:40rem;margin:auto;
+}
+
+#picture-title {
+    text-align:center;font-size:2rem;margin-bottom:-1rem;margin-top:1rem;
+}
+#button-section {
+    margin:auto;text-align:center;
 }

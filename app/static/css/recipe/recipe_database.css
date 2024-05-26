@@ -1,4 +1,8 @@
-
+#page_title {
+    text-align:center;
+    margin-top:1.5rem;
+    font-size:3rem;
+}
 
 /* Control Panel CSS */
 #control_panel {
@@ -113,6 +117,10 @@
 .card-title {
     font-weight: bold;
 
+}
+
+.recipe_card {
+    width: 18rem;
 }
 
 .card-text {
