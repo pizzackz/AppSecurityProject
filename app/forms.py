@@ -8,3 +8,4 @@ class CreateRecipeForm(Form):
     ingredients = StringField("Ingredients", validators=[DataRequired()], render_kw={"class": "form-control"})
     instructions = TextAreaField("Instructions", validators=[DataRequired()], render_kw={"class": "form-control"})
     picture = FileField("Picture", render_kw={"class": "form-control", "accept": "image/*"})
+

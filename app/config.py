@@ -1,5 +1,5 @@
 import os
-
+from datetime import timedelta
 
 # Define 'Config' class for all app configurations
 class Config:
@@ -16,9 +16,15 @@ class Config:
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    # CSRF protection
+    WTF_CSRF_ENABLED = True
+    WTF_CSRF_SECRET_KEY = os.environ.get("WTF_CSRF_SECRET_KEY") or "csrf_secret_key_123"
+
     SESSION_COOKIE_HTTPONLY = True  # Prevent Javascript from accessing session cookies
     SESSION_COOKIE_SECURE = True  # Ensure session cookies only sent over HTTPS
     SESSION_COOKIE_SAMESITE = "Lax"  # Mitigate CSRF by limiting cross-site requests
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=1)  # Set session lifetime to 1 hour(s)
+
 
     # Base CSP settings
     CSP_DIRECTIVES = {
@@ -33,3 +39,11 @@ class Config:
         'base-uri': ["'self'"],
         'form-action': ["'self'"],
     }
+
+    # Stripe configuration
+    STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+    STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
+
+    # Rate Limiting
+    RATELIMIT_DEFAULT = ["200 per day", "50 per hour"]
+    RATELIMIT_STORAGE_URL = "memory://"  # Store rate limit counters in memory
