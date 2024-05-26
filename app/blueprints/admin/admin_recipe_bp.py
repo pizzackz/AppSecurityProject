@@ -1,4 +1,14 @@
-from flask import Flask, current_app, Blueprint, render_template, request, redirect, session, flash, url_for
+from flask import (
+    Flask,
+    current_app,
+    Blueprint,
+    render_template,
+    request,
+    redirect,
+    session,
+    flash,
+    url_for,
+)
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
@@ -11,18 +21,21 @@ import re
 import random
 import sys
 
+from app import db
+
 admin_recipe_bp = Blueprint("admin_recipe_bp", __name__)
+
 
 def clean_input(html):
     cleaned = html.unescape(html)
     return cleaned
 
+
 # Recipe Pages
-@admin_recipe_bp.route('/admin/recipe_database', methods=['GET', 'POST'])
+@admin_recipe_bp.route("/admin/recipe_database", methods=["GET", "POST"])
 def recipe_database():
-    from . import db
-    with current_app.app_context():
-        print(db)
+    print(db)
+
     # """Searching using wildcard * for recipes"""
     # try:
     #     with db.cursor() as cursor:
@@ -80,8 +93,7 @@ def recipe_database():
     #         print('Error in searching recipes:', str(e))
     #         return render_template('admin/recipe_database.html', recipes=[])
 
-    return render_template('admin/recipe_database.html')
-
+    return render_template("admin/recipe/recipe_database.html")
 
 # @admin_recipe_bp.route('/admin/create_recipe', methods=['GET', 'POST'])
 # def create_recipe(id):
