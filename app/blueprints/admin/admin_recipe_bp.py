@@ -9,20 +9,19 @@ from flask import (
     flash,
     url_for,
 )
-import flask_sqlalchemy
-from app.models import Recipe
-from werkzeug.utils import secure_filename
-from werkzeug.security import generate_password_hash, check_password_hash
-import os
-from sqlalchemy import text
-from datetime import datetime
-import re
-import random
-import sys
-import html
+# import flask_sqlalchemy
+# from app.models import Recipe
+# from werkzeug.utils import secure_filename
+# from werkzeug.security import generate_password_hash, check_password_hash
+# import os
+# from sqlalchemy import text
+# from datetime import datetime
+# import re
+# import random
+# import sys
+# import html
 
 from app.forms import CreateRecipeForm
-
 from app import db
 
 admin_recipe_bp = Blueprint("admin_recipe_bp", __name__)
@@ -100,68 +99,69 @@ def recipe_database():
 @admin_recipe_bp.route('/admin/create_recipe', methods=['GET', 'POST'])
 def create_recipe():
     form = CreateRecipeForm()
-    if form.validate_on_submit():
-        name = form.name.data
-        ingredients = form.ingredients.data
-        instructions = form.instructions.data
-        picture = form.picture.data
-        calories = form.calories.data
-        prep_time = form.prep_time.data
-        recipe_type = form.type.data
-        print(name, ingredients, instructions, calories, prep_time,recipe_type)
 
+    if request.method == "POST":
+        # Handles invalidated form
+        if not form.validate_on_submit():
+            flash('Please fill in all fields', 'danger')
+        
+        # Handles validated form
+        else:
+            name = form.name.data
+            ingredients = form.ingredients.data
+            instructions = form.instructions.data
+            picture = form.picture.data
+            calories = form.calories.data
+            prep_time = form.prep_time.data
+            recipe_type = form.type.data
+            print(name, ingredients, instructions, calories, prep_time,recipe_type)
+            
+            # name = create_recipe_form['name']
+            # picture = request.files['picture']
+            # picture_filename = picture.filename
+        
+            # if not picture_filename.endswith(('jpg', 'png')):
+            #     return render_template('admin/recipe_create.html', alert_error='Images are only allowed', id=id)
+        
+            # # Save the image file
+            # picture_filename = secure_filename(picture_filename)
+            # picture.save(os.path.join('static/images_recipe', picture_filename))
+        
+            # ingredients = create_recipe_form['ingredients'].split(',')
+            # if not ingredients:
+            #     return render_template('admin/recipe_create.html', alert_error='Please add ingredients.', id=id)
+        
+            # instructions = create_recipe_form['instructions']
+        
+            # try:
+            #     with db.cursor() as cursor:
+            #         # Insert the new recipe into the database
+            #         cursor.execute("INSERT INTO recipes (name, ingredients, instructions, picture) VALUES (%s, %s, %s, %s)",
+            #                        (name, ','.join(ingredients), instructions, picture_filename))
+            #         db.commit()
+            #         flash(f'{name} has been created', 'success')
+            #         return redirect(url_for('admin.recipe_database', id=id))
+            # except Exception as e:
+            #     print('Error in creating recipe:', str(e))
+            #     flash('An error occurred while creating the recipe. Please try again.', 'danger')
 
-
-
-    #     name = create_recipe_form['name']
-    #     picture = request.files['picture']
-    #     picture_filename = picture.filename
-    #
-    #     if not picture_filename.endswith(('jpg', 'png')):
-    #         return render_template('admin/recipe_create.html', alert_error='Images are only allowed', id=id)
-    #
-    #     # Save the image file
-    #     picture_filename = secure_filename(picture_filename)
-    #     picture.save(os.path.join('static/images_recipe', picture_filename))
-    #
-    #     ingredients = create_recipe_form['ingredients'].split(',')
-    #     if not ingredients:
-    #         return render_template('admin/recipe_create.html', alert_error='Please add ingredients.', id=id)
-    #
-    #     instructions = create_recipe_form['instructions']
-    #
-    #     try:
-    #         with db.cursor() as cursor:
-    #             # Insert the new recipe into the database
-    #             cursor.execute("INSERT INTO recipes (name, ingredients, instructions, picture) VALUES (%s, %s, %s, %s)",
-    #                            (name, ','.join(ingredients), instructions, picture_filename))
-    #             db.commit()
-    #             flash(f'{name} has been created', 'success')
-    #             return redirect(url_for('admin.recipe_database', id=id))
-    #     except Exception as e:
-    #         print('Error in creating recipe:', str(e))
-    #         flash('An error occurred while creating the recipe. Please try again.', 'danger')
-
-    elif form.validate_on_submit() == False and request.method == 'POST':
-        flash('Please fill in all fields', 'danger')
     return render_template('admin/recipe/recipe_create.html', form=form)
 
 
-#
 @admin_recipe_bp.route('/admin/view_recipe/', methods=['GET', 'POST'])
 def view_recipe():
-#     try:
-#         with db.cursor() as cursor:
-#             # Retrieve the recipe from the database using its ID
-#             cursor.execute("SELECT * FROM recipes WHERE id=%s", (recipe_id,))
-#             recipe = cursor.fetchone()
-#             if not recipe:
-#                 return "Recipe not found"
-#             return render_template('admin/recipe_view.html', recipe=recipe, id=id)
-#     except Exception as e:
-#         print('Error in viewing recipe:', str(e))
-#         return "An error occurred while viewing the recipe"
-        return render_template('admin/recipe/recipe_view2.html')
+    # try:
+    #     with db.cursor() as cursor:
+    #         # Retrieve the recipe from the database using its ID
+    #         cursor.execute("SELECT * FROM recipes WHERE id=%s", (recipe_id,))
+    #         recipe = cursor.fetchone()
+    #         if not recipe:
+    #             return "Recipe not found"
+    #         return render_template('admin/recipe_view.html', recipe=recipe, id=id)
+    # except Exception as e:
+    #     print('Error in viewing recipe:', str(e))
+    #     return "An error occurred while viewing the recipe"
+    return render_template('admin/recipe/recipe_view2.html')
 #
 # @admin_recipe_bp.route('/admin/edit_recipe/<recipe_id>', methods=['GET', 'POST'])
 # def edit_recipe(recipe_id, id):

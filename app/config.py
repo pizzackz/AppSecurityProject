@@ -1,9 +1,6 @@
 import os
+import random  # Might be used for more secure secret keys
 from datetime import timedelta
-import random
-
-import app
-
 
 
 # Define 'Config' class for all app configurations
@@ -17,7 +14,7 @@ class Config:
     # to your local database
     SQLALCHEMY_DATABASE_URI = (
         os.environ.get("DATABASE_URL")
-        or "mysql://root:password123@localhost/recipes_db"
+        or "mysql://root:password123@localhost/tastefully"
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
