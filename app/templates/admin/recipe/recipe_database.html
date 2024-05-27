@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}tastefully | Recipe Database{% endblock %}
+
+{% block css %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/recipe/recipe_database.css') }}">
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script nonce="{{ nonce }}" src="{{ url_for('static', filename='js/recipe/recipe_database.js' ) }}"></script>
+{% endblock %}
+
+{% block navbar %} {% include "includes/_admin_navbar.html" %} {% endblock %}
+
+{% block content %}
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body text-center" id="modal-body">
+        Are you sure you want to delete this item?
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-secondary btn-lg" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-danger btn-lg" id="delete">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="parent" class="container">
+  <h1 class="mb-4" id="page_title">Recipe Database</h1>
+  <div class="row">
+    <div id="control_panel" class="col text-center center">
+      <div id="text">
+        <h5><u>How to Use</u>
+          <ul>
+            <li>Type in an ingredient or the dish name and click +.</li>
+            <li>If you want to remove the ingredient or dish, press the x beside the ingredient/name.</li>
+          </ul>
+        </h5>
+      </div>
+      <br>
+      <form class="form-inline" id="form1" method="post" action="{{ url_for('admin_recipe_bp.recipe_database')}}">
+        <div class="input_ingredient">
+          <input type="text" class="form-control form-control-lg mb-2" name="ingredient" id="ingredient" placeholder="chicken, salad">
+          <div id="autocomplete" class="autocomplete"></div>
+          <input type="button" value="+" id="add_ingredient" class="btn btn-success btn-lg mb-2">
+        </div>
+        <div id="ingredient_items_list"></div>
+        <div class="input_ingredient">
+          <input type="button" value="Remove All" class="btn btn-danger btn-lg mb-2" id="remove_all">
+          <input type="button" value="Search" class="btn btn-success btn-lg mb-2" id="search">
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="parent2">
+    <div id="recipe_items" class="row card-deck justify-content-center">
+      {% for recipe in recipes %}
+      <div class="card m-2 recipe_card">
+        <img src="{{ url_for('static', filename='images_recipe/' + recipe.get_picture()) }}" class="card-img-top" alt="{{ recipe.get_name() }}">
+        <div class="card-body">
+          <h5 class="card-title">{{ recipe.get_name() }}</h5>
+          <p class="card-text">
+            {% for ingredient in recipe.get_ingredients() %}
+            {{ ingredient }}{% if not loop.last %},{% endif %}
+            {% endfor %}
+          </p>
+          <a href="" class="btn btn-success m-2">View Recipe</a>
+          <a href="" class="btn btn-primary m-2">Edit Recipe</a>
+          <a onclick="confirmdelete('{{ recipe.get_name() }}', '{{ recipe.get_id() }}')" class="btn btn-danger m-2" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<script nonce="{{ nonce }}">
+  function confirmdelete(content, id) {
+    console.log(content);
+    document.getElementById('modal-body').innerHTML = 'Are you sure you want to remove ' + content + '?';
+    document.getElementById('delete').onclick = function () {
+      window.location.href = "delete_recipe/" + id;
+    }
+  }
+</script>
+
+{% if success %}
+<script nonce="{{ nonce }}">
+  display_popup('{{ success }}', 'success');
+</script>
+{% endif %}
+
+{% endblock %}

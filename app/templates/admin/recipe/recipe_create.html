@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+{% extends 'base.html' %}
+{% block title %}tastefully | Create Recipe{% endblock %}
+
+{% block css %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/recipe/recipe_create.css') }}">
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script nonce="{{ nonce }}" src="{{ url_for('static', filename='js/recipe/recipe_creator.js' ) }}"></script>
+{% endblock %}
+
+
+
+{% block content %}
+{% from "includes/_form_helper.html" import render_field, render_field_picture %}
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+<div>
+    <h1 class="mb-4" id="add_recipe_title">Add Recipe</h1>
+    <div class="container mt-5">
+        <h1 id="general_information_title">General Information</h1><br>
+        <form class="justify-content-center" method="post" enctype="multipart/form-data" id="create_recipe_form">
+            {{ form.csrf_token }}
+            <div class="form-group mb-3 recipe-form-input">
+                {{ render_field(form.name, class="form-control", id="name", placeholder="Teriyaki Chicken") }}
+            </div>
+
+            <div class="form-group mt-1 recipe-form-input">
+                {{ render_field(form.instructions, class="form-control", id="instructions") }}
+            </div>
+
+            <div class="form-group mt-1 recipe-form-input">
+                {{ render_field(form.calories, class="form-control", id="calories", placeholder="200") }}
+            </div>
+            <div class="form-group mt-1 recipe-form-input">
+                {{ render_field(form.prep_time, class="form-control", id="prep_time", placeholder="30") }}
+            </div>
+            <div class="form-group mt-1 recipe-form-input">
+                {{ render_field(form.type, class="form-control", id="type") }}
+            </div>
+
+
+            <div id="control_panel" class="text-center form-group">
+                <h1 id="ingredients_title">Ingredients</h1><br>
+                <div class="input_ingredient">
+                    <input type="text" class="form-control form-control-lg col-auto" name="ingredient" id="ingredient"
+                           placeholder="chicken, tomato" required>
+                    <div id="autocomplete" class="autocomplete">
+                    </div>
+                    <input type="button" value="+" id="add_ingredient" class="btn btn-success btn-lg col">
+                </div>
+                <div id="ingredient_items_list">
+                </div>
+                <div class="input_ingredient">
+                    <input type="button" value="Remove All" class="btn btn-danger btn-lg" id="remove_all">
+                </div>
+                {{ render_field_picture(form.ingredients, style="display:none;", id="ingredients") }}
+            </div>
+
+            <h1 id="picture-title">Picture</h1><br>
+            <div class="input-group mt-2 recipe-form-input">
+                {{ render_field_picture(form.picture, class="form-control", id="picture") }}
+            </div>
+
+            <div class="d-none"></div>
+            <div id="button-section">
+                <a href="{{ url_for('admin_recipe_bp.recipe_database', id=id) }}" class="btn btn-secondary mt-3 mb-4">Back to
+                    Home</a>
+                <input type="button" id="submit_recipe" onclick='submit_recipe1()' class="btn btn-primary mt-3 mb-4"
+                       value="Add Recipe">
+<!--                <input type="submit" class="btn btn-primary mt-3 mb-4" value="Add Recipe">-->
+            </div>
+        </form>
+        {% if alert_error %}
+        <script nonce="{{ nonce }}">
+      display_popup('{{ alert_error }}', 'error');
+
+        </script>
+        {% endif %}
+        <script>
+        ClassicEditor
+            .create( document.querySelector( '#i' ) )
+            .catch( error => {
+                console.error( error );
+            } );
+
+        </script>
+    </div>
+</div>
+{% endblock %}

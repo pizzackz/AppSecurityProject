@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+{% macro render_field(field, class) %}
+{{ field.label }}
+{{ field(class_=class, **kwargs) | safe }}
+{% if field.errors %}
+{% for error in field.errors %}
+<p style="margin-bottom: 0;" class="text-danger">{{ error }}</p>
+{% endfor %}
+{% endif %}
+{% endmacro %}
+
+{% macro render_field_picture(field, class) %}
+    {{ field(class_=class, **kwargs) | safe }}
+    <!-- Validation error messages from Forms.py fields -->
+    {% if field.errors %}
+        <div class="text-danger">
+            {% for error in field.errors %}
+                <script>
+                    display_popup('{{ error }}')
+                </script>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endmacro %}
+
+{% macro render_button(field, class) %}
+{{ field(class_=class, **kwargs) | safe }}
+{% if field.errors %}
+{% for error in field.errors %}
+<p style="margin-bottom: 0;" class="text-danger">{{ error }}</p>
+{% endfor %}
+{% endif %}
+{% endmacro %}

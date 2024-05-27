@@ -1,0 +1,95 @@
+{% extends "member/transaction-processing/transaction_base.html" %}
+
+{% block css %}
+{{ super() }}
+<link href="{{ url_for('static', filename='#') }}" rel="stylesheet">
+<link rel="stylesheet" type="text/css"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+{% endblock %}
+
+{# {% block navbar %}
+{% include "includes/_member_navbar.html" %}
+{% endblock %} #}
+
+{% block title %}tastefully | Plan Selection{% endblock %}
+
+{#  {% block content %}
+{% from "includes/_form_helper.html" import render_field %}
+{% endblock %}  #}
+
+
+{% block content %}
+<!-- Step Indicator -->
+<div class="step-container">
+    <div class="step step-active">
+        <span>1</span>
+        <span>Plan Selection</span>
+    </div>
+    <div class="step">
+        <span>2</span>
+        <span>Payment</span>
+    </div>
+    <div class="step">
+        <span>3</span>
+        <span>Confirmation</span>
+    </div>
+</div>
+
+<!-- Plan Card -->
+<form action="" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="max-w-sm mx-auto bg-yellow-100 p-6 rounded-lg shadow-md text-center">
+    <h2 class="text-xl font-bold mb-4">Premium Plan</h2>
+    <p class="text-lg mb-4">$30 SGD/month</p>
+    <button class="bg-white border border-black text-black font-bold py-2 px-4 rounded mb-4"  >Join</button>
+    <ul class="text-left list-disc list-inside">
+        <li>Get access to Premium Recipes</li>
+        <li>Get 4 inclusive Food Bundles every month (During 30 day subscription period)</li>
+        <li>Get early access to new recipes</li>
+        <li>Highlighted recipe posts and comments</li>
+    </ul>
+</div>
+</form>
+
+<!-- Return Button -->
+<form action="" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="text-center mt-4">
+        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded" name="return" value="True">Return</button>
+    </div>
+</form>
+
+
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    var stripe = Stripe('your_stripe_public_key');
+    document.getElementById('checkout-button').addEventListener('click', function () {
+        fetch('/plan_checkout', {
+            method: 'POST',
+        })
+        .then(function (response) {
+            return response.json();
+        })
+        .then(function (sessionId) {
+            return stripe.redirectToCheckout({ sessionId: sessionId.id });
+        })
+        .then(function (result) {
+            if (result.error) {
+                alert(result.error.message);
+            }
+        })
+        .catch(function (error) {
+            console.error('Error:', error);
+        });
+    });
+</script>
+{% endblock %}
+
+
+{% block scripts %}
+{{ super() }}
+<!--<script src="{{ url_for('static', filename='js/cart.js')}}"></script>-->
+{% endblock %}
+
+
+

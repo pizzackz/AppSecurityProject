@@ -1,16 +1,14 @@
 {% extends 'base.html' %}
 {% block title %}tastefully | Recipe Database{% endblock %}
 
-
-<!-- To replace nav bar with jinja later on-->
 {% block css %}
 {{ super() }}
-<link rel="stylesheet" href="../../static/css/recipe/recipe_database.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/recipe/recipe_database.css') }}">
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
-<script src="{{ url_for('static', filename='js/recipe/recipe_database.js' ) }}"></script>
+<script nonce="{{ nonce }}" src="{{ url_for('static', filename='js/recipe/recipe_database.js' ) }}"></script>
 {% endblock %}
 
 {% block navbar %} {% include "includes/_admin_navbar.html" %} {% endblock %}
@@ -32,14 +30,11 @@
   </div>
 </div>
 
-
-
 <div id="parent" class="container">
   <h1 class="mb-4" style="text-align:center;margin-top:1.5rem;font-size:3rem;">Recipe Database</h1>
   <div class="row">
     <div id="control_panel" class="col text-center center">
       <div id="text">
-
         <h5><u>How to Use</u>
           <ul>
             <li>Type in an ingredient or the dish name and click +.</li>
@@ -50,16 +45,11 @@
       <br>
       <form class="form-inline" id="form1" method="post" action="{{ url_for('admin_recipe_bp.recipe_database')}}">
         <div class="input_ingredient">
-          <input type="text" class="form-control form-control-lg mb-2" name="ingredient" id="ingredient"
-            placeholder="chicken, salad">
-          <div id="autocomplete" class="autocomplete">
-          </div>
+          <input type="text" class="form-control form-control-lg mb-2" name="ingredient" id="ingredient" placeholder="chicken, salad">
+          <div id="autocomplete" class="autocomplete"></div>
           <input type="button" value="+" id="add_ingredient" class="btn btn-success btn-lg mb-2">
         </div>
-
-        <div id="ingredient_items_list">
-
-        </div>
+        <div id="ingredient_items_list"></div>
         <div class="input_ingredient">
           <input type="button" value="Remove All" class="btn btn-danger btn-lg mb-2" id="remove_all">
           <input type="button" value="Search" class="btn btn-success btn-lg mb-2" id="search">
@@ -72,39 +62,25 @@
     <div id="recipe_items" class="row card-deck justify-content-center">
       {% for recipe in recipes %}
       <div class="card m-2" style="width: 18rem;">
-        <img src="{{ url_for('static', filename='images_recipe/' + recipe.get_picture()) }}" class="card-img-top"
-          alt="{{ recipe.get_name() }}">
-        <!--                    <img src="https://via.placeholder.com/150" class="card-img-top" alt="Placeholder Image">-->
+        <img src="{{ url_for('static', filename='images_recipe/' + recipe.get_picture()) }}" class="card-img-top" alt="{{ recipe.get_name() }}">
         <div class="card-body">
           <h5 class="card-title">{{ recipe.get_name() }}</h5>
           <p class="card-text">
             {% for ingredient in recipe.get_ingredients() %}
             {{ ingredient }}{% if not loop.last %},{% endif %}
             {% endfor %}
-
           </p>
-          <a href=""
-            class="btn btn-success m-2">View Recipe</a>
-          <a href=""
-            class="btn btn-primary m-2">Edit Recipe</a>
-          <a onclick="confirmdelete('{{ recipe.get_name() }}', '{{ recipe.get_id() }}')" class="btn btn-danger m-2"
-            data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
+          <a href="" class="btn btn-success m-2">View Recipe</a>
+          <a href="" class="btn btn-primary m-2">Edit Recipe</a>
+          <a onclick="confirmdelete('{{ recipe.get_name() }}', '{{ recipe.get_id() }}')" class="btn btn-danger m-2" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
         </div>
       </div>
       {% endfor %}
-
-
     </div>
   </div>
-
-
 </div>
 
-</div>
-
-</div>
-<script>
-  // Confirmation button
+<script nonce="{{ nonce }}">
   function confirmdelete(content, id) {
     console.log(content);
     document.getElementById('modal-body').innerHTML = 'Are you sure you want to remove ' + content + '?';
@@ -114,9 +90,8 @@
   }
 </script>
 
-
 {% if success %}
-<script>
+<script nonce="{{ nonce }}">
   display_popup('{{ success }}', 'success');
 </script>
 {% endif %}

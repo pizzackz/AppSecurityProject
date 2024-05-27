@@ -18,6 +18,7 @@ class Recipe:
         self.__instructions = instructions
         self.__picture = picture
 
+
     def get_id(self):
         return self.__id
 
