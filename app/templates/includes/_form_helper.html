@@ -22,3 +22,12 @@
         </div>
     {% endif %}
 {% endmacro %}
+
+{% macro render_button(field, class) %}
+{{ field(class_=class, **kwargs) | safe }}
+{% if field.errors %}
+{% for error in field.errors %}
+<p style="margin-bottom: 0;" class="text-danger">{{ error }}</p>
+{% endfor %}
+{% endif %}
+{% endmacro %}

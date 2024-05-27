@@ -1,12 +1,10 @@
 import os
-<<<<<<< Updated upstream
 from datetime import timedelta
-=======
 import random
 
 import app
 
->>>>>>> Stashed changes
+
 
 # Define 'Config' class for all app configurations
 class Config:
@@ -37,7 +35,7 @@ class Config:
     CSP_DIRECTIVES = {
         'default-src': ["'self'"],
         'style-src': ["'self'", 'https://cdn.jsdelivr.net'],
-        'script-src': ["'self'", 'https://cdn.jsdelivr.net'],
+        'script-src': ["'self'", 'https://cdn.jsdelivr.net', 'https://cdn.ckeditor.com'],
         'font-src': ["'self'", 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com'],
         'img-src': ["'self'", 'data:'],
         'connect-src': ["'self'"],
@@ -47,7 +45,6 @@ class Config:
         'form-action': ["'self'"],
     }
 
-<<<<<<< Updated upstream
     # Stripe configuration
     STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
     STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
@@ -55,5 +52,4 @@ class Config:
     # Rate Limiting
     RATELIMIT_DEFAULT = ["200 per day", "50 per hour"]
     RATELIMIT_STORAGE_URL = "memory://"  # Store rate limit counters in memory
-=======
->>>>>>> Stashed changes
+

@@ -100,14 +100,15 @@ def recipe_database():
 @admin_recipe_bp.route('/admin/create_recipe', methods=['GET', 'POST'])
 def create_recipe():
     form = CreateRecipeForm()
-    if form.validate():
-        name = clean_input(form.name.data)
-        ingredients = clean_input(form.ingredients.data)
-        instructions = clean_input(form.instructions.data)
+    if form.validate_on_submit():
+        name = form.name.data
+        ingredients = form.ingredients.data
+        instructions = form.instructions.data
         picture = form.picture.data
-        calories = clean_input(form.calories.data)
-        prep_time = clean_input(form.prep_time.data)
-        recipe_type = clean_input(form.type.data)
+        calories = form.calories.data
+        prep_time = form.prep_time.data
+        recipe_type = form.type.data
+        print(name, ingredients, instructions, calories, prep_time,recipe_type)
 
 
 
@@ -141,12 +142,14 @@ def create_recipe():
     #         print('Error in creating recipe:', str(e))
     #         flash('An error occurred while creating the recipe. Please try again.', 'danger')
 
+    elif form.validate_on_submit() == False and request.method == 'POST':
+        flash('Please fill in all fields', 'danger')
     return render_template('admin/recipe/recipe_create.html', form=form)
 
 
 #
-# @admin_recipe_bp.route('/admin/view_recipe/<recipe_id>', methods=['GET', 'POST'])
-# def view_recipe(recipe_id, id):
+@admin_recipe_bp.route('/admin/view_recipe/', methods=['GET', 'POST'])
+def view_recipe():
 #     try:
 #         with db.cursor() as cursor:
 #             # Retrieve the recipe from the database using its ID
@@ -158,7 +161,7 @@ def create_recipe():
 #     except Exception as e:
 #         print('Error in viewing recipe:', str(e))
 #         return "An error occurred while viewing the recipe"
-#
+        return render_template('admin/recipe/recipe_view2.html')
 #
 # @admin_recipe_bp.route('/admin/edit_recipe/<recipe_id>', methods=['GET', 'POST'])
 # def edit_recipe(recipe_id, id):
@@ -196,7 +199,7 @@ def create_recipe():
 #                 flash(f'{recipe["name"]} has been updated', 'info')
 #                 return redirect(url_for('admin.recipe_database', id=id))
 #
-#             return render_template('admin/recipe_update.html', recipe=recipe, id=id)
+        # return render_template('admin/recipe_update.html')
 #     except Exception as e:
 #         print('Error in editing recipe:', str(e))
 #         flash('An error occurred while editing the recipe', 'danger')

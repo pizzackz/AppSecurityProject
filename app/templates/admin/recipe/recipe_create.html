@@ -16,6 +16,7 @@
 
 {% block content %}
 {% from "includes/_form_helper.html" import render_field, render_field_picture %}
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
 <div>
     <h1 class="mb-4" id="add_recipe_title">Add Recipe</h1>
     <div class="container mt-5">
@@ -27,8 +28,7 @@
             </div>
 
             <div class="form-group mt-1 recipe-form-input">
-                {{ render_field(form.instructions, class="form-control" , id="instructions", placeholder="1. Deep fry
-                the chicken", rows=4) }}
+                {{ render_field(form.instructions, class="form-control", id="instructions") }}
             </div>
 
             <div class="form-group mt-1 recipe-form-input">
@@ -56,7 +56,7 @@
                 <div class="input_ingredient">
                     <input type="button" value="Remove All" class="btn btn-danger btn-lg" id="remove_all">
                 </div>
-                {{ render_field_picture(form.ingredients, class="hide", id="ingredients") }}
+                {{ render_field_picture(form.ingredients, style="display:none;", id="ingredients") }}
             </div>
 
             <h1 id="picture-title">Picture</h1><br>
@@ -70,6 +70,7 @@
                     Home</a>
                 <input type="button" id="submit_recipe" onclick='submit_recipe1()' class="btn btn-primary mt-3 mb-4"
                        value="Add Recipe">
+<!--                <input type="submit" class="btn btn-primary mt-3 mb-4" value="Add Recipe">-->
             </div>
         </form>
         {% if alert_error %}
@@ -78,6 +79,14 @@
 
         </script>
         {% endif %}
+        <script>
+        ClassicEditor
+            .create( document.querySelector( '#i' ) )
+            .catch( error => {
+                console.error( error );
+            } );
+
+        </script>
     </div>
 </div>
 {% endblock %}

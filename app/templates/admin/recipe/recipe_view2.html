@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 {% extends 'base.html' %}
-{% block title %}tastefully | {{ recipe.get_name() }}{% endblock %}
+{% block title %}tastefully |  }}{% endblock %}
 
 {% block css %}
 {{ super() }}
@@ -18,7 +18,7 @@
         <div class="card mb-3" style="margin:auto;">
             <div class="row g-0">
                 <div class="col-md">
-                    <img src="mixed_paella.jpg" class="img-fluid rounded-start" alt="...">
+                    <img src="{{ url_for('static', filename='images/mixed_paella.jpg') }}" class="img-fluid rounded-start" alt="...">
                 </div>
                 <div class="col-md">
                     <div class="card-body align-items-center" style="text-align:center;height:100%;display:grid;align-content: center;">
