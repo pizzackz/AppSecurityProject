@@ -15,7 +15,7 @@
     {% if field.errors %}
         <div class="text-danger">
             {% for error in field.errors %}
-                <script>
+                <script nonce="{{ nonce }}">
                     display_popup('{{ error }}')
                 </script>
             {% endfor %}

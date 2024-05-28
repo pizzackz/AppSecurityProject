@@ -2,15 +2,12 @@
 <html>
 <head>
     <title>Stripe Payment</title>
-    <script src="https://js.stripe.com/v3/"></script>
-
+    <script nonce="{{ nonce }}" src="https://js.stripe.com/v3/"></script>
 </head>
 <body class="flex items-center justify-center h-screen bg-gray-100">
     <div> Home</div>
 
-<!--    Placeholder for index/home page-->
-
-    <script type="text/javascript">
+    <script nonce="{{ nonce }}" type="text/javascript">
         var stripe = Stripe('{{ publishable_key }}');
 
         document.getElementById('checkout-button').addEventListener('click', function () {

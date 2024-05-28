@@ -1,0 +1,54 @@
+@font-face {
+    font-family: 'Inter-SemiBold';
+    src: url("../fonts/Inter-SemiBold.ttf") format("truetype");
+}
+
+#menu_item{
+    text-align: center;
+}
+
+.m-2{
+    display: inline-block;
+    margin: 10px;
+}
+
+.view{
+    background-color: green;
+}
+
+.delete{
+    background-color: red;
+}
+
+.update{
+    background-color: blue;
+}
+
+
+
+body {
+    height: 100%;
+    width: 100%;
+    font-family: 'Inter-SemiBold';
+    overflow-x: hidden;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+}
+
+.card-img-top {
+    max-width: 300px;
+    width: 100%;
+    aspect-ratio: 1/1;
+}
+#product-name{
+    height: 5rem;
+    overflow-y: auto;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+*{ 
+    font-family: Inter-SemiBold;
+}

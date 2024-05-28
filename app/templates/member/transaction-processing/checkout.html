@@ -1,62 +1,70 @@
+<!DOCTYPE html>
 {% extends "member/transaction-processing/transaction_base.html" %}
 
 {% block title %}Plan Checkout{% endblock %}
 
 {% block content %}
-  <title>Checkout</title>
-  <script src="https://js.stripe.com/v3/"></script>
-</head>
-<body>
+<script nonce="{{ nonce }}" src="https://js.stripe.com/v3/"></script>
 
-    <div class="step-container" xmlns="http://www.w3.org/1999/html">
-        <div class="step">
-            <span>1</span>
-            <span>Plan Selection</span>
-        </div>
-        <div class="step step-active">
-            <span>2</span>
-            <span>Payment</span>
-        </div>
-        <div class="step">
-            <span>3</span>
-            <span>Confirmation</span>
-        </div>
-    </div>
+<div class="step-container" xmlns="http://www.w3.org/1999/html">
+  <div class="step">
+      <span>1</span>
+      <span>Plan Selection</span>
+  </div>
+  <div class="step step-active">
+      <span>2</span>
+      <span>Payment</span>
+  </div>
+  <div class="step">
+      <span>3</span>
+      <span>Confirmation</span>
+  </div>
+</div>
 
-    <div class="text-center mt-4">
-      <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded" id="checkout-button">Stripe Payment</button>
-    </div>
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-    <div class="text-center mt-4">
-      <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded" onclick="window.history.back();">Return</button>
-    </div>
+<div class="text-center mt-4">
+  <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded" id="checkout-button">Stripe Payment</button>
+</div>
 
-  <script type="text/javascript">
-    var stripe = Stripe('{{ publishable_key }}');
-    var checkoutButton = document.getElementById('checkout-button');
+<div class="text-center mt-4">
+  <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded" id="return-button">Return</button>
+</div>
+{% endblock %}
 
-    checkoutButton.addEventListener('click', function () {
-      fetch('/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': '{{ csrf_token() }}'
-        },
-      })
-      .then(function (response) {
-        return response.json();
-      })
-      .then(function (session) {
-        return stripe.redirectToCheckout({ sessionId: session.id });
-      })
-      .then(function (result) {
-        if (result.error) {
-          alert(result.error.message);
-        }
-      })
-      .catch(function (error) {
-        console.error('Error:', error);
-      });
+{% block scripts %}
+{{ super() }}
+<script nonce="{{ nonce }}" type="text/javascript">
+  var stripe = Stripe('{{ publishable_key }}');
+  var checkoutButton = document.getElementById('checkout-button');
+
+  checkoutButton.addEventListener('click', function () {
+    fetch('/create-checkout-session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token() }}'
+      },
+    })
+    .then(function (response) {
+      return response.json();
+    })
+    .then(function (session) {
+      return stripe.redirectToCheckout({ sessionId: session.id });
+    })
+    .then(function (result) {
+      if (result.error) {
+        alert(result.error.message);
+      }
+    })
+    .catch(function (error) {
+      console.error('Error:', error);
     });
-  </script>
+  });
+
+  var returnButton = document.getElementById("return-button");
+  returnButton.addEventListener("click", function() {
+    window.history.back();
+  });
+</script>
 {% endblock %}
