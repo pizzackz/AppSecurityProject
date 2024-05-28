@@ -14,3 +14,8 @@ class CreateRecipeForm(FlaskForm):
     type = SelectField("Type", choices=[("Standard", "Standard"), ("Premium", "Premium")], validators=[DataRequired()], render_kw={"class": "form-control"})
     submit = SubmitField("Create Recipe", render_kw={"class": "btn btn-primary"})
 
+class createFeedback(Form):
+    name = StringField('Your Name', [validators.Length(min=1, max=150), validators.DataRequired()])
+    category = SelectField('Category', choices=[("product", "Product"), ("website", "Website"), ("delivery", "Delivery"), ("others", "Others")])
+    rating = DecimalField('Overall Satisfaction', [validators.NumberRange(min=1, max=5)])
+    comment = TextAreaField('Feedback', [validators.DataRequired()])
