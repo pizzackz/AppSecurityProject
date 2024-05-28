@@ -61,6 +61,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         else {
                             ingredient_list.push(arr[i]);
                             display_ingredient;
+                            document.getElementById('ingredients').value = ingredient_list;
                             localStorageStore;
                         }
                     }
@@ -178,7 +179,7 @@ function search_ingredients() {
         display_popup('Ingredient list is empty!', 'error');
     }
     else {
-        document.getElementById('ingredient').value = ingredient_list;
+        document.getElementById('ingredients').value = ingredient_list;
         document.getElementById('form1').submit();
     }
     

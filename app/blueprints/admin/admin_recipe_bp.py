@@ -9,20 +9,33 @@ from flask import (
     flash,
     url_for,
 )
+import re
+import imghdr
+import imageio
+import requests
+from werkzeug.utils import secure_filename
+from app.models import Recipe
+import os
+import json
+
+
+from PIL import Image
+from html import unescape
 # import flask_sqlalchemy
 # from app.models import Recipe
 # from werkzeug.utils import secure_filename
 # from werkzeug.security import generate_password_hash, check_password_hash
-# import os
+
 # from sqlalchemy import text
 # from datetime import datetime
-# import re
+
 # import random
 # import sys
-# import html
+import html
 
-from app.forms import CreateRecipeForm
+from app.forms import CreateRecipeForm, RecipeSearch
 from app import db
+from bs4 import BeautifulSoup
 
 admin_recipe_bp = Blueprint("admin_recipe_bp", __name__)
 
@@ -31,47 +44,89 @@ def clean_input(html):
     cleaned = html.unescape(html)
     return cleaned
 
+def is_image(filename):
+    # Check if the file is an image
+    image_type = imghdr.what(filename)
+    if image_type is not None:
+        return True, image_type
+    else:
+        return False, None
+
+def is_square_image(filename):
+    image_type = imghdr.what(filename)
+    with imageio.imread(filename) as img:
+        height, width, _ = img.shape
+        if width == height:
+            return True, image_type
+        else:
+            return False, None
 
 # Recipe Pages
 @admin_recipe_bp.route("/admin/recipe_database", methods=["GET", "POST"])
 def recipe_database():
-    print(db)
-
+    print(db) # Checking Database Status
+    form = RecipeSearch()
     """Searching using wildcard * for recipes"""
-    # try:
-    #     with db.cursor() as cursor:
-    #         # Retrieve recipes from the database
-    #         cursor.execute("SELECT * FROM recipes")
-    #         recipes = cursor.fetchall()
-    # except Exception as e:
-    #     print('Error in retrieving recipes:', str(e))
-    #     recipes = []
+
+    if request.method == 'POST':
+        if not form.validate_on_submit():
+            print('Failed')
+            flash('Please fill in all fields', 'danger')
+            return redirect(url_for('admin_recipe_bp.recipe_database'))
+        else:
+            print('Success')
+            ingredients = form.ingredients.data
+            try:
+                ingredients = ingredients.split(',')
+            except:
+                flash('Error processing ingredients', 'error')
+                return redirect(url_for('admin_recipe_bp.recipe_database'))
+
+            # Clean data
+            if ingredients == []:  # If empty, redirect
+                flash('Ingredients are empty!', 'error')
+                return redirect(url_for('admin_recipe_bp.recipe_database'))
+                # return redirect
+
+            # If not pass regex, redirect
+            regex = r'^[a-zA-Z ]+$'  # Regex pattern allowing only letters and spaces
+            for i in range(len(ingredients)):
+                ingredients[i] = (ingredients[i]).strip()
+                if ingredients[i] == '':
+                    flash('Ingredients are empty!', 'error')
+                    return redirect(url_for('admin_recipe_bp.recipe_database'))
+                if not re.fullmatch(regex, ingredients[i]):
+                    flash('Only letters and spaces allowed', 'error')
+                    return redirect(url_for('admin_recipe_bp.recipe_database'))
+                if len(ingredients[i]) > 20:
+                    flash('Ingredient cannot be more than 20 characters', 'error')
+                    return redirect(url_for('admin_recipe_bp.recipe_database'))
+                ingredients[i] = (ingredients[i]).lower()
+
+            # Search for recipes using ingredients
+            # try:
+            #     with db.cursor() as cursor:
+            #         # Retrieve recipes from the database
+            #         cursor.execute("SELECT * FROM recipes")
+            #         recipes = cursor.fetchall()
+            # except Exception as e:
+            #     print('Error in retrieving recipes:', str(e))
+            #     recipes = []
+
+
+
+
+
+            return redirect(url_for('admin_recipe_bp.recipe_database'))
     #
     # if request.method == 'POST':
     #     # Getting input from forms
     #     ingredients = request.form.get('ingredient')
     #     print(ingredients)
     #
-    #     try:
-    #         ingredients = ingredients.split(',')
-    #     except:
-    #         flash('Error processing ingredients', 'error')
-    #         return redirect(url_for('admin_recipe_bp.recipe_database'))
+
     #
-    #     if ingredients == []: # If empty, redirect
-    #         flash('Ingredients are empty!', 'error')
-    #         return redirect(url_for('admin_recipe_bp.recipe_database'))
-    #         # return redirect
-    #
-    #     # If not pass regex, redirect
-    #     regex = r'^[a-zA-Z ]+$'  # Regex pattern for uppercase letter followed by digits
-    #     for ingredient in ingredients:
-    #         if not re.fullmatch(regex, ingredient):
-    #             flash('Only letters and spaces allowed', 'error')
-    #             return redirect(url_for('admin_recipe_bp.recipe_database'))
-    #         if len(ingredient) > 20:
-    #             flash('Ingredient cannot be more than 20 characters', 'error')
-    #             return redirect(url_for('admin_recipe_bp.recipe_database'))
+
     #
     #     # Clean input, remove spaces at front and end
     #     for i in range(len(ingredients)):
@@ -94,7 +149,7 @@ def recipe_database():
     #         print('Error in searching recipes:', str(e))
     #         return render_template('admin/recipe_database.html', recipes=[])
 
-    return render_template("admin/recipe/recipe_database.html")
+    return render_template("admin/recipe/recipe_database.html", form=form)
 
 @admin_recipe_bp.route('/admin/create_recipe', methods=['GET', 'POST'])
 def create_recipe():
@@ -113,43 +168,176 @@ def create_recipe():
             picture = form.picture.data
             calories = form.calories.data
             prep_time = form.prep_time.data
-            recipe_type = form.type.data
-            print(name, ingredients, instructions, calories, prep_time,recipe_type)
-            
-            # name = create_recipe_form['name']
-            # picture = request.files['picture']
-            # picture_filename = picture.filename
-        
-            # if not picture_filename.endswith(('jpg', 'png')):
-            #     return render_template('admin/recipe_create.html', alert_error='Images are only allowed', id=id)
-        
-            # # Save the image file
-            # picture_filename = secure_filename(picture_filename)
-            # picture.save(os.path.join('static/images_recipe', picture_filename))
-        
-            # ingredients = create_recipe_form['ingredients'].split(',')
-            # if not ingredients:
-            #     return render_template('admin/recipe_create.html', alert_error='Please add ingredients.', id=id)
-        
-            # instructions = create_recipe_form['instructions']
-        
-            # try:
-            #     with db.cursor() as cursor:
-            #         # Insert the new recipe into the database
-            #         cursor.execute("INSERT INTO recipes (name, ingredients, instructions, picture) VALUES (%s, %s, %s, %s)",
-            #                        (name, ','.join(ingredients), instructions, picture_filename))
-            #         db.commit()
-            #         flash(f'{name} has been created', 'success')
-            #         return redirect(url_for('admin.recipe_database', id=id))
-            # except Exception as e:
-            #     print('Error in creating recipe:', str(e))
-            #     flash('An error occurred while creating the recipe. Please try again.', 'danger')
+            recipe_type = form.recipe_type.data
+            print(name, ingredients, instructions, calories, prep_time, recipe_type)
 
+            # PROCESS NAME
+            name = name.strip()
+            if name == '':
+                flash('Name is empty!', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+            regex = r'^[a-zA-Z ]+$'  # Regex pattern allowing only letters and spaces
+            if not re.fullmatch(regex, name):
+                flash('Only letters and spaces allowed', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+            if len(name) > 20:
+                flash('Name cannot be more than 20 characters', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+
+            # PROCESS INSTRUCTIONS
+            instructions = instructions.strip()
+            if instructions == '':
+                flash('Instructions are empty!', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+            if len(instructions) > 1000:
+                flash('Instructions cannot be more than 1000 characters', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+            html.unescape(instructions)
+            # Parse HTML
+            soup = BeautifulSoup(instructions, 'html.parser')
+
+            # Remove all script tags
+            for script in soup(["script", "style"]):
+                script.decompose()
+            # Remove all iFrame and input tags
+            for iframe in soup(["iframe", "input", "link", "submit", "link", "meta"]):
+                iframe.decompose()
+
+            # PROCESS CALORIES
+            if type(calories) != int:
+                flash('Calories must be an integer', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+            if calories < 0:
+                flash('Calories cannot be negative', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+            if calories > 3000:
+                flash('Calories cannot be more than 3000', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+
+            # PROCESS PREP TIME
+            if type(prep_time) != int:
+                flash('Prep time must be an integer', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+            if prep_time < 0:
+                flash('Prep time cannot be negative', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+            if prep_time > 300:
+                flash('Prep time cannot be more than 300 minutes', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+
+            # PROCESS RECIPE TYPE
+            if recipe_type != 'Standard' and recipe_type != 'Premium':
+                flash('Invalid recipe type', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+
+            # PROCESS INGREDIENTS
+            ingredients = form.ingredients.data
+            try:
+                ingredients = ingredients.split(',')
+            except:
+                flash('Error processing ingredients', 'error')
+                return redirect(url_for('admin_recipe_bp.recipe_database'))
+
+            # Clean data
+            if ingredients == []:  # If empty, redirect
+                flash('Ingredients are empty!', 'error')
+                return redirect(url_for('admin_recipe_bp.recipe_database'))
+                # return redirect
+
+            # If not pass regex, redirect
+            regex = r'^[a-zA-Z ]+$'  # Regex pattern allowing only letters and spaces
+            for i in range(len(ingredients)):
+                ingredients[i] = (ingredients[i]).strip()
+                if ingredients[i] == '':
+                    flash('Ingredients are empty!', 'error')
+                    return redirect(url_for('admin_recipe_bp.recipe_database'))
+                if not re.fullmatch(regex, ingredients[i]):
+                    flash('Only letters and spaces allowed', 'error')
+                    return redirect(url_for('admin_recipe_bp.recipe_database'))
+                if len(ingredients[i]) > 20:
+                    flash('Ingredient cannot be more than 20 characters', 'error')
+                    return redirect(url_for('admin_recipe_bp.recipe_database'))
+                ingredients[i] = (ingredients[i]).lower()
+            ingredient_cleaned = ''
+
+            for c in range(len(ingredients)):
+                ingredient_cleaned += ingredients[c]
+                if c != len(ingredients) - 1:
+                    ingredient_cleaned += ','
+
+            print(ingredient_cleaned)
+
+            # PROCESS IMAGE
+            if picture.filename == '':
+                flash('No image uploaded', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+            if not is_image(picture):
+                flash('Invalid image format', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+            # if not is_square_image(picture):
+            #     flash('Image size must be 1:1', 'error')
+            #     return redirect(url_for('admin_recipe_bp.create_recipe'))
+
+            def scan_image_for_malware(api_key, filename):
+                url = 'https://www.virustotal.com/vtapi/v2/file/scan'
+                params = {'apikey': api_key}
+                with open(filename, 'rb') as file:
+                    files = {'file': file}
+                    response = requests.post(url, files=files, params=params)
+                    result = response.json()
+                return result
+
+            def is_image_safe(result):
+                if 'response_code' in result and result['response_code'] == 1:
+                    if 'positives' in result and result['positives'] == 0:
+                        return True
+                return False
+
+            api_key = 'your_virustotal_api_key'
+            filename = picture.filename
+
+            result = scan_image_for_malware(api_key, filename)
+
+            if not is_image_safe(result):
+                print("The image is not safe. Proceed with using it.")
+                flash('Please reupload the image', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+
+            # Save the image file
+            picture_filename = secure_filename(picture.filename)
+            picture.save(os.path.join('static/images_recipe', picture_filename))
+
+            # Store in MYSQL class
+            new_recipe = Recipe(name=name, ingredients=ingredient_cleaned, instructions=instructions, picture=picture, recipe_type=recipe_type, calories=calories, prep_time=prep_time)
+            try:
+                db.session.add(new_recipe)
+                db.session.commit()
+            except:
+                print('Error in creating recipe:')
+                flash('An error occurred while creating the recipe. Please try again.', 'danger')
+            print('Success')
+            return redirect(url_for('admin_recipe_bp.recipe_database'))
     return render_template('admin/recipe/recipe_create.html', form=form)
 
 
 @admin_recipe_bp.route('/admin/view_recipe/', methods=['GET', 'POST'])
 def view_recipe():
+    recipes = Recipe.query.all()
+    output = []
+    for recipe in recipes:
+        recipe_data = {
+            'id': recipe.id,
+            'name': recipe.name,
+            'ingredients': json.loads(recipe.ingredients),  # Convert JSON string to Python object
+            'instructions': recipe.instructions,
+            'picture': recipe.picture,
+            'date_created': recipe.date_created,
+            'user_created': recipe.user_created,
+            'type': recipe.type,
+            'calories': recipe.calories,
+            'prep_time': recipe.prep_time
+        }
+        output.append(recipe_data)
     # try:
     #     with db.cursor() as cursor:
     #         # Retrieve the recipe from the database using its ID

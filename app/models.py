@@ -122,6 +122,25 @@ class LoginDetails(db.Model):
 
 
 class Recipe(db.Model):
+    def __init__(
+        self,
+        name: str,
+        ingredients: str,
+        instructions: str,
+        picture: str,
+        calories: int,
+        prep_time: int,
+        recipe_type: str,
+    ) -> None:
+        self.name = name
+        self.ingredients = ingredients
+        self.instructions = instructions
+        self.picture = picture
+        self.calories = calories
+        self.prep_time = prep_time
+        self.recipe_type = recipe_type
+        self.user_created = 'JohnDoe1'
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     ingredients = db.Column(
