@@ -11,8 +11,6 @@ pat2 = re.compile(r'\(.*\)')
 all_data = []
 with open(infile, 'r') as f:
     for line in f:
-        if 'type' not in line:
-            continue
 
         v = ast.literal_eval(pat1.search(line).group(0))
         t = ast.literal_eval(pat2.search(line).group(0))[0]
