@@ -98,6 +98,9 @@
 .ingredient_item span{
     margin-right:0.3rem;
 }
+#ingredients {
+    display:none;
+}
 
 /* Recipe Items */
 #parent2 {

@@ -236,27 +236,29 @@ def create_recipe():
                 ingredients = ingredients.split(',')
             except:
                 flash('Error processing ingredients', 'error')
-                return redirect(url_for('admin_recipe_bp.recipe_database'))
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
 
             # Clean data
             if ingredients == []:  # If empty, redirect
                 flash('Ingredients are empty!', 'error')
-                return redirect(url_for('admin_recipe_bp.recipe_database'))
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
                 # return redirect
 
             # If not pass regex, redirect
             regex = r'^[a-zA-Z ]+$'  # Regex pattern allowing only letters and spaces
+            print(ingredients)
             for i in range(len(ingredients)):
                 ingredients[i] = (ingredients[i]).strip()
                 if ingredients[i] == '':
                     flash('Ingredients are empty!', 'error')
-                    return redirect(url_for('admin_recipe_bp.recipe_database'))
+                    return redirect(url_for('admin_recipe_bp.create_recipe'))
                 if not re.fullmatch(regex, ingredients[i]):
+                    print(f'Error here, {ingredients[i]}')
                     flash('Only letters and spaces allowed', 'error')
-                    return redirect(url_for('admin_recipe_bp.recipe_database'))
+                    return redirect(url_for('admin_recipe_bp.create_recipe'))
                 if len(ingredients[i]) > 20:
                     flash('Ingredient cannot be more than 20 characters', 'error')
-                    return redirect(url_for('admin_recipe_bp.recipe_database'))
+                    return redirect(url_for('admin_recipe_bp.create_recipe'))
                 ingredients[i] = (ingredients[i]).lower()
             ingredient_cleaned = ''
 
@@ -296,12 +298,12 @@ def create_recipe():
             api_key = 'your_virustotal_api_key'
             filename = picture.filename
 
-            result = scan_image_for_malware(api_key, filename)
+            # result = scan_image_for_malware(api_key, filename)
 
-            if not is_image_safe(result):
-                print("The image is not safe. Proceed with using it.")
-                flash('Please reupload the image', 'error')
-                return redirect(url_for('admin_recipe_bp.create_recipe'))
+            # if not is_image_safe(result):
+            #     print("The image is not safe. Proceed with using it.")
+            #     flash('Please reupload the image', 'error')
+            #     return redirect(url_for('admin_recipe_bp.create_recipe'))
 
             # Save the image file
             picture_filename = secure_filename(picture.filename)
