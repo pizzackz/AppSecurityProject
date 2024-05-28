@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Customer Feeddback{% endblock %}
+{% block content %}
+<h1 class="display-4">Customer Feedback</h1>
+<div>
+    {% if count == 0 %}
+    <p>There are no customers.</p>
+    {% elif count == 1 %}
+    <p>There is 1 customer.</p>
+    {% else %}
+    <p>There are {{ count }} customers.</p>
+    {% endif %}
+</div>
+<div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Rating</th>
+                <th>Comment</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for customer in customers_list %}
+            <tr>
+                <td>{{ member.get_name() }}</td>
+                <td>{{ member.get_category() }}</td>
+                <td>{{ member.get_rating() }}</td>
+                <td>{{ member.get_comment() }}</td>
+                <td><a href="#" class="btn btn-warning">Update</a></td>
+                <td>
+                    <form action="" method="POST">
+                        <input type="submit" value="Delete" class="btn btn-danger">
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
