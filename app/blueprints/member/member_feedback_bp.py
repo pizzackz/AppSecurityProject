@@ -10,7 +10,7 @@ from flask import (
     url_for,
 )
 
-from forms import createFeedback
+from app.forms import createFeedback
 
 member_feedback_bp =  Blueprint("member_feedback_bp", __name__)
 
@@ -34,4 +34,4 @@ def feedback():
 
         # # change redirect to homepage
         # return redirect(url_for('menu'))
-    return render_template('customer/customer_feedback.html', form=feedback_form)
+    return render_template('member/feedback/feedback.html', form=feedback_form)

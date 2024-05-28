@@ -94,6 +94,9 @@ label {
 .remove_ingredient:hover {
     color:#7d7d7d;
 }
+#ingredients {
+    display:none;
+}
 
 
 .ingredient_item span{

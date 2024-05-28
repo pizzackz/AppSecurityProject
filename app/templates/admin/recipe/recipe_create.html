@@ -56,7 +56,8 @@
                 <div class="input_ingredient">
                     <input type="button" value="Remove All" class="btn btn-danger btn-lg" id="remove_all">
                 </div>
-                {{ render_field_picture(form.ingredients, style="display:none;", id="ingredients") }}
+                <label for="ingredients"></label>
+                {{ render_field_picture(form.ingredients, id="ingredients", placeholder="fad", value='') }}
             </div>
 
             <h1 id="picture-title">Picture</h1><br>
@@ -70,7 +71,7 @@
                     Home</a>
                 <input type="button" id="submit_recipe" onclick='submit_recipe1()' class="btn btn-primary mt-3 mb-4"
                        value="Add Recipe">
-<!--                <input type="submit" class="btn btn-primary mt-3 mb-4" value="Add Recipe">-->
+                <input type="submit" class="btn btn-primary mt-3 mb-4" value="Add Recipe">
             </div>
         </form>
         {% if alert_error %}
