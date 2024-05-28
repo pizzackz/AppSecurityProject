@@ -44,15 +44,17 @@
       </div>
       <br>
       <form class="form-inline" id="form1" method="post" action="{{ url_for('admin_recipe_bp.recipe_database')}}">
+        {{ form.csrf_token }}
         <div class="input_ingredient">
           <input type="text" class="form-control form-control-lg mb-2" name="ingredient" id="ingredient" placeholder="chicken, salad">
+          {{ form.ingredients(class="form-control", id="ingredients", style="display:none;")}}
           <div id="autocomplete" class="autocomplete"></div>
           <input type="button" value="+" id="add_ingredient" class="btn btn-success btn-lg mb-2">
         </div>
         <div id="ingredient_items_list"></div>
         <div class="input_ingredient">
           <input type="button" value="Remove All" class="btn btn-danger btn-lg mb-2" id="remove_all">
-          <input type="button" value="Search" class="btn btn-success btn-lg mb-2" id="search">
+          {{ form.submit(class="btn btn-success btn-lg mb-2", id="search", value="Search")}}
         </div>
       </form>
     </div>
