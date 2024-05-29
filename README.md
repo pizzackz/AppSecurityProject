@@ -3,6 +3,9 @@
       <li><b>[IMPORTANT]</b> Export all your data into a data file for others to use as sample data
         <ul>
           <li>Import the sample data into your own MySQL server and use that for testing</li>
+          <li>Make sure that your MySQL server already has a root client using password
+            <code>password123</code> and inside it, there's a schema/ database named <code>tastefully</code>
+          </li>
         </ul>
       </li>
       <br />  
@@ -15,6 +18,18 @@
                   If you have installed &amp; used any new packages,
                   please update <code>requirements.txt</code> so everyone
                   can run the app smoothly
+              </li>
+              <li>
+                  Note: Only include what you 'pip installed', DO NOT run the
+                  command <code>pip freeze > requirements.txt</code> because that will "dirty"
+                  our <code>requirements.txt</code><br>
+                  <ul>
+                    <li style="list-style-type:disc;">
+                      All other packages that the installed packages need will be
+                      installed once you run <code>pip install -r requirements.txt</code>
+                      provided said packages are already within <code>requirements.txt</code>
+                    </li>
+                  </ul>
               </li>
           </ul>
       </li>
