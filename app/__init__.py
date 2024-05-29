@@ -87,10 +87,12 @@ def create_app() -> Flask:
     from app.blueprints.admin.admin_recipe_bp import admin_recipe_bp
     from app.blueprints.member.member_subscription_bp import member_subscription_bp
     from app.blueprints.member.member_feedback_bp import member_feedback_bp
+    from app.blueprints.admin_log import admin_log
 
     app.register_blueprint(admin_recipe_bp)
     app.register_blueprint(member_subscription_bp)
     app.register_blueprint(member_feedback_bp)
+    app.register_blueprint(admin_log)
 
     # Return Flask app instance
     return app
