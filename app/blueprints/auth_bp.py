@@ -29,4 +29,4 @@ def initial_signup():
             session["username"], session["email"] = username, email
 
 
-    return render_template("initial_signup.html", form=form)
+    return "<h1>To be completed</h1>"  # render_template("initial_signup.html", form=form)
