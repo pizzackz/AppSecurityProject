@@ -1,0 +1,8 @@
+.venv/
+.idea/
+.mypy_cache/
+app/__pycache__
+app/blueprints/__pycache__
+app/blueprints/admin/__pycache__
+app/blueprints/member/__pycache__
+app/blueprints/guest/__pycache__

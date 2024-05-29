@@ -2,10 +2,9 @@ import os
 import base64
 
 from dotenv import load_dotenv
-from flask import Flask, Response, request, g
+from flask import Flask, Response, g
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
-from flask_csp.csp import csp_header
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_login import LoginManager
@@ -87,13 +86,13 @@ def create_app() -> Flask:
     from app.blueprints.admin.admin_recipe_bp import admin_recipe_bp
     from app.blueprints.member.member_subscription_bp import member_subscription_bp
     from app.blueprints.member.member_feedback_bp import member_feedback_bp
-    from app.blueprints.admin_log import admin_log
+    from app.blueprints.admin.admin_log_bp import admin_log_bp
     from app.blueprints.auth_bp import auth_bp
 
     app.register_blueprint(admin_recipe_bp)
     app.register_blueprint(member_subscription_bp)
     app.register_blueprint(member_feedback_bp)
-    app.register_blueprint(admin_log)
+    app.register_blueprint(admin_log_bp)
     app.register_blueprint(auth_bp)
 
     # Return Flask app instance
