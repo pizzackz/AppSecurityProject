@@ -13,8 +13,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('flask_app')
 
 # Log the loaded keys
-logger.info(f"Loaded Stripe Secret Key: {os.getenv('STRIPE_SECRET_KEY')}")
-logger.info(f"Loaded Stripe Publishable Key: {os.getenv('STRIPE_PUBLISHABLE_KEY')}")
+# logger.info(f"Loaded Stripe Secret Key: {os.getenv('STRIPE_SECRET_KEY')}")
+# logger.info(f"Loaded Stripe Publishable Key: {os.getenv('STRIPE_PUBLISHABLE_KEY')}")
 
 # Create blueprint
 member_subscription_bp = Blueprint('member_subscription_bp', __name__)
