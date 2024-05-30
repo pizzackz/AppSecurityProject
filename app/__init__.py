@@ -13,7 +13,7 @@ from flask_session import Session
 from app.config import Config
 
 # Load environment variables from .env file
-load_dotenv("../.env")
+load_dotenv()
 
 # Main file to define a function to create a flask application instance
 # Used to "combine" all important blueprints & configurations together in order to run flask app
@@ -69,8 +69,8 @@ def create_app() -> Flask:
             response.headers["Content-Security-Policy"] = csp_header_value
         
         # Set additional secure headers
-        # for key, value in app.config["SECURE_HEADERS"].items():
-        #     response.headers[key] = value
+        for key, value in app.config["SECURE_HEADERS"].items():
+            response.headers[key] = value
 
         return response
     
