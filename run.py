@@ -11,4 +11,4 @@ if __name__ == "__main__":
     # Comment out after you have populated the database so that you will get duplicate records
     populate_database(app, db)
 
-    app.run(debug=True)
+    # app.run(debug=True)
