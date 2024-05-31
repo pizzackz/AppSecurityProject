@@ -2,14 +2,14 @@ from wtforms import Form, StringField, PasswordField, FileField, TextAreaField, 
 from wtforms.validators import Email, DataRequired, Length, NumberRange, Optional, EqualTo
 from flask_wtf import FlaskForm
 
-from app.form_validators import unique_email, unique_username, validate_otp, validate_password_complexity, validate_phone_number, validate_postal_code
+from app.form_validators import unique_email, unique_username, validate_email_format, validate_otp, validate_password_complexity, validate_phone_number, validate_postal_code
 
 
 # Signup related forms to accomodate different phases of signing up
 # Manual Signup phase 1 form, requires username & email
 class InitialSignupForm(FlaskForm):
     username = StringField("Username", validators=[DataRequired(), Length(min=2, max=20), unique_username])
-    email = StringField("Email", validators=[DataRequired(), Email(), unique_email])
+    email = StringField("Email", validators=[DataRequired(), validate_email_format, unique_email])
     submit = SubmitField("Next")
 
 

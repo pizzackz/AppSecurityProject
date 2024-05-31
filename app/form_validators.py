@@ -2,6 +2,7 @@ import re
 import bleach
 from wtforms import ValidationError
 from app.models import User
+from email_validator import validate_email, EmailNotValidError
 
 
 # Function to sanitise data first before validating
@@ -20,6 +21,14 @@ def unique_username(form, field):
 def unique_email(form, field):
     if User.query.filter_by(email=sanitise_data(field.data)).first():
         raise ValidationError("Email is already in use. Please choose another one.")
+
+
+# Validator for email format
+def validate_email_format(form, field):
+    try:
+        validate_email(field.data)
+    except EmailNotValidError as e:
+        raise ValidationError(str(e))
 
 
 # Validator for OTP length
