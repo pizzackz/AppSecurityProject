@@ -37,7 +37,9 @@ def generate_nonce() -> str:
 
 def create_app() -> Flask:
     app: Flask = Flask(__name__)  # Create Flask application instance
-    app.config.from_object(Config)  # Load configuration from Config class in 'config.py'
+    app.config.from_object(
+        Config
+    )  # Load configuration from Config class in 'config.py'
 
     # Initialise extensions
     csrf.init_app(app)
@@ -67,13 +69,13 @@ def create_app() -> Flask:
                 [f"{key} {' '.join(value)}" for key, value in csp_directives.items()]
             )
             response.headers["Content-Security-Policy"] = csp_header_value
-        
+
         # Set additional secure headers
         for key, value in app.config["SECURE_HEADERS"].items():
             response.headers[key] = value
 
         return response
-    
+
     @app.before_request
     def set_none():
         g.nonce = generate_nonce()
@@ -100,4 +102,37 @@ def create_app() -> Flask:
 
 
 # Import the User model here to avoid circular import issues
-from app.models import User
+from app.models import User, Member, Admin
+
+
+def create_admin(app, username, email, master_key):
+    with app.app_context():
+        # Create a new user of type 'admin'
+        new_user = User(username=username, email=email, user_type="admin")
+        db.session.add(new_user)
+        db.session.commit()
+        print(f"User created: {new_user}")
+
+        # Create admin details associated with the user
+        new_admin_details = Admin(
+            user_id=new_user.user_id, master_key=master_key
+        )
+        db.session.add(new_admin_details)
+        db.session.commit()
+        print(f"AdminDetails created: {new_admin_details}")
+
+
+def get_emails(app):
+    with app.app_context():
+        member_email = (
+            db.session.query(User.email)
+            .join(Member, User.user_id == Member.user_id)
+            .first()
+        )
+        admin_email = (
+            db.session.query(User.email)
+            .join(Admin, User.user_id == Admin.user_id)
+            .first()
+        )
+        print(f"Member email: {member_email.email}")
+        print(f"Admin email: {admin_email.email}")
