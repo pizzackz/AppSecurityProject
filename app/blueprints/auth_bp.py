@@ -6,7 +6,7 @@ from flask_session import Session
 from werkzeug.security import generate_password_hash
 
 from app import db
-from app.models import User, Admin, Member, Authentication
+from app.models import User, Member  #, Admin, Authentication
 from app.forms import InitialSignupForm, VerifyOtpForm, SetPasswordForm, PhoneAddressForm
 # from app.email_utils import send_email
 
