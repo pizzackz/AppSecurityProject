@@ -102,8 +102,4 @@ def create_app() -> Flask:
 
 
 # Import the User model here to avoid circular import issues
-<<<<<<< Updated upstream
-from app.models import User, Member  #, Admin
-=======
 from app.models import User
->>>>>>> Stashed changes

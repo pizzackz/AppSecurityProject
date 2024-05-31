@@ -4,12 +4,7 @@ from werkzeug.security import generate_password_hash
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import with_polymorphic
 
-<<<<<<< Updated upstream
-from app.models import User, Member
-=======
 from app.models import Member, Admin, Authentication, AccountStatus, LoginDetails
->>>>>>> Stashed changes
-
 
 # IMPORTANT: If you already have data inside your database that overlaps with these sample data,
 # please clear them in your database otherwise, issues might arise
