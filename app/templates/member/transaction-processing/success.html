@@ -3,6 +3,14 @@
 
 {% block title %}Payment Successful{% endblock %}
 
+{% block css %}
+{{ super() }}
+<link href="{{ url_for('static', filename='#') }}" rel="stylesheet">
+<link rel="stylesheet" type="text/css"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+{% endblock %}
+
+
 {% block content %}
 <div class="step-container" xmlns="http://www.w3.org/1999/html">
     <div class="step">
@@ -22,5 +30,13 @@
 <div class="text-center">
     <h1 class="text-3xl font-bold mb-4">Payment Successful</h1>
     <p class="text-lg">Thank you for your purchase!</p>
+
+    <!-- Return Button -->
+    <form action="" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="text-center mt-4">
+            <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded" name="return" value="True">Return</button>
+        </div>
+    </form>
 </div>
 {% endblock %}

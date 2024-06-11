@@ -1,10 +1,12 @@
-# /blueprints/member/member_subscription_bp.py
 import logging
 import os
 from dotenv import load_dotenv
 
 import stripe
-from flask import Blueprint, session, request, redirect, url_for, render_template, jsonify
+from flask import Blueprint, request, redirect, url_for, render_template, jsonify
+from app import db, csrf
+from sqlalchemy.sql import func
+from sqlalchemy import Column, Integer, String, DateTime, Text
 
 load_dotenv('.env')
 
@@ -12,26 +14,32 @@ load_dotenv('.env')
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('flask_app')
 
-# Log the loaded keys
-# logger.info(f"Loaded Stripe Secret Key: {os.getenv('STRIPE_SECRET_KEY')}")
-# logger.info(f"Loaded Stripe Publishable Key: {os.getenv('STRIPE_PUBLISHABLE_KEY')}")
-
 # Create blueprint
 member_subscription_bp = Blueprint('member_subscription_bp', __name__)
 
 # Load environment variables from a .env file
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 publishable_key = os.getenv('STRIPE_PUBLISHABLE_KEY')
+endpoint_secret = os.getenv('STRIPE_ENDPOINT_SECRET')
 
 if not stripe.api_key:
     raise ValueError("No Stripe API key provided")
 
+class Payment(db.Model):
+    __tablename__ = "payments"
+    id = db.Column(db.Integer, primary_key=True)
+    stripe_payment_id = db.Column(db.String(255), unique=True, nullable=False)
+    amount = db.Column(db.Integer, nullable=False)
+    currency = db.Column(db.String(10), nullable=False)
+    status = db.Column(db.String(50), nullable=False)
+    created_at = db.Column(db.DateTime, default=func.current_timestamp(), nullable=False)
 
-# Placeholder for member index/home page, can be replaced
+    def __repr__(self):
+        return f"Payment(stripe_payment_id='{self.stripe_payment_id}', amount={self.amount}, currency='{self.currency}', status='{self.status}', timestamp='{self.created_at}')"
+
 @member_subscription_bp.route('/home', methods=['POST', 'GET'])
 def home():
     return render_template('member/transaction-processing/index.html')
-
 
 @member_subscription_bp.route('/plan_select', methods=['POST', 'GET'])
 def plan_select():
@@ -41,18 +49,14 @@ def plan_select():
         return redirect(url_for("member_subscription_bp.checkout"))
     return render_template('member/transaction-processing/plan_select.html')
 
-
 @member_subscription_bp.route('/checkout', methods=['POST', 'GET'])
 def checkout():
     return render_template('member/transaction-processing/checkout.html', publishable_key=publishable_key)
 
-
-@member_subscription_bp.route('/create-checkout-session', methods=['POST', 'GET'])
+@member_subscription_bp.route('/create-checkout-session', methods=['POST'])
 def create_checkout_session():
     try:
-        # Use the price ID from the Stripe Dashboard
         price_id = "price_1PKI5Y06BsEMbNMkj9KPsZTX"
-
         stripe_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=[{
@@ -71,17 +75,54 @@ def create_checkout_session():
         logger.error(f"Error: {str(e)}")
         return jsonify(error=str(e)), 403
 
+@csrf.exempt  # Exempt the route from CSRF protection
+@member_subscription_bp.route('/webhook', methods=['POST'])
+def stripe_webhook():
+    payload = request.get_data(as_text=True)
+    sig_header = request.headers.get('Stripe-Signature')
 
-@member_subscription_bp.route('/success')
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, endpoint_secret
+        )
+    except ValueError as e:
+        # Invalid payload
+        return jsonify({'error': str(e)}), 400
+    except stripe.error.SignatureVerificationError as e:
+        # Invalid signature
+        return jsonify({'error': str(e)}), 400
+
+    if event['type'] == 'payment_intent.succeeded':
+        payment_intent = event['data']['object']
+
+        new_payment = Payment(
+            stripe_payment_id=payment_intent['id'],
+            amount=payment_intent['amount'],
+            currency=payment_intent['currency'],
+            status=payment_intent['status'],
+            created_at=func.now()
+        )
+        db.session.add(new_payment)
+        db.session.commit()
+
+        logger.info(f"Payment stored: {new_payment}")
+
+    return jsonify({'status': 'success'}), 200
+
+@member_subscription_bp.route('/success', methods=['POST', 'GET'])
 def success():
-    return render_template('/member/transaction-processing/success.html')
+    if request.method == "POST":
+        if request.form.get('return') == 'True':
+            return redirect(url_for('member_subscription_bp.home'))
+    return render_template('member/transaction-processing/success.html')
 
-
-@member_subscription_bp.route('/cancel')
+@member_subscription_bp.route('/cancel', methods=['POST', 'GET'])
 def cancel():
-    return render_template('/member/transaction-processing/cancel.html')
-
+    if request.method == "POST":
+        if request.form.get('return') == 'True':
+            return redirect(url_for('member_subscription_bp.home'))
+    return render_template('member/transaction-processing/cancel.html')
 
 @member_subscription_bp.route('/plan_confirm')
 def plan_confirm():
-    return render_template('/member/transaction-processing/plan_confirm.html')
+    return render_template('member/transaction-processing/plan_confirm.html')
