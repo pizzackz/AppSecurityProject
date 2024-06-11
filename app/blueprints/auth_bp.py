@@ -6,11 +6,6 @@ from flask_session import Session
 from werkzeug.security import generate_password_hash
 
 from app import db
-<<<<<<< Updated upstream
-from app.models import User, Member  #, Admin, Authentication
-=======
-from app.models import User  # , Member, Admin, Authentication
->>>>>>> Stashed changes
 from app.forms import InitialSignupForm, VerifyOtpForm, SetPasswordForm, PhoneAddressForm
 # from app.email_utils import send_email
 

@@ -18,7 +18,7 @@ class User(UserMixin, db.Model):
     id = Column(Integer, primary_key=True)
     username = Column(String(255), unique=True, index=True, nullable=False)
     email = Column(String(255), unique=True, index=True, nullable=False)
-    profile_picture = Column(String(255), default=os.path.join("static", "uploads", "profile_pictures", "default.png"), nullable=True)
+    profile_picture = Column(String(255), default=os.path.join("static", "uploads", "profile_pictures", "ZGVmYXVsdA.png"), nullable=True)
     phone_number = Column(String(20), nullable=True)
     address = Column(String(255), nullable=True)
     postal_code = Column(String(20), nullable=True)
