@@ -7,6 +7,7 @@ from flask import Blueprint, request, redirect, url_for, render_template, jsonif
 from app import db, csrf
 from sqlalchemy.sql import func
 from sqlalchemy import Column, Integer, String, DateTime, Text
+from app.models import Payment
 
 load_dotenv('.env')
 
@@ -24,18 +25,6 @@ endpoint_secret = os.getenv('STRIPE_ENDPOINT_SECRET')
 
 if not stripe.api_key:
     raise ValueError("No Stripe API key provided")
-
-class Payment(db.Model):
-    __tablename__ = "payments"
-    id = db.Column(db.Integer, primary_key=True)
-    stripe_payment_id = db.Column(db.String(255), unique=True, nullable=False)
-    amount = db.Column(db.Integer, nullable=False)
-    currency = db.Column(db.String(10), nullable=False)
-    status = db.Column(db.String(50), nullable=False)
-    created_at = db.Column(db.DateTime, default=func.current_timestamp(), nullable=False)
-
-    def __repr__(self):
-        return f"Payment(stripe_payment_id='{self.stripe_payment_id}', amount={self.amount}, currency='{self.currency}', status='{self.status}', timestamp='{self.created_at}')"
 
 @member_subscription_bp.route('/home', methods=['POST', 'GET'])
 def home():

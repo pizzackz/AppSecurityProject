@@ -164,3 +164,15 @@ class Recipe(db.Model):
 
     def __repr__(self):
         return f"Recipe('{self.name}')"
+
+class Payment(db.Model):
+    __tablename__ = "payments"
+    id = db.Column(db.Integer, primary_key=True)
+    stripe_payment_id = db.Column(db.String(255), unique=True, nullable=False)
+    amount = db.Column(db.Integer, nullable=False)
+    currency = db.Column(db.String(10), nullable=False)
+    status = db.Column(db.String(50), nullable=False)
+    created_at = db.Column(db.DateTime, default=func.current_timestamp(), nullable=False)
+
+    def __repr__(self):
+        return f"Payment(stripe_payment_id='{self.stripe_payment_id}', amount={self.amount}, currency='{self.currency}', status='{self.status}', timestamp='{self.created_at}')"
