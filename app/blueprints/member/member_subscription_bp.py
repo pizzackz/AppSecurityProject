@@ -1,15 +1,12 @@
 import logging
 import os
-from dotenv import load_dotenv
-
 import stripe
+
+from dotenv import load_dotenv
 from flask import Blueprint, request, redirect, url_for, render_template, jsonify
 from app import db, csrf
 from sqlalchemy.sql import func
-from sqlalchemy import Column, Integer, String, DateTime, Text
 from app.models import Payment
-
-load_dotenv('.env')
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -19,6 +16,7 @@ logger = logging.getLogger('flask_app')
 member_subscription_bp = Blueprint('member_subscription_bp', __name__)
 
 # Load environment variables from a .env file
+load_dotenv('.env')
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 publishable_key = os.getenv('STRIPE_PUBLISHABLE_KEY')
 endpoint_secret = os.getenv('STRIPE_ENDPOINT_SECRET')
@@ -26,9 +24,11 @@ endpoint_secret = os.getenv('STRIPE_ENDPOINT_SECRET')
 if not stripe.api_key:
     raise ValueError("No Stripe API key provided")
 
+
 @member_subscription_bp.route('/home', methods=['POST', 'GET'])
 def home():
     return render_template('member/transaction-processing/index.html')
+
 
 @member_subscription_bp.route('/plan_select', methods=['POST', 'GET'])
 def plan_select():
@@ -38,9 +38,11 @@ def plan_select():
         return redirect(url_for("member_subscription_bp.checkout"))
     return render_template('member/transaction-processing/plan_select.html')
 
+
 @member_subscription_bp.route('/checkout', methods=['POST', 'GET'])
 def checkout():
     return render_template('member/transaction-processing/checkout.html', publishable_key=publishable_key)
+
 
 @member_subscription_bp.route('/create-checkout-session', methods=['POST'])
 def create_checkout_session():
@@ -63,6 +65,7 @@ def create_checkout_session():
     except Exception as e:
         logger.error(f"Error: {str(e)}")
         return jsonify(error=str(e)), 403
+
 
 @csrf.exempt  # Exempt the route from CSRF protection
 @member_subscription_bp.route('/webhook', methods=['POST'])
@@ -98,12 +101,14 @@ def stripe_webhook():
 
     return jsonify({'status': 'success'}), 200
 
+
 @member_subscription_bp.route('/success', methods=['POST', 'GET'])
 def success():
     if request.method == "POST":
         if request.form.get('return') == 'True':
             return redirect(url_for('member_subscription_bp.home'))
     return render_template('member/transaction-processing/success.html')
+
 
 @member_subscription_bp.route('/cancel', methods=['POST', 'GET'])
 def cancel():
@@ -112,6 +117,8 @@ def cancel():
             return redirect(url_for('member_subscription_bp.home'))
     return render_template('member/transaction-processing/cancel.html')
 
+
 @member_subscription_bp.route('/plan_confirm')
 def plan_confirm():
     return render_template('member/transaction-processing/plan_confirm.html')
+

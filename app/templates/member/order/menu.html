@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+{% extends "member/order/order_base.html" %}
+{% block title %}tastefully | Order {% endblock %}
+
+{% block css %}
+{{ super() }}
+<link href="{{ url_for('static', filename='#') }}" rel="stylesheet">
+<link rel="stylesheet" type="text/css"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+{% endblock %}
+
+{% block content %}
+<!-- Step Indicator -->
+<div class="step-container">
+    <div class="step step-active">
+        <span>1</span>
+        <span>Order</span>
+    </div>
+    <div class="step">
+        <span>2</span>
+        <span>Delivery Information</span>
+    </div>
+    <div class="step">
+        <span>3</span>
+        <span>Confirmation</span>
+    </div>
+</div>
+<br>
+<div>
+    <h1>Menu</h1>
+
+    <ul>
+        {% for menu_item in menu_items %}
+            <li>
+                {{ menu_item.name }} - ${{ menu_item.price }}
+                <form action="" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="menu_item_id" value="{{ menu_item.id }}">
+                    <input type="number" name="quantity" value="1" min="1">
+                    <button type="submit" class="btn btn-primary">Order</button>
+                </form>
+            </li>
+        {% endfor %}
+</div>
+{% endblock %}

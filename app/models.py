@@ -165,6 +165,8 @@ class Recipe(db.Model):
     def __repr__(self):
         return f"Recipe('{self.name}')"
 
+
+# Payment model to store payment related information
 class Payment(db.Model):
     __tablename__ = "payments"
     id = db.Column(db.Integer, primary_key=True)
@@ -176,3 +178,45 @@ class Payment(db.Model):
 
     def __repr__(self):
         return f"Payment(stripe_payment_id='{self.stripe_payment_id}', amount={self.amount}, currency='{self.currency}', status='{self.status}', timestamp='{self.created_at}')"
+
+
+# MenuItem model to store menu item related information
+class MenuItem(db.Model):
+    __tablename__ = 'menu_items'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    price = db.Column(db.Numeric(10, 2), nullable=False)
+
+    def __repr__(self):
+        return f"<MenuItem {self.name}>"
+
+
+# Order model to store order related information
+class Order(db.Model):
+    __tablename__ = 'orders'
+    id = db.Column(db.Integer, primary_key=True)
+    customer_name = db.Column(db.String(255), nullable=False)
+    customer_email = db.Column(db.String(255), nullable=True)
+    customer_address = db.Column(db.String(255), nullable=False)
+    customer_postal_code = db.Column(db.String(20), nullable=False)
+    customer_delivery_time = db.Column(db.DateTime, nullable=False)
+    created_at = db.Column(db.DateTime, default=func.current_timestamp())
+
+    items = db.relationship('OrderItem', backref='order', lazy=True)
+
+    def __repr__(self):
+        return f"<Order {self.id}>"
+
+
+class OrderItem(db.Model):
+    __tablename__ = 'order_items'
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('orders.id'), nullable=False)
+    menu_item_id = db.Column(db.Integer, db.ForeignKey('menu_items.id'), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+
+    menu_item = db.relationship('MenuItem', backref='order_items')
+
+    def __repr__(self):
+        return f"<OrderItem {self.id}>"
