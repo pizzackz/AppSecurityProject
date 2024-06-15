@@ -51,7 +51,7 @@ class Config:
     STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
 
     # Rate Limiting
-    RATELIMIT_DEFAULT = ["200 per day", "50 per hour"]
+    RATELIMIT_DEFAULT = ["200 per day", "20 per hour"]
     RATELIMIT_STORAGE_URL = "memory://"  # Store rate limit counters in memory
 
     # Secure headers

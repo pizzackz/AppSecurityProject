@@ -6,10 +6,11 @@
 {{ super() }}
 <link href="{{ url_for('static', filename='#') }}" rel="stylesheet">
 <link rel="stylesheet" type="text/css"
-    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    href="https://cdn.jsdelivr.net/npm/bootsdivap-icons@1.11.2/font/bootsdivap-icons.min.css">
 {% endblock %}
 
 {% block content %}
+<br>
 <!-- Step Indicator -->
 <div class="step-container">
     <div class="step step-active">
@@ -26,20 +27,53 @@
     </div>
 </div>
 <br>
+<h1 class="center1">Menu</h1>
 <div>
-    <h1>Menu</h1>
+    <div class="big-container">
 
-    <ul>
         {% for menu_item in menu_items %}
-            <li>
-                {{ menu_item.name }} - ${{ menu_item.price }}
-                <form action="" method="post">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="menu_item_id" value="{{ menu_item.id }}">
-                    <input type="number" name="quantity" value="1" min="1">
-                    <button type="submit" class="btn btn-primary">Order</button>
-                </form>
-            </li>
+            <div class="container">
+                <div><h2>{{ menu_item.name }}</h2></div>
+                <br>
+
+                {% if menu_item.image %}
+                <div class="image-control"><img src="{{ menu_item.image }}" alt="{{ menu_item.name }}" width="200"></div>
+                {% endif %}
+
+                <br>
+                <div>{{ menu_item.description }}</div>
+
+                <div class="combined center1">
+                    <button class="openModalBtn btn btn-secondary pad" data-modal="modal{{ loop.index }}">View</button>
+                        <!-- Modal -->
+                        <div id="modal{{ loop.index }}" class="modal">
+                            <div class="modal-content">
+                                <span class="close" data-modal="modal{{ loop.index }}">&times;</span>  <!--Close button(Always on TOP) -->
+                                <div class="big-container">
+                                    {% if menu_item.image %}
+                                        <div class="image-control"><img src="{{ menu_item.image }}" alt="{{ menu_item.name }}"></div>
+                                    {% endif %}
+                                    <div class="modal-container">
+                                        <h2>{{ menu_item.name }}</h2>
+                                        <p>Ingredients provided: {{ menu_item.ingredient_list }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    
+                    <form action="" method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="menu_item_id" value="{{ menu_item.id }}">
+                        <button type="submit" class="btn btn-primary pad">Order</button>
+                    </form>
+                </div>
+            </div>
         {% endfor %}
+    </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script nonce="{{ nonce }}" src="{{ url_for('static', filename='js/order_popup.js') }}"></script>
 {% endblock %}

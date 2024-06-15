@@ -7,10 +7,12 @@
 <script nonce="{{ nonce }}" src="https://js.stripe.com/v3/"></script>
 
 <div class="step-container" xmlns="http://www.w3.org/1999/html">
-  <div class="step">
-      <span>1</span>
-      <span>Plan Selection</span>
-  </div>
+  <a href="plan_select">
+    <div class="step step-inactive">
+        <span>1</span>
+        <span>Plan Selection</span>
+    </div>
+  </a>
   <div class="step step-active">
       <span>2</span>
       <span>Payment</span>
@@ -19,6 +21,7 @@
       <span>3</span>
       <span>Confirmation</span>
   </div>
+
 </div>
 
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
