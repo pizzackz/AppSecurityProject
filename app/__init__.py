@@ -36,6 +36,15 @@ def generate_nonce() -> str:
     return base64.b64encode(os.urandom(16)).decode("utf-8")
 
 
+def register_commands(app: Flask) -> None:
+    @app.cli.command("seed-db")
+    def seed_db():
+        """Seed the database with test data"""
+        from app.populate_database import seed_database
+        with app.app_context():
+            seed_database()
+
+
 def create_app() -> Flask:
     app: Flask = Flask(__name__)  # Create Flask application instance
     app.config.from_object(
@@ -85,21 +94,13 @@ def create_app() -> Flask:
     def inject_nonce():
         return dict(nonce=g.get("nonce"))
 
-
-
-
     # Register blueprints
     from app.blueprints.admin.admin_recipe_bp import admin_recipe_bp
     from app.blueprints.member.member_subscription_bp import member_subscription_bp
-    from app.blueprints.member.member_order_bp import member_order_bp, add_test_data, alter_menu_item_table
+    from app.blueprints.member.member_order_bp import member_order_bp  #, alter_menu_item_table
     from app.blueprints.member.member_feedback_bp import member_feedback_bp
     from app.blueprints.admin.admin_log_bp import admin_log_bp
     from app.blueprints.auth_bp import auth_bp
-
-    with app.app_context():
-        db.create_all() # Create all tables in the database
-        alter_menu_item_table() # Alter the menu_item table to add image and ingredient_list columns
-        add_test_data()  # Add test data upon application startup
 
     app.register_blueprint(admin_recipe_bp)
     app.register_blueprint(member_subscription_bp)
@@ -108,8 +109,15 @@ def create_app() -> Flask:
     app.register_blueprint(admin_log_bp)
     app.register_blueprint(auth_bp)
 
+    # Register CLI commands
+    register_commands(app)
+
     # Return Flask app instance
     return app
+
+
+# Import the User model here to avoid circular import issues
+from app.models import User
 
 
 # Import the User model here to avoid circular import issues

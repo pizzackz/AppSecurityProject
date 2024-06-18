@@ -1,0 +1,1 @@
+select * from account_status, admin, authentication, locked_accounts, login_details, member, user;
