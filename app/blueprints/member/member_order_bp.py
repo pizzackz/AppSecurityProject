@@ -2,7 +2,8 @@ import logging
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models import MenuItem, Order, OrderItem
-from app import db
+from app.forms import OrderForm, MenuForm
+from app import db, csrf
 from sqlalchemy import text
 
 
@@ -21,40 +22,59 @@ def home():
     return render_template('member/transaction-processing/index.html')
 
 
-@member_order_bp.route('/menu')
+@member_order_bp.route('/menu', methods=['POST', 'GET'])
 def menu():
+    form = MenuForm()
     items = MenuItem.query.all()
-    return render_template('member/order/menu.html', menu_items=items)
+
+    if request.method == "POST":
+        selected_items = request.form.getlist('menu_item_id')
+        return redirect(url_for('member_order_bp.order', selected_items=selected_items))
+
+    return render_template('member/order/menu.html', menu_items=items, form=form)
 
 
-@member_order_bp.route('/order', methods=['POST'])
+@member_order_bp.route('/order', methods=['GET', 'POST'])
 def order():
-    customer_name = request.form['customer_name']
-    customer_email = request.form['customer_email']
-    item_ids = request.form.getlist('item_id')
-    quantities = request.form.getlist('quantity')
+    form = OrderForm()
 
-    if not item_ids or not quantities or not customer_name:
-        flash('Please fill in all required fields.')
-        return redirect(url_for('ordering_bp.menu'))
+    selected_items = request.args.getlist('selected_items')
+    items = MenuItem.query.filter(MenuItem.id.in_(selected_items)).all()
 
-    order = Order(customer_name=customer_name, customer_email=customer_email)
-    db.session.add(order)
-    db.session.commit()
+    if form.validate_on_submit():
+        new_order = Order(
+            customer_name=form.name.data,
+            address=form.address.data,
+            postal_code=form.postal_code.data,
+            phone_number=form.phone_number.data,
+            delivery_date=form.selected_date.data,
+            delivery_time=form.selected_time.data
+        )
+        db.session.add(new_order)
+        db.session.commit()
 
-    for item_id, quantity in zip(item_ids, quantities):
-        order_item = OrderItem(order_id=order.id, menu_item_id=item_id, quantity=quantity)
-        db.session.add(order_item)
+        for item in items:
+            order_item = OrderItem(
+                order_id=new_order.id,
+                menu_item_id=item.id,
+                quantity=1  # Assuming a default quantity of 1 for simplicity
+            )
+            db.session.add(order_item)
+        db.session.commit()
 
-    db.session.commit()
+        return redirect(url_for('member_order_bp.success'))
+    else:
+        flash('Please fill in all the required fields.', 'danger')
+        print(form.errors)
 
-    flash('Order placed successfully!')
-    return redirect(url_for('ordering_bp.menu'))
+    return render_template('member/order/orders.html', form=form, menu_items=items)
 
 
-@member_order_bp.route('/orders')
-def orders():
-    orders = Order.query.all()
-    return render_template('member/order/orders.html', orders=orders)
 
+@member_order_bp.route('/order_confirm', methods=['POST', 'GET'])
+def success():
+    if request.method == "POST":
+        if request.form.get('return') == 'True':
+            return redirect(url_for('member_subscription_bp.home'))
+    return render_template('member/order/success.html')
 

@@ -291,30 +291,28 @@ class Payment(db.Model):
         return f"Payment(stripe_payment_id='{self.stripe_payment_id}', amount={self.amount}, currency='{self.currency}', status='{self.status}', timestamp='{self.created_at}')"
 
 
-# MenuItem model to store menu item related information
 class MenuItem(db.Model):
     __tablename__ = "menu_items"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    image = db.Column(db.String(255), nullable=True)  # Store path/URL to image
-    ingredient_list = db.Column(
-        db.Text, nullable=True
-    )  # Store list of ingredients as a text
+    image = db.Column(db.String(255), nullable=True)
+    ingredient_list = db.Column(db.Text, nullable=True)
 
     def __repr__(self):
         return f"<MenuItem {self.name}>"
 
 
-# Order model to store order related information
 class Order(db.Model):
     __tablename__ = "orders"
     id = db.Column(db.Integer, primary_key=True)
     customer_name = db.Column(db.String(255), nullable=False)
     customer_email = db.Column(db.String(255), nullable=True)
-    customer_address = db.Column(db.String(255), nullable=False)
-    customer_postal_code = db.Column(db.String(20), nullable=False)
-    customer_delivery_time = db.Column(db.DateTime, nullable=False)
+    address = db.Column(db.String(255), nullable=False)
+    postal_code = db.Column(db.String(20), nullable=False)
+    phone_number = db.Column(db.String(20), nullable=False)
+    delivery_date = db.Column(db.String(20), nullable=False)
+    delivery_time = db.Column(db.String(20), nullable=False)
     created_at = db.Column(db.DateTime, default=func.current_timestamp())
 
     items = db.relationship("OrderItem", backref="order", lazy=True)
