@@ -1,6 +1,14 @@
 import os
 import random  # Might be used for more secure secret keys
 from datetime import timedelta
+from dotenv import load_dotenv
+
+
+# Load environment file
+load_dotenv("../.env")
+
+# Base directory path
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
 # Define 'Config' class for all app configurations
@@ -12,10 +20,7 @@ class Config:
 
     # Change the value for 'SQLALCHEMY_DATABASE_URI' to whatever you used on your local computer to connect
     # to your local database
-    SQLALCHEMY_DATABASE_URI = (
-        os.environ.get("DATABASE_URL")
-        or "mysql://root:password123@localhost/tastefully"
-    )
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL") or os.getenv("DATABASE_URL")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # CSRF protection
@@ -46,10 +51,6 @@ class Config:
         'script-src-attr': ["'self'", 'https://js.stripe.com'],
     }
 
-    # Stripe configuration
-    STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
-    STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
-
     # Rate Limiting
     RATELIMIT_DEFAULT = ["200 per day", "20 per hour"]
     RATELIMIT_STORAGE_URL = "memory://"  # Store rate limit counters in memory
@@ -60,4 +61,12 @@ class Config:
         "X-Frame-Options": "DENY",
         "X-XSS-Protection": "1; mode=block",
     }
+
+    # Email configuration
+    GMAIL_USER = os.getenv("GMAIL_USER")
+    GMAIL_PASSWORD = os.getenv("GMAIL_PASSWORD")
+
+    # Stripe configuration
+    STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+    STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
 

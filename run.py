@@ -1,6 +1,6 @@
 import os
 from flask import Flask
-from app import create_app, db
+from app import create_app
 
 # Create Flask application instance
 app: Flask = create_app()

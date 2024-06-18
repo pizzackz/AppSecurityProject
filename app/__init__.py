@@ -109,6 +109,10 @@ def create_app() -> Flask:
     app.register_blueprint(admin_log_bp)
     app.register_blueprint(auth_bp)
 
+    # Create all database tables
+    with app.app_context():
+        db.create_all()
+
     # Register CLI commands
     register_commands(app)
 

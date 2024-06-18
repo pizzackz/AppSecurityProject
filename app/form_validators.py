@@ -15,11 +15,10 @@ def sanitise_data(data: str) -> str:
     Returns:
         str: The sanitised data.
     """
-    sanitised_data = bleach.clean(data)
-    return sanitised_data
+    return bleach.clean(data)
 
 
-# Validtor for unique username
+# Validator for unique username
 def unique_username(form, field):
     """Validate that the username is unique.
 
@@ -32,7 +31,7 @@ def unique_username(form, field):
     """
     if User.query.filter_by(username=sanitise_data(field.data)).first():
         raise ValidationError("Username is already in use. Please choose another one.")
-    
+
 
 # Validator for unique email
 def unique_email(form, field):
@@ -77,11 +76,12 @@ def validate_otp(form, field):
     Raises:
         ValidationError: If the OTP is not a 6-digit number.
     """
-    if not sanitise_data(field.data).isdigit() or len(sanitise_data(field.data)) != 6:
-        raise ValidationError("OTP must be a 6 digit number.")
+    otp = sanitise_data(field.data)
+    if not otp.isdigit() or len(otp) != 6:
+        raise ValidationError("OTP must be a 6-digit number.")
 
 
-# Validators for password complextiy policy
+# Validator for password complexity policy
 def validate_password_complexity(form, field):
     """Validate the password complexity.
 
@@ -92,76 +92,71 @@ def validate_password_complexity(form, field):
     Raises:
         ValidationError: If the password does not meet complexity requirements.
     """
-    sanitised_data: str = sanitise_data(field.data)
-    errors: list[int] = list()
+    errors = []
 
-    errors.append(validate_password_length(form, sanitise_data(field.data)))
-    errors.append(validate_password_upper(form, sanitise_data(field.data)))
-    errors.append(validate_password_lower(form, sanitise_data(field.data)))
-    errors.append(validate_password_symbol(form, sanitise_data(field.data)))
+    if not validate_password_length(field.data):
+        errors.append("Password must be at least 8 characters long.")
+    if not validate_password_upper(field.data):
+        errors.append("Password must contain at least 1 uppercase letter.")
+    if not validate_password_lower(field.data):
+        errors.append("Password must contain at least 1 lowercase letter.")
+    if not validate_password_symbol(field.data):
+        errors.append("Password must contain at least 1 symbol.")
 
-    if len(errors) > 0:
+    if errors:
         raise ValidationError("\n".join(errors))
 
 
 # Validate password length
-def validate_password_length(form, field):
+def validate_password_length(password: str) -> bool:
     """Validate the password length.
 
     Args:
-        form: The form instance.
-        field: The field instance containing the data to validate.
+        password (str): The password to validate.
 
     Returns:
-        str: Error message if the validation fails.
+        bool: True if the validation passes, False otherwise.
     """
-    if len(field.data) < 8:
-        return "Password must be at least 8 characters long."
+    return len(password) >= 8
 
 
 # Validate password at least 1 uppercase
-def validate_password_upper(form, field):
+def validate_password_upper(password: str) -> bool:
     """Validate that the password contains at least one uppercase letter.
 
     Args:
-        form: The form instance.
-        field: The field instance containing the data to validate.
+        password (str): The password to validate.
 
     Returns:
-        str: Error message if the validation fails.
+        bool: True if the validation passes, False otherwise.
     """
-    if not re.search(r"[A-Z]", field.data):
-        return "Password must contain at least 1 uppercase letter."
+    return bool(re.search(r"[A-Z]", password))
 
 
 # Validate password at least 1 lowercase
-def validate_password_lower(form, field):
+def validate_password_lower(password: str) -> bool:
     """Validate that the password contains at least one lowercase letter.
 
     Args:
-        form: The form instance.
-        field: The field instance containing the data to validate.
+        password (str): The password to validate.
 
     Returns:
-        str: Error message if the validation fails.
+        bool: True if the validation passes, False otherwise.
     """
-    if not re.search(r"[A-Z]", field.data):
-        return "Password must contain at least 1 uppercase letter."
+    return bool(re.search(r"[a-z]", password))
 
 
 # Validate password at least 1 symbol
-def validate_password_symbol(form, field):
+def validate_password_symbol(password: str) -> bool:
     """Validate that the password contains at least one symbol.
 
     Args:
-        form: The form instance.
-        field: The field instance containing the data to validate.
+        password (str): The password to validate.
 
     Returns:
-        str: Error message if the validation fails.
+        bool: True if the validation passes, False otherwise.
     """
-    if not re.search(r"\W", field.data):
-        return "Password must contain at least 1 symbol."
+    return bool(re.search(r"\W", password))
 
 
 # Validate phone number
@@ -175,8 +170,11 @@ def validate_phone_number(form, field):
     Raises:
         ValidationError: If the phone number is invalid.
     """
-    if not sanitise_data(field.data).isdigit() or not (10 <= len(sanitise_data(field.data)) <= 15):
-        raise ValidationError("Phone number must only contain numbers and be between 10 and 15 digits long.")
+    phone_number = sanitise_data(field.data)
+    if not phone_number.isdigit() or not (10 <= len(phone_number) <= 15):
+        raise ValidationError(
+            "Phone number must only contain numbers and be between 10 and 15 digits long."
+        )
 
 
 # Validate postal code
@@ -190,6 +188,7 @@ def validate_postal_code(form, field):
     Raises:
         ValidationError: If the postal code is invalid.
     """
+<<<<<<< Updated upstream
     if not field.data.isdigit() or not (3 <= len(field.data) <= 10):
         raise ValidationError("Postal code must only contain numbers and be between 3 and 10 digits long.")
 
@@ -212,3 +211,10 @@ def phone_number_validator(form, field):
     field_data_str = str(field.data)  # Ensure data is a string
     if not re.match(pattern, field_data_str):
         raise ValidationError("Please enter a valid phone number in the format 8/9XXX XXXX.")
+=======
+    postal_code = sanitise_data(field.data)
+    if not postal_code.isdigit() or not (3 <= len(postal_code) <= 10):
+        raise ValidationError(
+            "Postal code must only contain numbers and be between 3 and 10 digits long."
+        )
+>>>>>>> Stashed changes
