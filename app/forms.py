@@ -1,8 +1,8 @@
-from wtforms import Form, StringField, PasswordField, FileField, TextAreaField, IntegerField, SelectField, DecimalField, SubmitField, validators
+from wtforms import Form, StringField, PasswordField, FileField, TextAreaField, IntegerField, SelectField, DecimalField, SubmitField, validators, HiddenField
 from wtforms.validators import Email, DataRequired, Length, NumberRange, Optional, EqualTo
 from flask_wtf import FlaskForm
 
-from app.form_validators import unique_email, unique_username, validate_email_format, validate_otp, validate_password_complexity, validate_phone_number, validate_postal_code
+from app.form_validators import unique_email, unique_username, validate_email_format, validate_otp, validate_password_complexity, validate_phone_number, validate_postal_code, six_digit_postal_code_validator, phone_number_validator
 
 
 # Signup related forms to accomodate different phases of signing up
@@ -28,9 +28,9 @@ class SetPasswordForm(FlaskForm):
 
 # Signup optional fields - Save phone & address
 class PhoneAddressForm(FlaskForm):
-    phone_number = StringField("Phone Number", validators=[Optional(), Length(min=10, max=15), validate_phone_number])
-    address = StringField("Address", validators=[Optional(), Length(max=255)])
-    postal_code = StringField("Postal Code", validators=[Optional(), Length(max=20), validate_postal_code])
+    phone_number = StringField('Phone', [phone_number_validator, Optional()],render_kw={"placeholder": "9123 4567"})
+    address = StringField('Address', [Length(min=1, max=150), Optional()], render_kw={"placeholder": "123 ABC Street"})
+    postal_code = StringField('Postal Code', [six_digit_postal_code_validator, Optional()], render_kw={"placeholder": "123456"})
     submit = SubmitField("Complete")
     skip = SubmitField("Skip")
 
@@ -57,3 +57,19 @@ class createFeedback(Form):
     category = SelectField('Category', choices=[("product", "Product"), ("website", "Website"), ("delivery", "Delivery"), ("others", "Others")])
     rating = DecimalField('Overall Satisfaction', [validators.NumberRange(min=1, max=5)])
     comment = TextAreaField('Feedback', [validators.DataRequired()])
+
+
+# Order form to order menu items
+class MenuForm(FlaskForm):
+    menu_item_id = HiddenField()
+    submit = SubmitField("Order")
+
+class OrderForm(FlaskForm):
+    menu_item_id = HiddenField()
+    name = StringField('Name', [Length(min=1, max=150), DataRequired()], render_kw={"placeholder": "John Doe"})
+    address = StringField('Address', [Length(min=1, max=150), DataRequired()], render_kw={"placeholder": "123 ABC Street"})
+    postal_code = StringField('Postal Code', [six_digit_postal_code_validator, DataRequired()], render_kw={"placeholder": "123456"})
+    phone_number = StringField('Phone', [phone_number_validator, DataRequired()], render_kw={"placeholder": "9123 4567"})
+    selected_date = HiddenField('Selected Date', validators=[DataRequired()])
+    selected_time = HiddenField('Selected Time', validators=[DataRequired()])
+    submit = SubmitField('Schedule Delivery')

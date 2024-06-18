@@ -1,22 +1,147 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Orders</title>
-</head>
-<body>
-    <h1>Orders</h1>
-    <ul>
-        {% for order in orders %}
-            <li>
-                Order #{{ order.id }} - {{ order.customer_name }} ({{ order.created_at }})
-                <ul>
-                    {% for item in order.items %}
-                        <li>{{ item.menu_item.name }} - {{ item.quantity }}</li>
-                    {% endfor %}
-                </ul>
-            </li>
-        {% endfor %}
-    </ul>
-</body>
-</html>
+<!DOCTYPE html>
+{% extends "member/order/order_base.html" %}
+{% block title %}tastefully | Menu {% endblock %}
+
+{% block css %}
+{{ super() }}
+<link href="{{ url_for('static', filename='css/order/order.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<br>
+<!-- Step Indicator -->
+<div class="step-container">
+    <a href="menu">
+       <div class="step step-inactive">
+        <span>1</span>
+        <span>Order</span>
+       </div>
+   </a>
+    <div class="step step-active">
+        <span>2</span>
+        <span>Delivery Information</span>
+    </div>
+    <div class="step">
+        <span>3</span>
+        <span>Confirmation</span>
+    </div>
+</div>
+<br>
+<div class="big-container">
+    <div class="container">
+        <h3 class="center1">Customer Information</h3>
+        <form action="" method="post">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+                {{ form.name.label }}
+                {{ form.name(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.address.label }}
+                {{ form.address(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.postal_code.label }}
+                {{ form.postal_code(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.phone_number.label }}
+                {{ form.phone_number(class="form-control") }}
+            </div>
+
+    </div>
+    <div class="container">
+         <h3 class="center1 top">Schedule Delivery</h3>
+            <div class="top">
+                <div class="dropdown">
+                    <button type="button" class="dropbtn" id="dateDropdownBtn">Select Date</button>
+                    <div id="dateDropdown" class="dropdown-content">
+                        <a href="#" data-date="2024-05-16">Thu, 16 May</a>
+                        <a href="#" data-date="2024-05-17">Fri, 17 May</a>
+                        <a href="#" data-date="2024-05-18">Sat, 18 May</a>
+                        <a href="#" data-date="2024-05-19">Sun, 19 May</a>
+                        <a href="#" data-date="2024-05-20">Mon, 20 May</a>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <button type="button" class="dropbtn" id="timeDropdownBtn">Select Time</button>
+                    <div id="timeDropdown" class="dropdown-content">
+                        <a href="#" data-time="11:00">11:00</a>
+                        <a href="#" data-time="12:00">12:00</a>
+                        <a href="#" data-time="13:00">13:00</a>
+                        <a href="#" data-time="17:00">17:00</a>
+                        <a href="#" data-time="18:00">18:00</a>
+                    </div>
+                </div>
+                <input type="hidden" id="selected_date" name="selected_date" value="{{ form.selected_date.data }}">
+                <input type="hidden" id="selected_time" name="selected_time" value="{{ form.selected_time.data }}">
+            </div>
+        </div>
+    </div>
+    <br>
+    <div class="center1">
+            <!-- Return -->
+            <a href="menu"><button type="button" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">Return</button></a>
+            <button type="submit" class="btn btn-primary">Confirm</button>
+    </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script nonce="{{ nonce }}" src="{{ url_for('static', filename='js/order_popup.js') }}"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const dateDropdownBtn = document.getElementById("dateDropdownBtn");
+    const timeDropdownBtn = document.getElementById("timeDropdownBtn");
+    const dateDropdown = document.getElementById("dateDropdown");
+    const timeDropdown = document.getElementById("timeDropdown");
+    const selectedDateInput = document.getElementById("selected_date");
+    const selectedTimeInput = document.getElementById("selected_time");
+
+    // Toggle date dropdown
+    dateDropdownBtn.addEventListener("click", function () {
+        dateDropdown.classList.toggle("show");
+    });
+
+    // Toggle time dropdown
+    timeDropdownBtn.addEventListener("click", function () {
+        timeDropdown.classList.toggle("show");
+    });
+
+    // Add event listener to date options
+    dateDropdown.querySelectorAll("a").forEach(function (item) {
+        item.addEventListener("click", function (e) {
+            e.preventDefault();
+            selectedDateInput.value = item.getAttribute("data-date");
+            dateDropdownBtn.textContent = item.textContent;
+            dateDropdown.classList.remove("show");
+        });
+    });
+
+    // Add event listener to time options
+    timeDropdown.querySelectorAll("a").forEach(function (item) {
+        item.addEventListener("click", function (e) {
+            e.preventDefault();
+            selectedTimeInput.value = item.getAttribute("data-time");
+            timeDropdownBtn.textContent = item.textContent;
+            timeDropdown.classList.remove("show");
+        });
+    });
+
+    // Close the dropdown if the user clicks outside of it
+    window.addEventListener("click", function (event) {
+        if (!event.target.matches('.dropbtn')) {
+            const dropdowns = document.querySelectorAll(".dropdown-content");
+            dropdowns.forEach(function (dropdown) {
+                if (dropdown.classList.contains('show')) {
+                    dropdown.classList.remove('show');
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

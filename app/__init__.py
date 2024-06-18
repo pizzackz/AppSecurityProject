@@ -91,7 +91,7 @@ def create_app() -> Flask:
     # Register blueprints
     from app.blueprints.admin.admin_recipe_bp import admin_recipe_bp
     from app.blueprints.member.member_subscription_bp import member_subscription_bp
-    from app.blueprints.member.member_order_bp import member_order_bp, add_test_data, alter_menu_item_table
+    from app.blueprints.member.member_order_bp import member_order_bp, add_test_data, alter_menu_item_table, alter_order_table
     from app.blueprints.member.member_feedback_bp import member_feedback_bp
     from app.blueprints.admin.admin_log_bp import admin_log_bp
     from app.blueprints.auth_bp import auth_bp
@@ -99,6 +99,7 @@ def create_app() -> Flask:
     with app.app_context():
         db.create_all() # Create all tables in the database
         alter_menu_item_table() # Alter the menu_item table to add image and ingredient_list columns
+        alter_order_table()
         add_test_data()  # Add test data upon application startup
 
     app.register_blueprint(admin_recipe_bp)
@@ -107,6 +108,12 @@ def create_app() -> Flask:
     app.register_blueprint(member_feedback_bp)
     app.register_blueprint(admin_log_bp)
     app.register_blueprint(auth_bp)
+
+
+
+
+    with app.app_context():
+        alter_order_table()
 
     # Return Flask app instance
     return app
