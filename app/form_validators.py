@@ -188,9 +188,11 @@ def validate_postal_code(form, field):
     Raises:
         ValidationError: If the postal code is invalid.
     """
-<<<<<<< Updated upstream
-    if not field.data.isdigit() or not (3 <= len(field.data) <= 10):
-        raise ValidationError("Postal code must only contain numbers and be between 3 and 10 digits long.")
+    postal_code = sanitise_data(field.data)
+    if not postal_code.isdigit() or not (3 <= len(postal_code) <= 10):
+        raise ValidationError(
+            "Postal code must only contain numbers and be between 3 and 10 digits long."
+        )
 
 
 # Validators for postal code
@@ -211,10 +213,3 @@ def phone_number_validator(form, field):
     field_data_str = str(field.data)  # Ensure data is a string
     if not re.match(pattern, field_data_str):
         raise ValidationError("Please enter a valid phone number in the format 8/9XXX XXXX.")
-=======
-    postal_code = sanitise_data(field.data)
-    if not postal_code.isdigit() or not (3 <= len(postal_code) <= 10):
-        raise ValidationError(
-            "Postal code must only contain numbers and be between 3 and 10 digits long."
-        )
->>>>>>> Stashed changes
