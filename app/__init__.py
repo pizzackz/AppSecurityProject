@@ -122,7 +122,3 @@ def create_app() -> Flask:
 
 # Import the User model here to avoid circular import issues
 from app.models import User
-
-
-# Import the User model here to avoid circular import issues
-from app.models import User
