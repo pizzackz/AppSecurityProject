@@ -1,6 +1,6 @@
-import os
-import base64
+import logging
 
+from logging import Logger, StreamHandler, Formatter
 from dotenv import load_dotenv
 from flask import Flask, Response, g
 from flask_sqlalchemy import SQLAlchemy
@@ -11,6 +11,7 @@ from flask_login import LoginManager
 from flask_session import Session
 
 from app.config import Config
+from app.utils import generate_nonce, register_commands
 
 
 # Load environment variables from .env file
@@ -22,27 +23,31 @@ load_dotenv()
 csrf: CSRFProtect = CSRFProtect()
 db: SQLAlchemy = SQLAlchemy()
 login_manager: LoginManager = LoginManager()
-limiter = Limiter(
-    key_func=get_remote_address,
-    default_limits=Config.RATELIMIT_DEFAULT,
-    storage_uri=Config.RATELIMIT_STORAGE_URL,
-)
+limiter = Limiter(key_func=get_remote_address, default_limits=Config.RATELIMIT_DEFAULT, storage_uri=Config.RATELIMIT_STORAGE_URL)
 
 
-# Generate nonce (number used once), randomly generated base64-encoded string
-# to be used with CSP to only allow scripts & styles with correct nonce to be
-# executed on client-side
-def generate_nonce() -> str:
-    return base64.b64encode(os.urandom(16)).decode("utf-8")
+# Setup logger for own logs function
+def setup_custom_logger(name: str) -> Logger:
+    """Configure a custom logger for the application"""
+    logger: Logger = logging.getLogger(name)
 
+    # Remove all handlers associated with logger
+    if logger.hasHandlers():
+        print("ran")
+        logger.handlers.clear()
 
-def register_commands(app: Flask) -> None:
-    @app.cli.command("seed-db")
-    def seed_db():
-        """Seed the database with test data"""
-        from app.populate_database import seed_database
-        with app.app_context():
-            seed_database()
+    handler: StreamHandler = logging.StreamHandler()
+    formatter: Formatter = logging.Formatter(
+        "%(levelname)s:%(name)s - - [%(asctime)s] \"%(message)s\"", 
+        datefmt="%d/%b/%Y %H:%M:%S"
+    )
+    
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    logger.propagate = False  # Prevents log messages from being propagated to Flask default logger
+
+    return logger
 
 
 def create_app() -> Flask:
@@ -56,6 +61,10 @@ def create_app() -> Flask:
     db.init_app(app)
     login_manager.init_app(app)
     limiter.init_app(app)
+    
+    # Custom logger for app logic
+    custom_logger: Logger = setup_custom_logger("tastefully")
+    app.config["CUSTOM_LOGGER"] = custom_logger
 
     # Configure Flask-Session to use SQLAlchemy
     app.config["SESSION_SQLALCHEMY"] = db

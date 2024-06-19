@@ -28,11 +28,9 @@ class SetPasswordForm(FlaskForm):
 
 # Signup optional fields - Save phone & address
 class PhoneAddressForm(FlaskForm):
-    phone_number = StringField('Phone', [phone_number_validator, Optional()],render_kw={"placeholder": "9123 4567"})
-    address = StringField('Address', [Length(min=1, max=150), Optional()], render_kw={"placeholder": "123 ABC Street"})
-    postal_code = StringField('Postal Code', [six_digit_postal_code_validator, Optional()], render_kw={"placeholder": "123456"})
-    submit = SubmitField("Complete")
-    skip = SubmitField("Skip")
+    phone_number = StringField('Phone', [phone_number_validator, Optional()],render_kw={"placeholder": "E.g. 9123 4567"})
+    address = StringField('Address', [Length(min=1, max=150), Optional()], render_kw={"placeholder": "E.g. 123 ABC Street"})
+    postal_code = StringField('Postal Code', [six_digit_postal_code_validator, Optional()], render_kw={"placeholder": "E.g. 123456"})
 
 
 # Create recipe form for members and admin, can double as Update recipe form

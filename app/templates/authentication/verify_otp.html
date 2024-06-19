@@ -7,7 +7,7 @@
 {% from "includes/_form_helper.html" import render_field %}
 <h1>Verify OTP</h1>
 <form action="" method="post">
-    {{ form.csrf_token }}
+    {{ form.hidden_tag() }}
     <div>
         {{ render_field(form.otp, class="form-control", placeholder="Enter your one time password") }}
     </div>

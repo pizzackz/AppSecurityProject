@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+
+{% block title %}Verify OTP{% endblock %}
+
+{% block content %}
+{% from "includes/_form_helper.html" import render_field %}
+<h1>Set Password</h1>
+<form action="" method="post">
+    {{ form.hidden_tag() }}
+    <div>
+        {{ render_field(form.phone_number, class="form-control") }}
+    </div>
+    <div>
+        {{ render_field(form.address, class="form-control") }}
+    </div>
+    <div>
+        {{ render_field(form.postal_code, class="form-control") }}
+    </div>
+
+    <button type="submit" name="action" value="complete" class="btn btn-primary">Complete</button>
+    <button type="submit" name="action" value="skip" class="btn btn-secondary">Skip</button>
+</form>
+{% endblock %}
