@@ -24,21 +24,24 @@
     {% block flash_messages %}
     <script nonce="{{ nonce }}">
         {% for message in get_flashed_messages(category_filter=["info"]) %}
-        display_popup("{{ message }}", "info");
+            display_popup("{{ message }}", "info");
         {% endfor %}
+
         {% for message in get_flashed_messages(category_filter=["error"]) %}
-        display_popup("{{ message }}", "error");
+            display_popup("{{ message }}", "error");
         {% endfor %}
+
         {% for message in get_flashed_messages(category_filter=["success"]) %}
-        display_popup("{{ message }}", "success");
+            display_popup("{{ message }}", "success");
         {% endfor %}
-        {& for message in get_flashed_messages(category_filter=["warning"]) %}
-        display_popup("{{ message }}", "warning");
+
+        {% for message in get_flashed_messages(category_filter=["warning"]) %}
+            display_popup("{{ message }}", "warning");
         {% endfor %}
     </script>
     {% endblock %}
 
-    {% block content %}{% endblock %}
+    {% block content %}Base Content{% endblock %}
     {% block scripts %}
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

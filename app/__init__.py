@@ -52,9 +52,7 @@ def setup_custom_logger(name: str) -> Logger:
 
 def create_app() -> Flask:
     app: Flask = Flask(__name__)  # Create Flask application instance
-    app.config.from_object(
-        Config
-    )  # Load configuration from Config class in 'config.py'
+    app.config.from_object(Config)  # Load configuration from Config class in 'config.py'
 
     # Initialise extensions
     csrf.init_app(app)

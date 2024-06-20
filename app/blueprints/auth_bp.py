@@ -63,7 +63,8 @@ def initial_signup():
             return redirect(url_for("auth_bp.verify_otp"))
 
         # Handle unsuccessful sending of OTP
-        flash("Failed to send OTP. Please try again.", "danger")
+        clear_signup_session()  # Clear session data
+        flash("Failed to send OTP. Please try again.", "error")
         logger.error(f"Failed to send OTP to {email} for user {username}")
 
     return render_template("authentication/initial_signup.html", form=form)
@@ -74,7 +75,7 @@ def initial_signup():
 @session_required(
     keys=["username", "email", "otp_data"],
     flash_message="Your session has expired or you have not completed the signup process.",
-    log_message="Session keys missing for OTP verification: {mising_keys}"
+    log_message="Session keys missing for OTP verification: {missing_keys}"
 )
 def verify_otp():
     """Verify the OTP sent to user's email."""
@@ -90,22 +91,23 @@ def verify_otp():
         required_keys: List[str] = ["value", "generation_time"]
         if not validate_otp_data(otp_data, required_keys, expiry_time=5, otp_length=6):
             # Inform user otp invalid/ expired, redirect to same route
-            flash("OTP is invalid or has expired. Please request a new OTP.", "danger")
+            flash("OTP is invalid or has expired. Please request a new OTP.", "error")
             logger.warning(f"Invalid or expired OTP attempt for user {session['username']} with email {session['email']}")
             return redirect(url_for("auth_bp.verify_otp"))
-        
-        # Compare OTPs
-        if input_otp == otp_data.get("value"):
-            # OTP matches, proceed to set password
-            session.pop("otp_data", None)  # Remove otp_data from session
-            flash("OTP verified successfully. Please set your password", "success")
-            logger.info(f"OTP verified for user {session['username']} with email {session['email']}.")
-            return redirect(url_for("auth_bp.set_password"))
 
-        # Handle incorrect otp
-        flash("Invalid OTP. Please try again.", "danger")
-        logger.warning(f"Invalid OTP attempt for user {session['username']} with email {session['email']}.")
-    
+        # Compare OTPs
+        if input_otp != otp_data.get("value"):
+            # Handle incorrect otp, redirect to verify_otp to force refresh
+            flash("Invalid OTP. Please try again.", "error")
+            logger.warning(f"Invalid OTP attempt for user {session["username"]} with email {session["email"]}.")
+            return redirect(url_for("auth_bp.verify_otp"))
+
+        # OTP matches, proceed to set password
+        session.pop("otp_data", None)  # Remove otp_data from session
+        flash("OTP verified successfully. Please set your password", "success")
+        logger.info(f"OTP verified for user {session["username"]} with email {session["email"]}.")
+        return redirect(url_for("auth_bp.set_password"))
+
     return render_template("authentication/verify_otp.html", form=form)
 
 
@@ -138,7 +140,7 @@ def resend_otp():
         logger.info(f"OTP sent to {email} for user {username}.")
     else:
         # Unsuccessful resend
-        flash("Failed to resend OTP. Please try again.", "danger")
+        flash("Failed to resend OTP. Please try again.", "error")
         logger.error(f"Failed to resend OTP to {email} for user {username}")
 
     return redirect(url_for("auth_bp.verify_otp"))
@@ -163,7 +165,7 @@ def set_password():
 
         # Session data retrieval unsuccessful
         if not username or not email:
-            flash("An error occurred. Please try again.", "danger")
+            flash("An error occurred. Please try again.", "error")
             logging.error("Missing username or email in session during set_password.")
             return redirect(url_for("auth_bp.set_password"))
 
@@ -175,15 +177,15 @@ def set_password():
             # Member account creation unsuccessful
             if not member:
                 raise Exception("Failed to create member account.")
-            
+
             # Member account creation successful
             flash("Account created successfully. Please continue.", "success")
             logger.info(f"Member account created for user {username} with email {email}.")
             return redirect(url_for("auth_bp.additional_info"))
-        
+
         # Handle failed account creation
         except Exception as e:
-            flash("Account creation failed. Please try again.", "danger")
+            flash("Account creation failed. Please try again.", "error")
             logger.error(f"Failed to create member account for username: {username}, email: {email}")
             return redirect(url_for("auth_bp.set_password"))
 
@@ -204,7 +206,7 @@ def additional_info():
 
         # Handle invalid actions
         if action not in ("skip", "complete"):
-            flash("Invalid action. Please try again.", "danger")
+            flash("Invalid action. Please try again.", "error")
             logger.warning(f"Invalid action '{action}' attempted in additional_info.")
             return redirect(url_for("auth_bp.additional_info"))
 
@@ -245,7 +247,7 @@ def additional_info():
 
             except Exception as e:
                 db.session.rollback()
-                flash(f"An error occurred when trying to save your data. Please try again", "danger")
+                flash(f"An error occurred when trying to save your data. Please try again", "error")
                 logger.error(f"Failed to save additional info for user {username}, email {email}. Error: {e}")
 
                 # Reset temporary session data, Redirect back to this route

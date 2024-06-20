@@ -44,7 +44,7 @@ function display_popup(message, status) {
     else if (status == 'warning') {
       popup.innerHTML = `
       <span class="bi bi-exclamation-circle" id="exclamation"></span>
-      <span class="msg">Error: ` + message + `</span>
+      <span class="msg">Warning: ` + message + `</span>
       <div id="close-btn">
         <span class="bi bi-x"></span>
       </div>
