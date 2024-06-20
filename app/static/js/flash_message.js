@@ -49,7 +49,7 @@ function display_popup(message, status) {
         <span class="bi bi-x"></span>
       </div>
     `;
-       popup.style.backgroundColor = "rgb(255, 255, 0)";
+       popup.style.backgroundColor = "rgb(255,99,71)";
 
     }
     else if (status == 'success') {
@@ -63,6 +63,7 @@ function display_popup(message, status) {
        popup.style.backgroundColor = "rgb(61, 92, 52)";
        console.log('Success')
     }
+
     popup.classList.remove('hide');
     popup.classList.add('show1');
 

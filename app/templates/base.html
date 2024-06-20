@@ -32,6 +32,9 @@
         {% for message in get_flashed_messages(category_filter=["success"]) %}
         display_popup("{{ message }}", "success");
         {% endfor %}
+        {& for message in get_flashed_messages(category_filter=["warning"]) %}
+        display_popup("{{ message }}", "warning");
+        {% endfor %}
     </script>
     {% endblock %}
 
