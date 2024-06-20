@@ -10,6 +10,11 @@ function remove_ingredient(num) {
     ingredient_list.splice(num, 1);
     display_ingredient();
 }
+// Sending POST request
+function search_ingredients() {
+    document.getElementById('ingredients').value = ingredient_list;
+}
+
 
 // Display ingredient
 function display_ingredient() {
@@ -32,6 +37,7 @@ function display_ingredient() {
         const search = document.getElementById('search');
         remove_all.classList.add('disabled')
     }
+    search_ingredients();
 }
 
 // Add event listeners to buttons
@@ -203,10 +209,6 @@ function submit_recipe1() {
 }
 
 
-// Sending POST request
-function search_ingredients() {
-    document.getElementById('ingredient').value = ingredient_list;
-}
 
 
 

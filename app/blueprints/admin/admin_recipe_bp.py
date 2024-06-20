@@ -16,6 +16,7 @@ import requests
 from werkzeug.utils import secure_filename
 from app.models import Recipe
 import os
+from sqlalchemy import or_
 import json
 
 
@@ -66,7 +67,13 @@ def is_square_image(filename):
 def recipe_database():
     print(db) # Checking Database Status
     form = RecipeSearch()
-    """Searching using wildcard * for recipes"""
+
+    # Getting pages (For Pagination)
+    page = request.args.get('page', 1, type=int)
+    per_page = 16
+    start = (page - 1) * per_page
+    end = start + per_page
+
 
     if request.method == 'POST':
         if not form.validate_on_submit():
@@ -103,44 +110,30 @@ def recipe_database():
                     return redirect(url_for('admin_recipe_bp.recipe_database'))
                 ingredients[i] = (ingredients[i]).lower()
 
+            # Searching
+            search_results = []
 
-            return redirect(url_for('admin_recipe_bp.recipe_database'))
-    #
-    print(Recipe.query.all())
+            for i in ingredients:
+                search_results = Recipe.query.filter(
+                    or_(
+                        Recipe.ingredients.contains(i),
+                        Recipe.name.contains(i)
+                    )
+                ).all()
 
+            total_pages = (len(search_results) // per_page) + 1
+            search_results = search_results[start:end]
 
+            return render_template("admin/recipe/recipe_database.html", form=form, recipes=search_results, total_pages=total_pages, page=page)
 
-    # if request.method == 'POST':
-    #     # Getting input from forms
-    #     ingredients = request.form.get('ingredient')
-    #     print(ingredients)
-    #
+    # Get pages
+    total_pages = (Recipe.query.count() // per_page) + 1
+    print(f'Total pages: {total_pages}')
+    print(f'There are {Recipe.query.count()} recipes')
 
-    #
+    items_on_page = Recipe.query.slice(start, end)
 
-    #
-    #     # Clean input, remove spaces at front and end
-    #     for i in range(len(ingredients)):
-    #         ingredients[i] = (ingredients[i]).strip()
-    #         ingredients[i] = (ingredients[i]).lower()
-    #
-    #     try:
-    #         # Searching for recipes using ingredients
-    #         with db.cursor() as cursor:
-    #             recipe2 = []
-    #             for ingredient in ingredients:
-    #                 # Search for recipes containing the given ingredients
-    #                 cursor.execute("SELECT * FROM recipes WHERE ingredients LIKE %s", ("%" + ingredient + "%",))
-    #                 recipes_with_ingredient = cursor.fetchall()
-    #                 recipe2.extend(recipes_with_ingredient)
-    #
-    #         return render_template('admin/recipe_database.html', recipes=recipe2)
-    #
-    #     except Exception as e:
-    #         print('Error in searching recipes:', str(e))
-    #         return render_template('admin/recipe_database.html', recipes=[])
-
-    return render_template("admin/recipe/recipe_database.html", form=form, recipes=Recipe.query.all())
+    return render_template("admin/recipe/recipe_database.html", form=form, recipes=items_on_page, total_pages=total_pages, page=page)
 
 @admin_recipe_bp.route('/admin/create_recipe', methods=['GET', 'POST'])
 def create_recipe():
@@ -335,7 +328,11 @@ def view_recipe(recipe_id):
     return render_template('admin/recipe/recipe_view2.html', recipe=recipe_data)
 
 
-
+@admin_recipe_bp.route('/populate_recipes')
+def populate_recipes():
+    from app.populate_recipes import populate_recipes
+    populate_recipes()
+    return 'Populated recipes'
 
 
 

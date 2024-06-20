@@ -45,8 +45,8 @@
             <div id="control_panel" class="text-center form-group">
                 <h1 id="ingredients_title">Ingredients</h1><br>
                 <div class="input_ingredient">
-                    <input type="text" class="form-control form-control-lg col-auto" name="ingredient" id="ingredient"
-                           placeholder="chicken, tomato" required>
+                    <input type="text" class="form-control form-control-lg col-auto" id="ingredient"
+                           placeholder="chicken, tomato">
                     <div id="autocomplete" class="autocomplete">
                     </div>
                     <input type="button" value="+" id="add_ingredient" class="btn btn-success btn-lg col">
@@ -56,8 +56,8 @@
                 <div class="input_ingredient">
                     <input type="button" value="Remove All" class="btn btn-danger btn-lg" id="remove_all">
                 </div>
-                <label for="ingredients"></label>
-                {{ render_field_picture(form.ingredients, id="ingredients", placeholder="fad", value='') }}
+
+                {{ form.ingredients(class="form-control", id="ingredients", placeholder="chicken, salad") }}
             </div>
 
             <h1 id="picture-title">Picture</h1><br>

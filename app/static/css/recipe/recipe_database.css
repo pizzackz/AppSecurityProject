@@ -148,3 +148,9 @@
 .modal-body {
     font-size: 1.7rem;
 }
+
+#pagination {
+    margin:auto;
+    margin-top: 2rem;
+    margin-bottom: 4rem;
+}

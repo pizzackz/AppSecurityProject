@@ -17,8 +17,8 @@ function remove_ingredient(num) {
 function display_ingredient() {
     var ingredient_itemHTML = ""
     for (i = 0; i < ingredient_list.length; i++) {
-        ingredient_itemHTML += '<div class="ingredient_item" id="' + ingredient_list[i] +  `" style="width:fit-content">
-        <i class="bi bi-x remove_ingredient" id="remove_` + ingredient_list[i] + '" onclick="remove_ingredient(' + i + `)"></i>
+        ingredient_itemHTML += '<div nonce="{{ nonce }}" class="ingredient_item" id="' + ingredient_list[i] +  `" style="width:fit-content">
+        <i nonce="{{ nonce }}" class="bi bi-x remove_ingredient" id="remove_` + ingredient_list[i] + '" onclick="remove_ingredient(' + i + `)"></i>
         <span class="item">` + ingredient_list[i] + "</span></div>";
     }
     document.getElementById('ingredient_items_list').innerHTML = ingredient_itemHTML;
@@ -120,7 +120,7 @@ function autocompletion() {
 
     var autoCompleteHTML = "<ul>"
     for (i=0;i<matchingWords.length;i++) {
-        autoCompleteHTML += "<li onclick=" + '"' + "select_autocomplete('" + matchingWords[i]  + "')" + '">' + matchingWords[i] + '</li>'
+        autoCompleteHTML += "<li nonce='{{ nonce }}' onclick=" + '"' + "select_autocomplete('" + matchingWords[i]  + "')" + '">' + matchingWords[i] + '</li>'
         // <li onclick="select_autocomplete('chicken')">chicken</li>
         console.log(matchingWords[i]);
     }
