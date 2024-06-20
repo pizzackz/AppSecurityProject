@@ -15,4 +15,5 @@
         {{ form.submit }}
     </div>
 </form>
+<p>Didn't receive an OTP or OTP expired? <a href="{{ url_for('auth_bp.resend_otp') }}">Resend OTP</a></p>
 {% endblock %}

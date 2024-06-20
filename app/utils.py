@@ -6,13 +6,14 @@ import string
 import bleach
 import logging
 
+from datetime import datetime, timedelta
 from logging import Logger
 from flask import Flask, session, flash, redirect, url_for, current_app
 from functools import wraps
 from typing import List, Optional
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
 
 # Use logger configured in '__init__.py'
@@ -21,16 +22,30 @@ logger: Logger = logging.getLogger('tastefully')
 
 # Decorators
 # Specific session data required (match keys) decorator
-def session_required(keys: List[str], redirect_link: str = "auth_bp.initial_signup"):
-    """Decorator to ensure session data exists for the given keys."""
+def session_required(keys: List[str], **kwargs):
+    """
+    Decorator to ensure session data exists for the given keys.
+
+    Args:
+        keys (List[str]): The keys to check in the session.
+        kwargs (Dict): Optional keyword arguments including:
+            - redirect_link (str): The link to redirect if session keys are missing.
+            - flash_message (str): The message to flash if session keys are missing.
+            - log_message (str): The message to log if session keys are missing.
+    """
+    # Set default values for optional keyword arguments
+    redirect_link: str = kwargs.get("redirect_link", "auth_bp.initial_signup")
+    flash_message = kwargs.get('flash_message', "Session expired or invalid access. Please start again.")
+    log_message = kwargs.get('log_message', "Missing session keys: {missing_keys}")
+
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             missing_keys: List[str] = [key for key in keys if key not in session]
 
             if missing_keys:
-                flash("Session expired or invalid access. Please start again.", "warning")
-                logger.warning(f"Missing session keys: {missing_keys}")
+                flash(flash_message, "warning")
+                logger.warning(log_message.format(missing_keys=missing_keys))
                 return redirect(url_for(redirect_link))
 
             return f(*args, **kwargs)
@@ -74,7 +89,7 @@ def clear_session_data(keys: List[str]) -> None:
 # Clear temporary singup session data function
 def clear_signup_session() -> None:
     """Clear the signup-related session data (username, email, otp)."""
-    clear_session_data(["username", "email", "otp"])
+    clear_session_data(["username", "email", "otp_data"])
 
 
 # Set session data function
@@ -103,6 +118,85 @@ def generate_otp(length: int = 6) -> str:
         str: The generated OTP.
     """
     return ''.join(random.choices(string.digits, k=length))
+
+
+# Validate dictionary data structure function
+def validate_dict_data_structure(data: Dict, required_keys: List[str]) -> bool:
+    """
+    General function to validate a dictionary data structure.
+
+    Args:
+        data (Dict): The data dictionary to validate.
+        required_keys (List[str]): The list of keys that are required in the data dictionary.
+
+    Returns:
+        bool: True if the data structure is valid, False otherwise.
+    """
+    # Return False if data not a dictionary
+    if not isinstance(data, dict):
+        return False
+    
+    # Return False if key in required_keys not present in data or value for key has no value
+    for key in required_keys:
+        if key not in data.keys() or not data.get(key):
+            return False
+    
+    # Return True when all checks passed
+    return True
+
+
+# OTP expiry check function
+def is_expired_otp(otp_data: Dict, expiry_time: int) -> bool:
+    """
+    Check if the OTP has expired.
+
+    Args:
+        otp_data (Dict): The OTP data dictionary containing value and generation_time.
+        expiry_time (int): The expiry time for the OTP in minutes.
+
+    Returns:
+        bool: True if the OTP has expired, False otherwise.
+    """
+    # Return False if generation_time not in otp_data or value is not string
+    generation_time: str = otp_data.get("generation_time", None)
+    if not generation_time or not isinstance(generation_time, str):
+        return False
+    
+    # Get time from generation_time string, return False if unsuccessful
+    try:
+        otp_generation_time: datetime = datetime.strptime(generation_time, "%d/%b/%Y %H:%M:%S")
+    except ValueError:
+        return False
+    
+    # Return result of whther current time within allowed time frame
+    return datetime.now() > otp_generation_time + timedelta(minutes=expiry_time)
+
+
+# OTP data object validator function
+def validate_otp_data(otp_data: Dict, required_keys: List[str], expiry_time: int, otp_length: int = 6) -> bool:
+    """
+    Validate the OTP data structure and check if it has expired.
+
+    Args:
+        otp_data (Dict): The OTP data dictionary.
+        required_keys (List[str]): The list of keys that are required in the OTP data dictionary.
+        expiry_time (int): The expiry time for the OTP in minutes.
+        otp_length (int): The required length of the OTP.
+
+    Returns:
+        bool: True if the OTP data structure is valid, not expired, and the OTP is of correct length, False otherwise.
+    """
+    # Return False if data structure not dict
+    if not validate_dict_data_structure(otp_data, required_keys):
+        return False
+    
+    # Return False, if no value for otp_data or length of value doesn't match
+    otp_value: str = otp_data.get("value", "")
+    if not otp_value or len(otp_value) != otp_length:
+        return False
+    
+    # Return whether otp not expired
+    return not is_expired_otp(otp_data, expiry_time)
 
 
 # General send email function

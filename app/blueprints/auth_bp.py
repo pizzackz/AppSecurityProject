@@ -1,15 +1,16 @@
 import logging
 
 from logging import Logger
+from datetime import datetime
 from flask import Blueprint, render_template, session, url_for, flash, redirect, request, current_app
 from flask_login import login_user
 from werkzeug.security import generate_password_hash
-from typing import Optional
+from typing import Optional, Dict, List
 
 from app import db
 from app.models import User, Member
 from app.forms import InitialSignupForm, VerifyOtpForm, SetPasswordForm, PhoneAddressForm
-from app.utils import clean_input, generate_otp, send_otp_email, clear_signup_session, handle_user_not_found, session_required, set_session_data
+from app.utils import clean_input, generate_otp, send_otp_email, clear_signup_session, handle_user_not_found, session_required, set_session_data, validate_otp_data
 
 auth_bp: Blueprint = Blueprint("auth_bp", __name__)
 
@@ -46,9 +47,13 @@ def initial_signup():
             # return redirect(url_for("auth_bp.login"))
             return "User exists, please login now"
 
-        # Generate OTP, Store session data (username, email, otp) for later
+        # Generate OTP & current time
         otp: str = generate_otp()
-        set_session_data({"username": username, "email": email, "otp": otp})
+        current_time: datetime = datetime.now()
+        otp_data: Dict = {"value": otp, "generation_time": current_time.strftime("%d/%b/%Y %H:%M:%S")}
+
+        # Store session data (username, email, otp_data)
+        set_session_data({"username": username, "email": email, "otp_data": otp_data})
 
         # Send OTP email
         if send_otp_email(email, otp):
@@ -66,21 +71,33 @@ def initial_signup():
 
 # OTP verification route
 @auth_bp.route("/verify_otp", methods=["POST", "GET"])
-@session_required(["username", "email", "otp"])
+@session_required(
+    keys=["username", "email", "otp_data"],
+    flash_message="Your session has expired or you have not completed the signup process.",
+    log_message="Session keys missing for OTP verification: {mising_keys}"
+)
 def verify_otp():
     """Verify the OTP sent to user's email."""
     # Create form to render
     form: VerifyOtpForm = VerifyOtpForm()
 
     if request.method == "POST" and form.validate_on_submit():
-        # Retrieve OTP from form
+        # Retrieve OTP data from form and session
         input_otp: str = clean_input(form.otp.data)
-        stored_otp: str = session.get("otp")
+        otp_data: Dict = session.get("otp_data")
+
+        # Validate otp_data
+        required_keys: List[str] = ["value", "generation_time"]
+        if not validate_otp_data(otp_data, required_keys, expiry_time=5, otp_length=6):
+            # Inform user otp invalid/ expired, redirect to same route
+            flash("OTP is invalid or has expired. Please request a new OTP.", "danger")
+            logger.warning(f"Invalid or expired OTP attempt for user {session["username"]} with email {session["email"]}")
+            return redirect(url_for("auth_bp.verify_otp"))
         
         # Compare OTPs
-        if input_otp == stored_otp:
+        if input_otp == otp_data.get("value"):
             # OTP matches, proceed to set password
-            session.pop("otp", None)  # Remove OTP from session
+            session.pop("otp_data", None)  # Remove otp_data from session
             flash("OTP verified successfully. Please set your password", "success")
             logger.info(f"OTP verified for user {session["username"]} with email {session["email"]}.")
             return redirect(url_for("auth_bp.set_password"))
@@ -90,6 +107,41 @@ def verify_otp():
         logger.warning(f"Invalid OTP attempt for user {session["username"]} with email {session["email"]}.")
     
     return render_template("authentication/verify_otp.html", form=form)
+
+
+# Resend OTP route
+@auth_bp.route("/resend_otp", methods=["GET"])
+@session_required(
+    keys=["username", "email"],
+    flash_message="Your session has expired. Please start the signup process again.",
+    log_message="Attempt to resend OTP without valid session data: {missing_keys}"
+)
+def resend_otp():
+    """Resend the OTP to the user's email."""
+    # Retrieve username & email
+    username: str = session.get("username")
+    email = session.get("email")
+
+    # Clear any existing OTP data in session
+    session.pop("otp_data", None)
+
+    # Generate OTP & current time
+    otp: str = generate_otp()
+    current_time: datetime = datetime.now()
+    otp_data: Dict = {"value": otp, "generation_time": current_time.strftime("%d/%b/%Y %H:%M:%S")}
+    set_session_data({"otp_data": otp_data})  # Store otp_data in session
+
+    # Send OTP email
+    if send_otp_email(email, otp):
+        # Successful resend
+        flash("A new OTP has been sent to your email.", "info")
+        logger.info(f"OTP sent to {email} for user {username}.")
+    else:
+        # Unsuccessful resend
+        flash("Failed to resend OTP. Please try again.", "danger")
+        logger.error(f"Failed to resend OTP to {email} for user {username}")
+
+    return redirect(url_for("auth_bp.verify_otp"))
 
 
 # Set password route (For initial signups)
