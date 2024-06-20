@@ -91,7 +91,7 @@ def verify_otp():
         if not validate_otp_data(otp_data, required_keys, expiry_time=5, otp_length=6):
             # Inform user otp invalid/ expired, redirect to same route
             flash("OTP is invalid or has expired. Please request a new OTP.", "danger")
-            logger.warning(f"Invalid or expired OTP attempt for user {session["username"]} with email {session["email"]}")
+            logger.warning(f"Invalid or expired OTP attempt for user {session['username']} with email {session['email']}")
             return redirect(url_for("auth_bp.verify_otp"))
         
         # Compare OTPs
@@ -99,12 +99,12 @@ def verify_otp():
             # OTP matches, proceed to set password
             session.pop("otp_data", None)  # Remove otp_data from session
             flash("OTP verified successfully. Please set your password", "success")
-            logger.info(f"OTP verified for user {session["username"]} with email {session["email"]}.")
+            logger.info(f"OTP verified for user {session['username']} with email {session['email']}.")
             return redirect(url_for("auth_bp.set_password"))
 
         # Handle incorrect otp
         flash("Invalid OTP. Please try again.", "danger")
-        logger.warning(f"Invalid OTP attempt for user {session["username"]} with email {session["email"]}.")
+        logger.warning(f"Invalid OTP attempt for user {session['username']} with email {session['email']}.")
     
     return render_template("authentication/verify_otp.html", form=form)
 

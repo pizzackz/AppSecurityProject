@@ -20,7 +20,7 @@ class Config:
 
     # Change the value for 'SQLALCHEMY_DATABASE_URI' to whatever you used on your local computer to connect
     # to your local database
-    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL") or os.getenv("DATABASE_URL")
+    SQLALCHEMY_DATABASE_URI = "mysql://root:password123@localhost/tastefully"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # CSRF protection

@@ -16,10 +16,16 @@ function display_ingredient() {
     var ingredient_itemHTML = ""
     for (i = 0; i < ingredient_list.length; i++) {
         ingredient_itemHTML += '<div class="ingredient_item" id="' + ingredient_list[i] +  `" style="width:fit-content">
-        <i class="bi bi-x remove_ingredient" id="remove_` + ingredient_list[i] + '" onclick="remove_ingredient(' + i + `)"></i>
+        <i class="bi bi-x remove_ingredient" id="remove_` + ingredient_list[i] + `"></i>
         <span class="item">` + ingredient_list[i] + "</span></div>";
     }
     document.getElementById('ingredient_items_list').innerHTML = ingredient_itemHTML;
+    for (i = 0; i < ingredient_list.length; i++) {
+        remove_button = document.getElementById('remove_' + ingredient_list[i]);
+        remove_button.addEventListener('click', function() {
+            remove_ingredient(i);
+       })
+    }
     remove_all.classList.remove('disabled');
     if (ingredient_itemHTML == "") {
         const remove_all = document.getElementById('remove_all');

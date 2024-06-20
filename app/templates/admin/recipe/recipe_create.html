@@ -16,7 +16,7 @@
 
 {% block content %}
 {% from "includes/_form_helper.html" import render_field, render_field_picture %}
-<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+<script nonce="{{ nonce }}" src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
 <div>
     <h1 class="mb-4" id="add_recipe_title">Add Recipe</h1>
     <div class="container mt-5">
@@ -69,8 +69,6 @@
             <div id="button-section">
                 <a href="{{ url_for('admin_recipe_bp.recipe_database', id=id) }}" class="btn btn-secondary mt-3 mb-4">Back to
                     Home</a>
-                <input type="button" id="submit_recipe" onclick='submit_recipe1()' class="btn btn-primary mt-3 mb-4"
-                       value="Add Recipe">
                 <input type="submit" class="btn btn-primary mt-3 mb-4" value="Add Recipe">
             </div>
         </form>
@@ -80,7 +78,7 @@
 
         </script>
         {% endif %}
-        <script>
+        <script nonce="{{ nonce }}">
         ClassicEditor
             .create( document.querySelector( '#i' ) )
             .catch( error => {

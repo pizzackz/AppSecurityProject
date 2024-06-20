@@ -4,7 +4,7 @@
 
 {% block css %}
 {{ super() }}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/view_recipe.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/recipe/recipe_view.css') }}">
 {% endblock %}
 
 {% block scripts %}
@@ -15,51 +15,55 @@
 
 {% block content %}
    <div class="container">
-        <div class="card mb-3" style="margin:auto;">
+        <div class="card mb-3">
             <div class="row g-0">
                 <div class="col-md">
-                    <img src="{{ url_for('static', filename='images/recipe/mixed_paella.jpg') }}" class="img-fluid rounded-start" alt="...">
+                    <img src="{{ url_for('static', filename='images_recipe/' + recipe.picture) }}" class="img-fluid rounded-start" alt="...">
                 </div>
                 <div class="col-md">
-                    <div class="card-body align-items-center" style="text-align:center;height:100%;display:grid;align-content: center;">
-                        <h6 style="font-size:small">PREMIUM</h6>
+                    <div id="a" class="card-body align-items-center" >
+                        {% if recipe.type == 'Premium' %}
+                        <h6>PREMIUM</h6>
+                        {% endif %}
                         <h1 class="card-title">Mixed Parmesan Cheese Pizza</h1>
-                        <p class="card-text"><small class="text-muted">Created by JohnDoe</small></p>
-                        <p class="card-text"><small class="text-muted">Last Edited: 31 June 2024</small></p>
+                        <p class="card-text"><small class="text-muted">Created by {{ recipe.user_created }}</small></p>
+                        <p class="card-text"><small class="text-muted">Last Edited: {{ recipe.date_created }}</small></p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="row" style="padding:1rem;margin:0;margin-bottom:1rem;border:rgb(212, 212, 212) 0.5px solid;border-radius:10px;text-align:center;">
+        <div id="b" class="row">
             <div class="col items">
                 <h3>PREP TIME</h3>
-                <h2>30 mins</h2>
+                <h2>{{ recipe.prep_time }} mins</h2>
             </div>
             <div class="col items">
                 <h3>CALORIES</h3>
-                <h2>390 kcal</h2>
+                <h2>{{ recipe.calories }} kcal</h2>
             </div>
             <div class="col items">
                 <h3>INGREDIENTS</h3>
-                <h2>8</h2>
+                <h2>{{ recipe.ingredient_count }}</h2>
             </div>
         </div>
         <div class='row'>
             <div class="col-md-4">
-                <div style="padding:1rem;margin:0.2rem;border:rgb(212, 212, 212) 0.5px solid;border-radius:10px;">
-                    <h2 style="text-align:center">Ingredients</h2>
-                    <div style="max-width:fit-content;margin-left:8%">
-                        <ul style="width: 50%;text-align:center;padding-top:1rem;font-size:1.2rem;">
-                            <li>tomatoes</li>
+                <div class="c0" id="c" >
+                    <h2 >Ingredients</h2>
+                    <div id="d">
+                        <ul>
+                            {% for ingredient in recipe.ingredients %}
+                            <li>{{ ingredient }}</li>
+                            {% endfor %}
                         </ul>
                     </div>
                 </div>
             </div>
             <div class="col-md-8">
-                <div nonce="{{ nonce }}" style="padding:1rem;margin:0.2rem;border:rgb(212, 212, 212) 0.5px solid;border-radius:10px;text-align:center">
+                <div nonce="{{ nonce }}" class="c0" id="e">
                     <h2>Description</h2>
-                    <p style="padding-top:1rem;">A dish to celebrate blah blah blah lorjeihandifuhhosidhuhsfiuvhiufsd asfuiaushfhwae iuawhiufh iuawehihaewf i</p>
+                    <p id="f">{{ recipe.instructions }}</p>
                 </div>
             </div>
         </div>

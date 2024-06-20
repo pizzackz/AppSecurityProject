@@ -27,7 +27,7 @@ from html import unescape
 # from werkzeug.security import generate_password_hash, check_password_hash
 
 # from sqlalchemy import text
-# from datetime import datetime
+from datetime import datetime
 
 # import random
 # import sys
@@ -103,22 +103,13 @@ def recipe_database():
                     return redirect(url_for('admin_recipe_bp.recipe_database'))
                 ingredients[i] = (ingredients[i]).lower()
 
-            # Search for recipes using ingredients
-            # try:
-            #     with db.cursor() as cursor:
-            #         # Retrieve recipes from the database
-            #         cursor.execute("SELECT * FROM recipes")
-            #         recipes = cursor.fetchall()
-            # except Exception as e:
-            #     print('Error in retrieving recipes:', str(e))
-            #     recipes = []
-
-
-
-
 
             return redirect(url_for('admin_recipe_bp.recipe_database'))
     #
+    print(Recipe.query.all())
+
+
+
     # if request.method == 'POST':
     #     # Getting input from forms
     #     ingredients = request.form.get('ingredient')
@@ -149,7 +140,7 @@ def recipe_database():
     #         print('Error in searching recipes:', str(e))
     #         return render_template('admin/recipe_database.html', recipes=[])
 
-    return render_template("admin/recipe/recipe_database.html", form=form)
+    return render_template("admin/recipe/recipe_database.html", form=form, recipes=Recipe.query.all())
 
 @admin_recipe_bp.route('/admin/create_recipe', methods=['GET', 'POST'])
 def create_recipe():
@@ -306,11 +297,14 @@ def create_recipe():
             #     return redirect(url_for('admin_recipe_bp.create_recipe'))
 
             # Save the image file
-            picture_filename = secure_filename(picture.filename)
-            picture.save(os.path.join('static/images_recipe', picture_filename))
+            picture_filename = picture.filename
+            picture_filename = picture_filename.split('.')
+            picture_filename = name + '.' + picture_filename[1]
 
-            # Store in MYSQL class
-            new_recipe = Recipe(name=name, ingredients=ingredient_cleaned, instructions=instructions, picture=picture, recipe_type=recipe_type, calories=calories, prep_time=prep_time)
+            picture.save(os.path.join('app/static/images_recipe', picture_filename))
+
+            # Store in database
+            new_recipe = Recipe(name=name, ingredients=ingredient_cleaned, instructions=instructions, picture=picture_filename, type=recipe_type, calories=calories, prep_time=prep_time, user_created='JohnDoeTesting')
             try:
                 db.session.add(new_recipe)
                 db.session.commit()
@@ -322,37 +316,36 @@ def create_recipe():
     return render_template('admin/recipe/recipe_create.html', form=form)
 
 
-@admin_recipe_bp.route('/admin/view_recipe/', methods=['GET', 'POST'])
-def view_recipe():
-    recipes = Recipe.query.all()
-    output = []
-    for recipe in recipes:
-        recipe_data = {
-            'id': recipe.id,
-            'name': recipe.name,
-            'ingredients': json.loads(recipe.ingredients),  # Convert JSON string to Python object
-            'instructions': recipe.instructions,
-            'picture': recipe.picture,
-            'date_created': recipe.date_created,
-            'user_created': recipe.user_created,
-            'type': recipe.type,
-            'calories': recipe.calories,
-            'prep_time': recipe.prep_time
-        }
-        output.append(recipe_data)
-    # try:
-    #     with db.cursor() as cursor:
-    #         # Retrieve the recipe from the database using its ID
-    #         cursor.execute("SELECT * FROM recipes WHERE id=%s", (recipe_id,))
-    #         recipe = cursor.fetchone()
-    #         if not recipe:
-    #             return "Recipe not found"
-    #         return render_template('admin/recipe_view.html', recipe=recipe, id=id)
-    # except Exception as e:
-    #     print('Error in viewing recipe:', str(e))
-    #     return "An error occurred while viewing the recipe"
-    return render_template('admin/recipe/recipe_view2.html')
-#
+@admin_recipe_bp.route('/admin/view_recipe/<recipe_id>', methods=['GET', 'POST'])
+def view_recipe(recipe_id):
+    recipe = Recipe.query.filter_by(id=recipe_id).first()
+    recipe_data = {
+       'id': recipe.id,
+       'name': recipe.name,
+       'ingredients': (recipe.ingredients).split(','),  # Convert JSON string to Python object
+       'instructions': recipe.instructions,
+       'picture': recipe.picture,
+       'date_created': recipe.date_created,
+       'user_created': recipe.user_created,
+       'type': recipe.type,
+       'calories': recipe.calories,
+       'prep_time': recipe.prep_time,
+       'ingredient_count': len(recipe.ingredients.split(',')),
+    }
+    return render_template('admin/recipe/recipe_view2.html', recipe=recipe_data)
+
+
+
+
+
+
+
+
+
+
+
+
+
 # @admin_recipe_bp.route('/admin/edit_recipe/<recipe_id>', methods=['GET', 'POST'])
 # def edit_recipe(recipe_id, id):
 #     try:

@@ -28,3 +28,46 @@ ingredient-and-img {
     padding-top: 0.2rem;
     font-size: 2rem;
 }
+
+#a {
+    text-align:center;
+    height:100%;
+    display:grid;
+    align-content: center;
+}
+
+#a h6 {
+    font-size:small;
+}
+
+#b {
+    padding:1rem;margin:0;margin-bottom:1rem;border:rgb(212, 212, 212) 0.5px solid;border-radius:10px;text-align:center;background-color:white;
+}
+
+.c0 {
+    background-color:white;
+}
+
+#c {
+padding:1rem;margin:0.2rem;border:rgb(212, 212, 212) 0.5px solid;border-radius:10px;
+}
+
+#c h2 {
+text-align:center
+}
+
+#d {
+max-width:fit-content;margin-left:8%
+}
+
+#d ul {
+width: 50%;text-align:center;padding-top:1rem;font-size:1.2rem;
+}
+
+#e {
+padding:1rem;margin:0.2rem;border:rgb(212, 212, 212) 0.5px solid;border-radius:10px;text-align:center
+}
+
+#f {
+padding-top:1rem;
+}

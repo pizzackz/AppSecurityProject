@@ -65,17 +65,15 @@
     <div id="recipe_items" class="row card-deck justify-content-center">
       {% for recipe in recipes %}
       <div class="card m-2 recipe_card">
-        <img src="{{ url_for('static', filename='images_recipe/' + recipe.get_picture()) }}" class="card-img-top" alt="{{ recipe.get_name() }}">
+        <img src="{{ url_for('static', filename='images_recipe/' + recipe.picture) }}" class="card-img-top" alt="{{ recipe.name }}">
         <div class="card-body">
-          <h5 class="card-title">{{ recipe.get_name() }}</h5>
+          <h5 class="card-title">{{ recipe.name }}</h5>
           <p class="card-text">
-            {% for ingredient in recipe.get_ingredients() %}
-            {{ ingredient }}{% if not loop.last %},{% endif %}
-            {% endfor %}
+            {{ recipe.ingredients }}
           </p>
-          <a href="" class="btn btn-success m-2">View Recipe</a>
+          <a href="/admin/view_recipe/{{ recipe.id }}" class="btn btn-success m-2">View Recipe</a>
           <a href="" class="btn btn-primary m-2">Edit Recipe</a>
-          <a onclick="confirmdelete('{{ recipe.get_name() }}', '{{ recipe.get_id() }}')" class="btn btn-danger m-2" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
+          <a onclick="confirmdelete('{{ recipe.name }}', '{{ recipe.id }}')" class="btn btn-danger m-2" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
         </div>
       </div>
       {% endfor %}
