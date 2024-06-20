@@ -120,7 +120,7 @@ function autocompletion() {
 
     var autoCompleteHTML = "<ul>"
     for (i=0;i<matchingWords.length;i++) {
-        autoCompleteHTML += "<li nonce='{{ nonce }}' onclick=" + '"' + "select_autocomplete('" + matchingWords[i]  + "')" + '">' + matchingWords[i] + '</li>'
+        autoCompleteHTML += "<li nonce='{{ nonce }}' id='" + matchingWords[i] + "'>" + matchingWords[i] + '</li>'
         // <li onclick="select_autocomplete('chicken')">chicken</li>
         console.log(matchingWords[i]);
     }
@@ -128,6 +128,13 @@ function autocompletion() {
     console.log(autoCompleteHTML);
     // Filling up the list
     document.getElementById('autocomplete').innerHTML = autoCompleteHTML;
+    for (i=0;i<matchingWords.length;i++) {
+        document.getElementById(matchingWords[i]).addEventListener('click', function() {
+            console.log('clicked');
+            select_autocomplete(matchingWords[i]);
+        })
+    }
+
     if (ingredient == "") {
         close_list();
     }
@@ -206,4 +213,11 @@ function overlayoff() {
     overlay.style.display = 'none';
 }
 
+  function confirmdelete(content, id) {
+    console.log(content);
+    document.getElementById('modal-body').innerHTML = 'Are you sure you want to remove ' + content + '?';
+    document.getElementById('delete').onclick = function () {
+      window.location.href = "delete_recipe/" + id;
+    }
+  }
 

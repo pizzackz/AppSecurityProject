@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 {% extends 'base.html' %}
 {% block title %}tastefully | Create Recipe{% endblock %}
 
@@ -10,13 +9,14 @@
 {% block scripts %}
 {{ super() }}
 <script nonce="{{ nonce }}" src="{{ url_for('static', filename='js/recipe/recipe_creator.js' ) }}"></script>
+
 {% endblock %}
 
 
 
 {% block content %}
 {% from "includes/_form_helper.html" import render_field, render_field_picture %}
-<script nonce="{{ nonce }}" src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+<script nonce src="https://cdn.tiny.cloud/1/no-origin/tinymce/7.2.0-70/icons/default/icons.min.js"></script>
 <div>
     <h1 class="mb-4" id="add_recipe_title">Add Recipe</h1>
     <div class="container mt-5">
@@ -28,7 +28,7 @@
             </div>
 
             <div class="form-group mt-1 recipe-form-input">
-                {{ render_field(form.instructions, class="form-control", id="instructions") }}
+                {{ render_field(form.instructions, class="form-control", id="instructions", placeholder="Step 1: ...") }}
             </div>
 
             <div class="form-group mt-1 recipe-form-input">
@@ -72,20 +72,14 @@
                 <input type="submit" class="btn btn-primary mt-3 mb-4" value="Add Recipe">
             </div>
         </form>
+
         {% if alert_error %}
         <script nonce="{{ nonce }}">
       display_popup('{{ alert_error }}', 'error');
 
         </script>
         {% endif %}
-        <script nonce="{{ nonce }}">
-        ClassicEditor
-            .create( document.querySelector( '#i' ) )
-            .catch( error => {
-                console.error( error );
-            } );
 
-        </script>
     </div>
 </div>
 {% endblock %}

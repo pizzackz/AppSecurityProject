@@ -99,13 +99,13 @@ def verify_otp():
         if input_otp != otp_data.get("value"):
             # Handle incorrect otp, redirect to verify_otp to force refresh
             flash("Invalid OTP. Please try again.", "error")
-            logger.warning(f"Invalid OTP attempt for user {session["username"]} with email {session["email"]}.")
+            logger.warning(f"Invalid OTP attempt for user {session['username']} with email {session['email']}.")
             return redirect(url_for("auth_bp.verify_otp"))
 
         # OTP matches, proceed to set password
         session.pop("otp_data", None)  # Remove otp_data from session
         flash("OTP verified successfully. Please set your password", "success")
-        logger.info(f"OTP verified for user {session["username"]} with email {session["email"]}.")
+        logger.info(f"OTP verified for user {session['username']} with email {session['email']}.")
         return redirect(url_for("auth_bp.set_password"))
 
     return render_template("authentication/verify_otp.html", form=form)

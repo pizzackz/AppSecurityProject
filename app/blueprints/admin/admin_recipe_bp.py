@@ -113,13 +113,34 @@ def recipe_database():
             # Searching
             search_results = []
 
+            print(ingredients)
             for i in ingredients:
-                search_results = Recipe.query.filter(
+                print(i)
+                all_recipes = Recipe.query.filter(
                     or_(
                         Recipe.ingredients.contains(i),
                         Recipe.name.contains(i)
                     )
                 ).all()
+                for recipe in all_recipes:
+                    if recipe not in search_results:
+                        search_results.append(recipe)
+
+            # Sort the search results by the ingredients matched count
+            search_results = sorted(search_results, key=lambda x: len(set(x.ingredients.split(',')).intersection(ingredients)), reverse=True)
+            match = []
+            for i in search_results:
+                count = 0
+                for c in ingredients:
+                    print(i.ingredients)
+                    print(i.name)
+                    if c in i.ingredients:
+                        count += 1
+                    if c in i.name:
+                        count += 1
+                match.append(count)
+            print(match)
+
 
             total_pages = (len(search_results) // per_page) + 1
             search_results = search_results[start:end]
@@ -142,6 +163,7 @@ def create_recipe():
     if request.method == "POST":
         # Handles invalidated form
         if not form.validate_on_submit():
+            print('failed')
             flash('Please fill in all fields', 'danger')
         
         # Handles validated form
@@ -327,6 +349,14 @@ def view_recipe(recipe_id):
     }
     return render_template('admin/recipe/recipe_view2.html', recipe=recipe_data)
 
+
+@admin_recipe_bp.route('/admin/delete_recipe/<recipe_id>', methods=['GET', 'POST'])
+def delete_recipe(recipe_id):
+    recipe = Recipe.query.filter_by(id=recipe_id).first()
+    flash(f'{recipe.name} was deleted', 'info')
+    db.session.delete(recipe)
+    db.session.commit()
+    return redirect(url_for('admin_recipe_bp.recipe_database'))
 
 @admin_recipe_bp.route('/populate_recipes')
 def populate_recipes():

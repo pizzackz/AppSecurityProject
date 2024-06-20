@@ -38,12 +38,12 @@ class Config:
 
     # Base CSP settings
     CSP_DIRECTIVES = {
-        'default-src': ["'self'"],
-        'style-src': ["'self'", 'https://cdn.jsdelivr.net'],
-        'script-src': ["'self'", 'https://cdn.jsdelivr.net', 'https://cdn.ckeditor.com', 'https://js.stripe.com/v3/'],
+        'default-src': ["'self'", 'https://cdn.jsdelivr.net', 'https://cdn.tiny.cloud'],
+        'style-src': ["'self'", 'https://cdn.jsdelivr.net', 'https://cdn.tiny.cloud'],
+        'script-src': ["'self'", 'https://cdn.jsdelivr.net', 'https://cdn.ckeditor.com', 'https://js.stripe.com/v3/', 'https://cdn.tiny.cloud'],
         'font-src': ["'self'", 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com'],
-        'img-src': ["'self'", 'data:'],
-        'connect-src': ["'self'"],
+        'img-src': ["'self'", 'data:', 'https://sp.tinymce.com'],
+        'connect-src': ["'self'", 'https://cdn.tiny.cloud'],
         'frame-src': ["'self'", 'https://js.stripe.com'],
         'object-src': ["'none'"],
         'base-uri': ["'self'"],

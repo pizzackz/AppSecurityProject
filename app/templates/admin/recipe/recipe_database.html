@@ -73,7 +73,13 @@
           </p>
           <a href="/admin/view_recipe/{{ recipe.id }}" class="btn btn-success m-2">View Recipe</a>
           <a href="" class="btn btn-primary m-2">Edit Recipe</a>
-          <a onclick="confirmdelete('{{ recipe.name }}', '{{ recipe.id }}')" class="btn btn-danger m-2" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
+          <a nonce="{{ nonce }}" id="delete_{{ recipe.id }}" class="btn btn-danger m-2" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
+          <script nonce="{{ nonce }}">
+            var selected = document.getElementById('delete_{{ recipe.id }}');
+            selected.onclick = function () {
+              confirmdelete('{{ recipe.name }}', '{{ recipe.id }}')
+            }
+          </script>
         </div>
       </div>
       {% endfor %}
