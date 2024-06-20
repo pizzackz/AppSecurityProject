@@ -72,7 +72,7 @@
             {{ recipe.ingredients }}
           </p>
           <a href="/admin/view_recipe/{{ recipe.id }}" class="btn btn-success m-2">View Recipe</a>
-          <a href="" class="btn btn-primary m-2">Edit Recipe</a>
+          <a href="/admin/update_recipe/{{ recipe.id }}" class="btn btn-primary m-2">Edit Recipe</a>
           <a nonce="{{ nonce }}" id="delete_{{ recipe.id }}" class="btn btn-danger m-2" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
           <script nonce="{{ nonce }}">
             var selected = document.getElementById('delete_{{ recipe.id }}');

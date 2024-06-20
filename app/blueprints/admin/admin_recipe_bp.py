@@ -358,6 +358,146 @@ def delete_recipe(recipe_id):
     db.session.commit()
     return redirect(url_for('admin_recipe_bp.recipe_database'))
 
+@admin_recipe_bp.route('/admin/update_recipe/<recipe_id>', methods=['GET', 'POST'])
+def update_recipe(recipe_id):
+    recipe = Recipe.query.filter_by(id=recipe_id).first()
+    form = CreateRecipeForm()
+    if request.method == 'POST':
+        name = form.name.data
+        ingredients = form.ingredients.data
+        instructions = form.instructions.data
+        picture = form.picture.data
+        calories = form.calories.data
+        prep_time = form.prep_time.data
+        recipe_type = form.recipe_type.data
+
+        if name != '':
+            regex = r'^[a-zA-Z ]+$'  # Regex pattern allowing only letters and spaces
+            if not re.fullmatch(regex, name):
+                flash('Only letters and spaces allowed', 'error')
+                return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
+            if len(name) > 20:
+                flash('Name cannot be more than 20 characters', 'error')
+                return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
+
+        if instructions != '':
+            if len(instructions) > 1000:
+                flash('Instructions cannot be more than 1000 characters', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+            html.unescape(instructions)
+            # Parse HTML
+            soup = BeautifulSoup(instructions, 'html.parser')
+
+            # Remove all script tags
+            for script in soup(["script", "style"]):
+                script.decompose()
+            # Remove all iFrame and input tags
+            for iframe in soup(["iframe", "input", "link", "submit", "link", "meta"]):
+                iframe.decompose()
+
+        # PROCESS CALORIES
+        if calories != '':
+            if type(calories) != int:
+                flash('Calories must be an integer', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+            if calories < 0:
+                flash('Calories cannot be negative', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+            if calories > 3000:
+                flash('Calories cannot be more than 3000', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+
+        # PROCESS PREP TIME
+        if prep_time != '':
+            if type(prep_time) != int:
+                flash('Prep time must be an integer', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+            if prep_time < 0:
+                flash('Prep time cannot be negative', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+            if prep_time > 300:
+                flash('Prep time cannot be more than 300 minutes', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+
+        # PROCESS RECIPE TYPE
+        if recipe_type != 'Standard' and recipe_type != 'Premium':
+            flash('Invalid recipe type', 'error')
+            return redirect(url_for('admin_recipe_bp.create_recipe'))
+
+        # PROCESS INGREDIENTS
+        try:
+            ingredients = ingredients.split(',')
+        except:
+            flash('Error processing ingredients', 'error')
+            return redirect(url_for('admin_recipe_bp.create_recipe'))
+
+        # Clean data
+        if ingredients != []:
+            # If not pass regex, redirect
+            regex = r'^[a-zA-Z ]+$'  # Regex pattern allowing only letters and spaces
+            print(ingredients)
+            for i in range(len(ingredients)):
+                ingredients[i] = (ingredients[i]).strip()
+                if ingredients[i] == '':
+                    flash('Ingredients are empty!', 'error')
+                    return redirect(url_for('admin_recipe_bp.create_recipe'))
+                if not re.fullmatch(regex, ingredients[i]):
+                    print(f'Error here, {ingredients[i]}')
+                    flash('Only letters and spaces allowed', 'error')
+                    return redirect(url_for('admin_recipe_bp.create_recipe'))
+                if len(ingredients[i]) > 20:
+                    flash('Ingredient cannot be more than 20 characters', 'error')
+                    return redirect(url_for('admin_recipe_bp.create_recipe'))
+                ingredients[i] = (ingredients[i]).lower()
+            ingredient_cleaned = ''
+
+            for c in range(len(ingredients)):
+                ingredient_cleaned += ingredients[c]
+                if c != len(ingredients) - 1:
+                    ingredient_cleaned += ','
+
+        # PROCESS IMAGE
+        if picture.filename != '':
+            if not is_image(picture):
+                flash('Invalid image format', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+                # Save the image file
+            picture_filename = picture.filename
+            picture_filename = picture_filename.split('.')
+            picture_filename = name + '.' + picture_filename[1]
+            picture.save(os.path.join('app/static/images_recipe', picture_filename))
+
+        if name != '':
+            recipe.name = name
+        if ingredients != []:
+            recipe.ingredients = ingredient_cleaned
+        if instructions != '':
+            recipe.instructions = instructions
+        if picture.filename != '':
+            recipe.picture = picture_filename
+        if calories != '':
+            recipe.calories = calories
+        if prep_time != '':
+            recipe.prep_time = prep_time
+        recipe.type = recipe_type
+
+        db.session.commit()
+        flash(f'{recipe.name} updated', 'info')
+        return redirect(url_for('admin_recipe_bp.recipe_database'))
+
+    form.name.data = recipe.name
+
+    form.instructions.data = recipe.instructions
+    form.calories.data = recipe.calories
+    form.prep_time.data = recipe.prep_time
+    form.recipe_type.data = recipe.type
+    ingredients = (recipe.ingredients).split(',')
+
+
+    return render_template('admin/recipe/recipe_update.html', form=form, ingredients=ingredients)
+
+
+
 @admin_recipe_bp.route('/populate_recipes')
 def populate_recipes():
     from app.populate_recipes import populate_recipes
