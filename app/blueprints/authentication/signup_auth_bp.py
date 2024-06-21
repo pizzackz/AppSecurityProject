@@ -204,8 +204,9 @@ def set_password():
 
     # Redirect to 'verify_otp' if otp_data verified is False
     if otp_data.get("verified", None) is None:
+        username, email = session.get("username"), session.get("email")
         flash("You need to verify your email before setting a password.", "warning")
-        logger.warning(f"User {session["username"]} with email {session["email"]} attempted to set password for account creation without verified email.")
+        logger.warning(f"User {username} with email {email} attempted to set password for account creation without verified email.")
         return redirect(url_for("signup_auth_bp.verify_otp"))
 
     if request.method == "POST":
