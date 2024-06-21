@@ -10,20 +10,17 @@ from app.form_validators import unique_email, unique_username, validate_email_fo
 class InitialSignupForm(FlaskForm):
     username = StringField("Username", validators=[DataRequired(), Length(min=2, max=20), unique_username])
     email = StringField("Email", validators=[DataRequired(), validate_email_format, unique_email])
-    submit = SubmitField("Next")
 
 
 # Manual Signup phase 2 - Verify email using otp
 class VerifyOtpForm(FlaskForm):
     otp = StringField("One Time Code", validators=[DataRequired(), Length(min=6, max=6), validate_otp])
-    submit = SubmitField("Verify")
 
 
 # Manual Signup & 1st time google signin - Set password
 class SetPasswordForm(FlaskForm):
     password = PasswordField("Password", validators=[DataRequired(), Length(min=6), validate_password_complexity])
     confirm_password = PasswordField("Confirm Password", validators=[DataRequired(), EqualTo("password")])
-    submit = SubmitField("Signup")
 
 
 # Signup optional fields - Save phone & address

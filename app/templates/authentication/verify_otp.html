@@ -4,16 +4,25 @@
 {% block title %}Verify OTP{% endblock %}
 
 {% block content %}
-{% from "includes/_form_helper.html" import render_field %}
-<h1>Verify OTP</h1>
+{% from "includes/_form_helper.html" import render_field, render_button %}
+
+<h1>Verify Email</h1>
+<!-- Message with resend otp below -->
+<p>We have sent you a verification email, please verify your email address.</p>
+
+<a href="{{ url_for('signup_auth_bp.resend_otp') }}">Resend it</a>
+
 <form action="" method="post">
     {{ form.hidden_tag() }}
     <div>
-        {{ render_field(form.otp, class="form-control", placeholder="Enter your one time password") }}
+        {{ render_field(form.otp, class="form-control", placeholder="Enter the code") }}
     </div>
+
+    <!-- Submit buttons (Back, Next) -->
     <div>
-        {{ form.submit }}
+        <a href="{{ url_for('signup_auth_bp.verify_otp', action='back') }}" class="btn btn-light btn-outline-primary rounded-pill">Back</a>
+        <button type="submit" name="action" value="next" class="btn btn-primary rounded-pill">Next</button>
     </div>
 </form>
-<p>Didn't receive an OTP or OTP expired? <a href="{{ url_for('auth_bp.resend_otp') }}">Resend OTP</a></p>
+
 {% endblock %}

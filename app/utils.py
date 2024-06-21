@@ -8,12 +8,12 @@ import logging
 
 from datetime import datetime, timedelta
 from logging import Logger
-from flask import Flask, session, flash, redirect, url_for, current_app
+from flask import Flask, Response, session, flash, redirect, url_for, current_app
 from functools import wraps
 from typing import List, Optional
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from typing import Optional, Dict, List
+from typing import Optional, Union, Dict, List, Tuple
 
 
 # Use logger configured in '__init__.py'
@@ -34,7 +34,7 @@ def session_required(keys: List[str], **kwargs):
             - log_message (str): The message to log if session keys are missing.
     """
     # Set default values for optional keyword arguments
-    redirect_link: str = kwargs.get("redirect_link", "auth_bp.initial_signup")
+    redirect_link: str = kwargs.get("redirect_link", "signup_auth_bp.initial_signup")
     flash_message = kwargs.get('flash_message', "Session expired or invalid access. Please start again.")
     log_message = kwargs.get('log_message', "Missing session keys: {missing_keys}")
 
@@ -86,25 +86,14 @@ def clear_session_data(keys: List[str]) -> None:
         session.pop(key, None)
 
 
-# Clear temporary singup session data function
-def clear_signup_session() -> None:
-    """Clear the signup-related session data (username, email, otp)."""
-    clear_session_data(["username", "email", "otp_data"])
-
-
 # Set session data function
 def set_session_data(data: Dict) -> None:
     """Set multiple session data keys at once."""
     for key, value in data.items():
+        if value is None:
+            session.pop(key, None)
+            continue
         session[key] = value
-
-
-# Handle user (mainly member) not found function
-def handle_user_not_found(username: str, email: str, user_type: str = "User") -> None:
-    """Handle the case where a user (usually member) is not found in the database."""
-    flash(f"{user_type} not found. Please start again.", "danger")
-    logger.error(f"{user_type} not found for username: {username}, email: {email}.")
-    clear_signup_session()
 
 
 # Generate OTP function
@@ -138,7 +127,7 @@ def validate_dict_data_structure(data: Dict, required_keys: List[str]) -> bool:
     
     # Return False if key in required_keys not present in data or value for key has no value
     for key in required_keys:
-        if key not in data.keys() or not data.get(key):
+        if key not in data.keys() or data.get(key) is None:
             return False
     
     # Return True when all checks passed
@@ -256,3 +245,24 @@ def send_otp_email(to_email: str, otp: str) -> Optional[bool]:
     subject = "Your OTP Code"
     body = f"Your OTP code is {otp}"
     return send_email(to_email, subject, body)
+
+
+# Function to properly redirect to the correct signup stages (stored in session)
+# Each endpoint has own checkers to see whether the user is actually supposed to be at that stage
+def signup_stage_redirect(current_stage: str):
+    expected_stage: str = session.get("signup_stage", "initial_signup")
+    
+    # Initalise stage mapping to correct endpoint
+    redirect_mapping: Dict[str, Tuple[str, str]] = {
+        "initial_signup": ("signup_auth_bp.initial_signup", "Please enter your email and username first before continuing."),
+        "otp": ("signup_auth_bp.resend_otp", ""),
+        "password": ("signup_auth_bp.set_password", "You were previously setting your password. Please enter your password."),
+        "additional_info": ("signup_auth_bp.additional_info", "You have already created an account. Please provide additional details or skip.")
+    }
+
+    endpoint, message = redirect_mapping[expected_stage]
+    if len(message) >= 1:
+        flash(message, "info")
+    logger.warning(f"Redirected user from {current_stage} stage to {expected_stage} stage.")
+    
+    return redirect(url_for(endpoint))  # Redirect user

@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 {% extends "base.html" %}
 
-{% block title %}Verify OTP{% endblock %}
+{% block title %}Additional Info{% endblock %}
 
 {% block content %}
-{% from "includes/_form_helper.html" import render_field %}
-<h1>Set Password</h1>
+{% from "includes/_form_helper.html" import render_field, render_button %}
+
+<h1>Additional Information</h1>
+<!-- Short description -->
+<p>Please provide additional information to complete your profile.</p>
+
 <form action="" method="post">
     {{ form.hidden_tag() }}
     <div>
@@ -18,7 +22,11 @@
         {{ render_field(form.postal_code, class="form-control") }}
     </div>
 
-    <button type="submit" name="action" value="complete" class="btn btn-primary">Complete</button>
-    <button type="submit" name="action" value="skip" class="btn btn-secondary">Skip</button>
+    <!-- Submit buttons (Skip, Complete) -->
+    <div>
+        <button type="submit" name="action" value="skip" class="btn btn-light btn-outline-primary rounded-pill">Skip</button>
+        <button type="submit" name="action" value="complete" class="btn btn-primary rounded-pill">Complete</button>
+    </div>
 </form>
+
 {% endblock %}
