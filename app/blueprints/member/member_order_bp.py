@@ -2,7 +2,7 @@ import logging
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models import MenuItem, Order, OrderItem
-from app.forms import OrderForm, MenuForm
+from app.forms.forms import OrderForm, MenuForm
 from app import db, csrf
 from sqlalchemy import text
 

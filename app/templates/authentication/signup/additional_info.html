@@ -4,7 +4,7 @@
 {% block title %}Additional Info{% endblock %}
 
 {% block content %}
-{% from "includes/_form_helper.html" import render_field, render_button %}
+{% from "includes/_form_helper.html" import render_field %}
 
 <h1>Additional Information</h1>
 <!-- Short description -->
@@ -25,7 +25,7 @@
     <!-- Submit buttons (Skip, Complete) -->
     <div>
         <button type="submit" name="action" value="skip" class="btn btn-light btn-outline-primary rounded-pill">Skip</button>
-        <button type="submit" name="action" value="complete" class="btn btn-primary rounded-pill">Complete</button>
+        <button type="submit" name="action" value="complete" class="btn btn-primary rounded-pill submit-disabler optional-submit">Complete</button>
     </div>
 </form>
 

@@ -10,7 +10,7 @@ from flask import (
     url_for,
 )
 
-from app.forms import createFeedback
+from app.forms.forms import createFeedback
 
 member_feedback_bp = Blueprint("member_feedback_bp", __name__)
 

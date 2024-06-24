@@ -34,7 +34,7 @@ from datetime import datetime
 # import sys
 import html
 
-from app.forms import CreateRecipeForm, RecipeSearch
+from app.forms.forms import CreateRecipeForm, RecipeSearch
 from app import db
 from bs4 import BeautifulSoup
 

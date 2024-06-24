@@ -4,7 +4,7 @@
 {% block title %}Verify OTP{% endblock %}
 
 {% block content %}
-{% from "includes/_form_helper.html" import render_field, render_button %}
+{% from "includes/_form_helper.html" import render_field %}
 
 <h1>Verify Email</h1>
 <!-- Message with resend otp below -->
@@ -21,7 +21,7 @@
     <!-- Submit buttons (Back, Next) -->
     <div>
         <a href="{{ url_for('signup_auth_bp.verify_otp', action='back') }}" class="btn btn-light btn-outline-primary rounded-pill">Back</a>
-        <button type="submit" name="action" value="next" class="btn btn-primary rounded-pill">Next</button>
+        <button type="submit" name="action" value="next" class="btn btn-primary rounded-pill submit-disabler">Next</button>
     </div>
 </form>
 

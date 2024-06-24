@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+{% from "includes/_form_helper.html" import render_field %}
+<h1>Signup</h1>
+
+<!-- Link to guest recipes page -->
+<p>Just browsing? Our recipes are <a href="">here</a></p>
+
+<!-- Google Signin button to use Google Signin API -->
+<button type="button" class="btn btn-light">Sign in with Google</button>
+
+<form action="" method="post">
+    {{ form.hidden_tag() }}
+    <div>
+        {{ render_field(form.username, class="form-control", placeholder="Enter your username") }}
+    </div>
+
+    <div>
+        {{ render_field(form.password, class="form-control", placeholder="Enter your password") }}
+    </div>
+
+    <!-- Account recovery (get username or set new password) -->
+    <a href="{{ url_for('login_auth_bp.account_recovery') }}">Forgot Username or Password?</a>
+
+    <!-- Submit buttons (Create Account, Signin) -->
+    <div>
+        <button type="submit" name="action" value="sign_in" class="btn btn-light btn-outline-primary rounded-pill">Create Account</button>
+        <button type="submit" name="action" value="next" class="btn btn-primary rounded-pill submit-disabler">Signin</button>
+    </div>
+</form>
+
+{% endblock %}

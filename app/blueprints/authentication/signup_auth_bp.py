@@ -9,7 +9,7 @@ from typing import Optional, Dict, List
 
 from app import db
 from app.models import User, Member
-from app.forms import InitialSignupForm, VerifyOtpForm, SetPasswordForm, PhoneAddressForm
+from app.forms.auth_forms import InitialSignupForm, VerifyOtpForm, SetPasswordForm, PhoneAddressForm
 from app.utils import clean_input, generate_otp, send_otp_email, session_required, clear_session_data, set_session_data, validate_otp_data, signup_stage_redirect
 
 signup_auth_bp: Blueprint = Blueprint("signup_auth_bp", __name__)
@@ -38,9 +38,7 @@ def initial_signup():
 
         # Redirect if pressed 'Sign In'
         if action == "sign_in":
-            # TODO: Redirect to login
-            # return redirect(url_for("login_auth_bp.login"))
-            return "Pressed Sign In, redirecting..."
+            return redirect(url_for("login_auth_bp.initial_login"))
 
         # Handle if pressed 'Next'
         if action == "next" and form.validate_on_submit():
@@ -54,9 +52,7 @@ def initial_signup():
                 flash("User already exists. Please login.", "info")
                 logger.info(f"User {username} with email {email} tried to signup but account already exists.")
 
-                # TODO: Redirect to login
-                # return redirect(url_for("login_auth_bp.login"))
-                return "User exists, please login now"
+                return redirect(url_for("login_auth_bp.initial_login"))
 
             # Generate OTP & current time
             otp: str = generate_otp()
@@ -84,7 +80,7 @@ def initial_signup():
             return redirect(url_for("signup_auth_bp.initial_signup"))
 
     # Handle GET request, POST request w/o proper action
-    return render_template("authentication/initial_signup.html", form=form)
+    return render_template("authentication/signup/initial_signup.html", form=form)
 
 
 # OTP verification route
@@ -140,7 +136,7 @@ def verify_otp():
             return redirect(url_for("signup_auth_bp.set_password"))
 
     # Handle GET request, POST request w/o proper action
-    return render_template("authentication/verify_otp.html", form=form)
+    return render_template("authentication/signup/verify_otp.html", form=form)
 
 
 # Resend OTP route
@@ -247,7 +243,7 @@ def set_password():
                 return redirect(url_for("signup_auth_bp.set_password"))
 
     # Handle GET request, POST request w/o proper action
-    return render_template("authentication/set_password.html", form=form)
+    return render_template("authentication/signup/set_password.html", form=form)
 
 
 # Additional info route (Phone number, address, postal code)
@@ -315,4 +311,4 @@ def additional_info():
         # return redirect(url_for("member_bp.home"))
         return "Extra info saved, redirect to homepage"
 
-    return render_template("authentication/additional_info.html", form=form)
+    return render_template("authentication/signup/additional_info.html", form=form)
