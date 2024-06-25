@@ -3,16 +3,22 @@
 
 {% block css %}
 {{ super() }}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/recipe/recipe_database.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/recipe/recipe_create.css') }}">
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
 <script nonce="{{ nonce }}" src="{{ url_for('static', filename='js/recipe/recipe_update.js' ) }}"></script>
+{% for ingredient in ingredients %}
+<script nonce="{{ nonce }}">
+
+        add_ingredient_item('{{ ingredient }}')
+    </script>
+{% endfor %}
 {% endblock %}
 
 {% block content %}
-
+{% from "includes/_form_helper.html" import render_field, render_field_picture %}
 <div>
     <h1 class="mb-4" id="add_recipe_title">Update Recipe</h1>
     <div class="container mt-5">
@@ -48,12 +54,7 @@
                     <input type="button" value="+" id="add_ingredient" class="btn btn-success btn-lg col">
                 </div>
                 <div id="ingredient_items_list">
-                    {% for ingredient in ingredients %}
-            <script>
-            add_ingredient_item('{{ ingredient }}')
-            </script>
 
-            {% endfor %}
                 </div>
                 <div class="input_ingredient">
                     <input type="button" value="Remove All" class="btn btn-danger btn-lg" id="remove_all">

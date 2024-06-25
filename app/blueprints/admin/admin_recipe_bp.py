@@ -319,7 +319,7 @@ def create_recipe():
             picture.save(os.path.join('app/static/images_recipe', picture_filename))
 
             # Store in database
-            new_recipe = Recipe(name=name, ingredients=ingredient_cleaned, instructions=instructions, picture=picture_filename, type=recipe_type, calories=calories, prep_time=prep_time, user_created='JohnDoeTesting')
+            new_recipe = Recipe(name=name, ingredients=ingredient_cleaned, instructions=soup, picture=picture_filename, type=recipe_type, calories=calories, prep_time=prep_time, user_created='JohnDoeTesting')
             try:
                 db.session.add(new_recipe)
                 db.session.commit()
@@ -472,7 +472,7 @@ def update_recipe(recipe_id):
         if ingredients != []:
             recipe.ingredients = ingredient_cleaned
         if instructions != '':
-            recipe.instructions = instructions
+            recipe.instructions = soup
         if picture.filename != '':
             recipe.picture = picture_filename
         if calories != '':

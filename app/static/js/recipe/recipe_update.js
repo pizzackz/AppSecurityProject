@@ -181,6 +181,30 @@ function submit_recipe1() {
   }
 
 function add_ingredient_item(string1) {
-    ingredient_list.push(string1);
-    display_ingredient;
+    var ingredient = string1;
+        if (ingredient.trim() == '') {
+        display_popup('The input is empty.', 'error')
+    }
+    else {
+        var regex = /^[a-zA-Z\s,]+$/;
+        if (regex.test(ingredient)) {
+            for (i=0;i<ingredient.length;i++) {
+                if (ingredient_list.includes(ingredient)) {
+
+                }
+                else {
+                    if (ingredient.trim() == '') {
+                        display_popup('The input is empty.', 'error');
+                    }
+                    else {
+                        ingredient_list.push(string1);
+                        display_ingredient();
+                    }
+                }
+            }
+        }
+        else {
+            display_popup('Letters, spaces and commas are only accepted.', 'error');
+        }
+    }
 }

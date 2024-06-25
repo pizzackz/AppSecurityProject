@@ -5,7 +5,7 @@ from flask import Blueprint, request, redirect, render_template, url_for
 
 from app import db
 from app.models import User
-from app.forms.forms import InitialLoginForm
+# from app.forms.forms import InitialLoginForm
 
 
 # Initialise flask blueprint - 'login_aut_bp'
