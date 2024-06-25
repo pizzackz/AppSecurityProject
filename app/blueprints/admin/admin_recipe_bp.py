@@ -14,7 +14,7 @@ import imghdr
 import imageio
 import requests
 from werkzeug.utils import secure_filename
-from app.models import Recipe
+from app.models import Recipe, RecipeDeleted
 import os
 from sqlalchemy import or_
 import json
@@ -26,7 +26,7 @@ from PIL import Image
 # from werkzeug.utils import secure_filename
 # from werkzeug.security import generate_password_hash, check_password_hash
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # import random
 # import sys
@@ -38,6 +38,7 @@ from bs4 import BeautifulSoup
 
 admin_recipe_bp = Blueprint("admin_recipe_bp", __name__)
 
+locked_recipes = False
 
 def clean_input(html):
     cleaned = html.unescape(html)
@@ -71,7 +72,6 @@ def recipe_database():
     per_page = 16
     start = (page - 1) * per_page
     end = start + per_page
-
 
     if request.method == 'POST':
         if not form.validate_on_submit():
@@ -157,8 +157,10 @@ def recipe_database():
 @admin_recipe_bp.route('/admin/create_recipe', methods=['GET', 'POST'])
 def create_recipe():
     form = CreateRecipeForm()
-
     if request.method == "POST":
+        if locked_recipes == True:
+            flash('Recipes are locked', 'danger')
+            return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
         # Handles invalidated form
         if not form.validate_on_submit():
             print('failed')
@@ -350,8 +352,14 @@ def view_recipe(recipe_id):
 
 @admin_recipe_bp.route('/admin/delete_recipe/<recipe_id>', methods=['GET', 'POST'])
 def delete_recipe(recipe_id):
+    global locked_recipes
+    if locked_recipes == True:
+        flash('Recipes are locked', 'danger')
+        return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
     recipe = Recipe.query.filter_by(id=recipe_id).first()
     flash(f'{recipe.name} was deleted', 'info')
+    old_recipe = RecipeDeleted(name=recipe.name, ingredients=recipe.ingredients, instructions=recipe.instructions, picture=recipe.picture, type=recipe.type, calories=recipe.calories, prep_time=recipe.prep_time, user_created=recipe.user_created, date_created=recipe.date_created)
+    db.session.add(old_recipe)
     db.session.delete(recipe)
     db.session.commit()
     return redirect(url_for('admin_recipe_bp.recipe_database'))
@@ -361,6 +369,9 @@ def update_recipe(recipe_id):
     recipe = Recipe.query.filter_by(id=recipe_id).first()
     form = CreateRecipeForm()
     if request.method == 'POST':
+        if locked_recipes == True:
+            flash('Recipes are locked', 'danger')
+            return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
         name = form.name.data
         ingredients = form.ingredients.data
         instructions = form.instructions.data
@@ -467,17 +478,25 @@ def update_recipe(recipe_id):
 
         if name != '':
             recipe.name = name
+            recipe.date_created = datetime.utcnow()
         if ingredients != []:
             recipe.ingredients = ingredient_cleaned
+            recipe.date_created = datetime.utcnow()
         if instructions != '':
             recipe.instructions = soup.prettify()
+            recipe.date_created = datetime.utcnow()
         if picture.filename != '':
             recipe.picture = picture_filename
+            recipe.date_created = datetime.utcnow()
         if calories != '':
             recipe.calories = calories
+            recipe.date_created = datetime.utcnow()
         if prep_time != '':
             recipe.prep_time = prep_time
-        recipe.type = recipe_type
+            recipe.date_created = datetime.utcnow()
+        if recipe.type != recipe_type:
+            recipe.type = recipe_type
+            recipe.date_created = datetime.utcnow()
 
         db.session.commit()
         flash(f'{recipe.name} updated', 'info')
@@ -494,13 +513,202 @@ def update_recipe(recipe_id):
 
     return render_template('admin/recipe/recipe_update.html', form=form, ingredients=ingredients)
 
+@admin_recipe_bp.route('/admin/recipe_dashboard')
+def recipe_dashboard():
+    recipes = Recipe.query.all()
+    now = datetime.utcnow()
+
+    recipe_count_last_12_hours = []
+
+    # Loop through the last 12 hours
+    for i in range(12, 0, -1):
+        start_time = now - timedelta(hours=i)
+        end_time = now - timedelta(hours=i - 1)
+        count = sum(1 for recipe in recipes if start_time <= recipe.date_created < end_time)
+        recipe_count_last_12_hours.append(count)
+
+    # sort the recipes by date created
+    recipes = sorted(recipes, key=lambda x: x.date_created, reverse=True)
+    recipes = recipes[:5]
+
+    deletedrecipes = RecipeDeleted.query.all()
+    deletedrecipes = sorted(deletedrecipes, key=lambda x: x.date_deleted, reverse=True)
+    deletedrecipes = deletedrecipes[:5]
+    data = {
+        'recipe_count': Recipe.query.count(),
+        'premium_recipe': Recipe.query.filter_by(type='Premium').count(),
+        'standard_recipe': Recipe.query.filter_by(type='Standard').count()
+    }
+    return render_template('admin/recipe/recipe_dashboard.html', recipes=recipes, locked_recipes=locked_recipes, data=data, deletedrecipes=deletedrecipes, recipe_count_list=recipe_count_last_12_hours)
+
+@admin_recipe_bp.route('/admin/lock_recipes')
+def lock_recipes():
+    global locked_recipes
+    locked_recipes = True
+    flash('Recipes locked', 'info')
+    return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
+
+@admin_recipe_bp.route('/admin/unlock_recipes')
+def unlock_recipes():
+    global locked_recipes
+    locked_recipes = False
+    flash('Recipes unlocked', 'info')
+    return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
+
+def check_locked_recipes():
+    global locked_recipes
+    print(f'Passed through function, {locked_recipes}')
+    if locked_recipes == True:
+        flash('Recipes are locked', 'danger')
+        return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
 
 
-@admin_recipe_bp.route('/populate_recipes')
+@admin_recipe_bp.route('/admin/populate_recipes')
 def populate_recipes():
     from app.populate_recipes import populate_recipes
     populate_recipes()
-    return 'Populated recipe'
+    flash('Populated recipe', 'info')
+    return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
+
+@admin_recipe_bp.route('/admin/reset_recipes')
+def reset_recipes():
+    recipes = Recipe.query.all()
+    for recipe in recipes:
+        db.session.delete(recipe)
+    db.session.commit()
+    flash('Database reset', 'info')
+    return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
+
+@admin_recipe_bp.route('/admin/deleted_recipe_database', methods=['GET', 'POST'])
+def deleted_recipe_database():
+    print(db) # Checking Database Status
+    form = RecipeSearch()
+
+    # Getting pages (For Pagination)
+    page = request.args.get('page', 1, type=int)
+    per_page = 16
+    start = (page - 1) * per_page
+    end = start + per_page
+
+    if request.method == 'POST':
+        if not form.validate_on_submit():
+            print('Failed')
+            flash('Please fill in all fields', 'danger')
+            return redirect(url_for('admin_recipe_bp.recipe_database'))
+        else:
+            print('Success')
+            ingredients = form.ingredients.data
+            try:
+                ingredients = ingredients.split(',')
+            except:
+                flash('Error processing ingredients', 'error')
+                return redirect(url_for('admin_recipe_bp.recipe_database'))
+
+            # Clean data
+            if ingredients == []:  # If empty, redirect
+                flash('Ingredients are empty!', 'error')
+                return redirect(url_for('admin_recipe_bp.recipe_database'))
+                # return redirect
+
+            # If not pass regex, redirect
+            regex = r'^[a-zA-Z ]+$'  # Regex pattern allowing only letters and spaces
+            for i in range(len(ingredients)):
+                ingredients[i] = (ingredients[i]).strip()
+                if ingredients[i] == '':
+                    flash('Ingredients are empty!', 'error')
+                    return redirect(url_for('admin_recipe_bp.deleted_recipe_database'))
+                if not re.fullmatch(regex, ingredients[i]):
+                    flash('Only letters and spaces allowed', 'error')
+                    return redirect(url_for('admin_recipe_bp.deleted_recipe_database'))
+                if len(ingredients[i]) > 20:
+                    flash('Ingredient cannot be more than 20 characters', 'error')
+                    return redirect(url_for('admin_recipe_bp.deleted_recipe_database'))
+                ingredients[i] = (ingredients[i]).lower()
+
+            # Searching
+            search_results = []
+
+            print(ingredients)
+            for i in ingredients:
+                print(i)
+                all_recipes = RecipeDeleted.query.filter(
+                    or_(
+                        Recipe.ingredients.contains(i),
+                        Recipe.name.contains(i)
+                    )
+                ).all()
+                for recipe in all_recipes:
+                    if recipe not in search_results:
+                        search_results.append(recipe)
+
+            # Sort the search results by the ingredients matched count
+            search_results = sorted(search_results, key=lambda x: len(set(x.ingredients.split(',')).intersection(ingredients)), reverse=True)
+            match = []
+            for i in search_results:
+                count = 0
+                for c in ingredients:
+                    print(i.ingredients)
+                    print(i.name)
+                    if c in i.ingredients:
+                        count += 1
+                    if c in i.name:
+                        count += 1
+                match.append(count)
+            print(match)
+
+
+            total_pages = (len(search_results) // per_page) + 1
+            search_results = search_results[start:end]
+
+            return render_template("admin/recipe/recipe_database_deleted.html", form=form, recipes=search_results, total_pages=total_pages, page=page)
+
+    # Get pages
+    total_pages = (RecipeDeleted.query.count() // per_page) + 1
+    print(f'Total pages: {total_pages}')
+    print(f'There are {RecipeDeleted.query.count()} recipe')
+
+    items_on_page = RecipeDeleted.query.slice(start, end)
+
+    return render_template("admin/recipe/recipe_database_deleted.html", form=form, recipes=items_on_page, total_pages=total_pages, page=page)
+
+# View deleted recipes
+@admin_recipe_bp.route('/admin/view_deleted_recipe/<recipe_id>', methods=['GET', 'POST'])
+def view_deleted_recipe(recipe_id):
+    recipe = RecipeDeleted.query.filter_by(id=recipe_id).first()
+    recipe_data = {
+       'id': recipe.id,
+       'name': recipe.name,
+       'ingredients': (recipe.ingredients).split(','),  # Convert JSON string to Python object
+       'instructions': recipe.instructions,
+       'picture': recipe.picture,
+       'date_created': recipe.date_created,
+        'date_deleted':recipe.date_deleted,
+       'user_created': recipe.user_created,
+       'type': recipe.type,
+       'calories': recipe.calories,
+       'prep_time': recipe.prep_time,
+       'ingredient_count': len(recipe.ingredients.split(',')),
+    }
+    return render_template('admin/recipe/recipe_view_deleted.html', recipe=recipe_data)
+
+
+@admin_recipe_bp.route('/admin/delete_recipe_forever/<recipe_id>', methods=['GET', 'POST'])
+def delete_recipe_forever(recipe_id):
+    recipe = RecipeDeleted.query.filter_by(id=recipe_id).first()
+    flash(f'{recipe.name} was deleted forever', 'info')
+    db.session.delete(recipe)
+    db.session.commit()
+    return redirect(url_for('admin_recipe_bp.deleted_recipe_database'))
+
+@admin_recipe_bp.route('/admin/restore_recipe/<recipe_id>', methods=['GET', 'POST'])
+def restore_recipe(recipe_id):
+    recipe = RecipeDeleted.query.filter_by(id=recipe_id).first()
+    flash(f'{recipe.name} was restored', 'info')
+    new_recipe = Recipe(name=recipe.name, ingredients=recipe.ingredients, instructions=recipe.instructions, picture=recipe.picture, type=recipe.type, calories=recipe.calories, prep_time=recipe.prep_time, user_created=recipe.user_created, date_created=recipe.date_created)
+    db.session.add(new_recipe)
+    db.session.delete(recipe)
+    db.session.commit()
+    return redirect(url_for('admin_recipe_bp.recipe_database'))
 
 
 
@@ -510,72 +718,3 @@ def populate_recipes():
 
 
 
-
-# @admin_recipe_bp.route('/admin/edit_recipe/<recipe_id>', methods=['GET', 'POST'])
-# def edit_recipe(recipe_id, id):
-#     try:
-#         with db.cursor() as cursor:
-#             # Retrieve the recipe from the database using its ID
-#             cursor.execute("SELECT * FROM recipe WHERE id=%s", (recipe_id,))
-#             recipe = cursor.fetchone()
-#             if not recipe:
-#                 return "Recipe not found"
-#
-#             if request.method == 'POST':
-#                 name = request.form.get('name')
-#                 ingredients = request.form.get('ingredients').split(',')
-#                 instructions = request.form.get('instructions')
-#                 picture = request.files.get('picture')
-#
-#                 # Update recipe data in the database
-#                 if picture.filename:
-#                     old_picture = recipe['picture']
-#                     if old_picture:
-#                         os.remove(os.path.join('static/images_recipe', old_picture))
-#                     picture_filename = secure_filename(picture.filename)
-#                     picture.save(os.path.join('static/images_recipe', picture_filename))
-#                     cursor.execute("UPDATE recipe SET picture=%s WHERE id=%s", (picture_filename, recipe_id))
-#
-#                 if name:
-#                     cursor.execute("UPDATE recipe SET name=%s WHERE id=%s", (name, recipe_id))
-#                 if ingredients:
-#                     cursor.execute("UPDATE recipe SET ingredients=%s WHERE id=%s", (','.join(ingredients), recipe_id))
-#                 if instructions:
-#                     cursor.execute("UPDATE recipe SET instructions=%s WHERE id=%s", (instructions, recipe_id))
-#
-#                 db.commit()
-#                 flash(f'{recipe["name"]} has been updated', 'info')
-#                 return redirect(url_for('admin.recipe_database', id=id))
-#
-        # return render_template('admin/recipe_update.html')
-#     except Exception as e:
-#         print('Error in editing recipe:', str(e))
-#         flash('An error occurred while editing the recipe', 'danger')
-#         return redirect(url_for('admin.recipe_database', id=id))
-#
-#
-# @admin_recipe_bp.route('/admin/delete_recipe/<recipe_id>')
-# def delete_recipe(recipe_id, id):
-#     try:
-#         with db.cursor() as cursor:
-#             # Retrieve the recipe from the database using its ID
-#             cursor.execute("SELECT * FROM recipe WHERE id=%s", (recipe_id,))
-#             recipe = cursor.fetchone()
-#             if not recipe:
-#                 return "Recipe not found"
-#
-#             # Delete the recipe from the database
-#             cursor.execute("DELETE FROM recipe WHERE id=%s", (recipe_id,))
-#             db.commit()
-#
-#             # Delete the recipe's picture file
-#             old_picture = recipe['picture']
-#             if old_picture:
-#                 os.remove(os.path.join('static/images_recipe', old_picture))
-#
-#             flash(f'{recipe["name"]} has been deleted', 'info')
-#             return redirect(url_for('admin.recipe_database', id=id))
-#     except Exception as e:
-#         print('Error in deleting recipe:', str(e))
-#         flash('An error occurred while deleting the recipe', 'danger')
-#         return redirect(url_for('admin.recipe_database', id=id))

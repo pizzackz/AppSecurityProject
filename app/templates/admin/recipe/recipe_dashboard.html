@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}tastefully | Recipe Database{% endblock %}
+
+{% block css %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/recipe/recipe_dashboard.css') }}">
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script nonce="{{ nonce }}" src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script nonce="{{ nonce }}" src="{{ url_for('static', filename='js/recipe/recipe_dashboard.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1 class="mb-4" id="page_title">Recipe Dashboard</h1>
+  <div class="row">
+
+    <div class="col">
+      <div class="row">
+        <div class="col items">
+          <h2>{{ data.recipe_count }}</h2>
+          <h3>Number of Recipes</h3>
+        </div>
+        <div class="col items">
+          <h2>{{ data.premium_recipe }}</h2>
+          <h3>Premium Recipes</h3>
+        </div>
+        <div class="col items">
+          <h2>{{ data.standard_recipe }}</h2>
+          <h3>Standard Recipes</h3>
+        </div>
+      </div>
+        <div class="items">
+          <canvas id="myChart"></canvas>
+          <script nonce="{{ nonce }}">
+            var recipeData = {
+                labels: [
+                    '12 hour ago', '11 hours ago', '10 hours ago', '9 hours ago', '8 hours ago',
+                    '7 hours ago', '6 hours ago', '5 hours ago', '4 hours ago', '3 hours ago',
+                    '2 hours ago', '1 hour ago'
+                ],
+                datasets: [{
+                    label: 'Number of Recipes Created in the last 12 hours',
+                    data: {{ recipe_count_list }},
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            };
+
+          </script>
+        </div>
+    </div>
+    <div class="col col-4 items">
+      <h2>Actions</h2>
+      <a href="/admin/recipe_database" class="btn btn-success mb-2">View All Recipes</a><br>
+      <a href="/admin/create_recipe" class="btn btn-primary mb-2">Create Recipe</a><br>
+      <a href="/admin/deleted_recipe_database" class="btn btn-info mb-2">View Deleted Recipes</a><br>
+
+      {% if locked_recipes == True %}
+        <a href="/admin/unlock_recipes" class="btn btn-success mb-2">Unlock Recipes</a><br>
+      {% endif %}
+      {% if locked_recipes == False %}
+        <a href="/admin/lock_recipes" class="btn btn-danger mb-2">Lock Recipes</a><br>
+      {% endif %}
+      <a href="/admin/populate_recipes" class="btn btn-warning mb-2">Repopulate Database</a><br>
+      <a href="/admin/reset_recipes" class="btn btn-danger mb-2">Reset Database</a><br>
+
+    </div>
+  </div>
+  <div class="row">
+    <div class="col items">
+          <h3>Recipes Created Recently</h3>
+          <table class="table">
+            <tr>
+              <th>Recipe Name</th>
+              <th>Date Created</th>
+              <th>Created by</th>
+            </tr>
+            {% for recipe in recipes %}
+            <tr>
+              <td>{{ recipe.name }}</td>
+              <td>{{ recipe.date_created }}</td>
+              <td>{{ recipe.user_created }}</td>
+            </tr>
+            {% endfor %}
+
+          </table>
+    </div>
+    <div class="col items">
+      <h3>Recipes Deleted Recently</h3>
+          <table class="table">
+            <tr>
+              <th>Recipe Name</th>
+              <th>Date Deleted</th>
+              <th>Created by</th>
+            </tr>
+            {% for recipe in deletedrecipes %}
+            <tr>
+              <td>{{ recipe.name }}</td>
+              <td>{{ recipe.date_deleted }}</td>
+              <td>{{ recipe.user_created }}</td>
+            </tr>
+            {% endfor %}
+
+          </table>
+        </div>
+
+    </div>
+  </div>
+
+
+
+
+</div>
+{% endblock %}
