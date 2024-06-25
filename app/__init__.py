@@ -73,6 +73,10 @@ def create_app() -> Flask:
     def load_user(user_id: int) -> User:
         return User.query.get(int(user_id))
 
+    @app.before_request
+    def set_nonce():
+        g.nonce = generate_nonce()
+
     # Set Content Security Policy header to mitigate XSS attacks
     @app.after_request
     def set_security_headers(response: Response) -> Response:
@@ -93,10 +97,6 @@ def create_app() -> Flask:
 
         return response
 
-    @app.before_request
-    def set_none():
-        g.nonce = generate_nonce()
-
     @app.context_processor
     def inject_nonce():
         return dict(nonce=g.get("nonce"))
@@ -108,7 +108,7 @@ def create_app() -> Flask:
     app.register_blueprint(login_auth_bp)
     
     from app.blueprints.member.member_subscription_bp import member_subscription_bp
-    from app.blueprints.member.member_order_bp import member_order_bp  #, alter_menu_item_table
+    from app.blueprints.member.member_order_bp import member_order_bp
     from app.blueprints.member.member_feedback_bp import member_feedback_bp
     app.register_blueprint(member_subscription_bp)
     app.register_blueprint(member_order_bp)

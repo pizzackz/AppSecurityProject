@@ -7,3 +7,4 @@ app/blueprints/admin/__pycache__
 app/blueprints/member/__pycache__
 app/blueprints/guest/__pycache__
 app/blueprints/authentication/__pycache__
+app/forms/__pycache__
