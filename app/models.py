@@ -27,15 +27,9 @@ class User(UserMixin, db.Model):
     address = Column(String(255), nullable=True)
     postal_code = Column(String(20), nullable=True)
     created_at = Column(DateTime, default=func.current_timestamp(), nullable=False)
-    updated_at = Column(
-        DateTime,
-        default=func.current_timestamp(),
-        onupdate=func.current_timestamp(),
-        nullable=False,
-    )
-    type = Column(
-        String(50), default="member", nullable=False
-    )  # "member" or "admin", defaulted to 'member'
+    updated_at = Column(DateTime, default=func.current_timestamp(), onupdate=func.current_timestamp(), nullable=False)
+    
+    type = Column(String(50), default="member", nullable=False)  # "member" or "admin", defaulted to 'member'
 
     # Defining relationships with other models
     authentication = db.relationship(

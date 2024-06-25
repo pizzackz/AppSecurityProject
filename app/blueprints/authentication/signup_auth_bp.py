@@ -32,13 +32,13 @@ def initial_signup():
     # Clear session data to start fresh
     clear_session_data(["username", "email", "otp_data"])
 
+    # If pressed 'login', redirect to initial_login
+    if request.args.get("action") == "login":
+        return redirect(url_for("login_auth_bp.initial_login"))
+
     # Handle validated form, input data sanitised before validation
     if request.method == "POST":
         action: str = request.form.get("action")
-
-        # Redirect if pressed 'Sign In'
-        if action == "sign_in":
-            return redirect(url_for("login_auth_bp.initial_login"))
 
         # Handle if pressed 'Next'
         if action == "next" and form.validate_on_submit():
@@ -77,9 +77,7 @@ def initial_signup():
             flash("Failed to send OTP. Please try again.", "error")
             logger.error(f"Failed to send OTP to {email} for user {username}")
 
-            return redirect(url_for("signup_auth_bp.initial_signup"))
-
-    # Handle GET request, POST request w/o proper action
+    # Handle GET request, POST request w/o proper action, POST request failed to send email
     return render_template("authentication/signup/initial_signup.html", form=form)
 
 

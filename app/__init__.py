@@ -50,6 +50,36 @@ def setup_custom_logger(name: str) -> Logger:
     return logger
 
 
+# Generate and save nonce (number used once) to request specific object (flask.g)
+def set_nonce():
+    g.nonce = generate_nonce()
+
+
+# Set Content Security Policy header to mitigate XSS attacks
+def set_security_headers(response: Response) -> Response:
+    nonce = g.get("nonce")
+    if nonce:
+        csp_directives = Config.CSP_DIRECTIVES
+        csp_directives["style-src"].append(f"'nonce-{nonce}'")
+        csp_directives["script-src"].append(f"'nonce-{nonce}'")
+        csp_directives["script-src-attr"].append(f"'nonce-{nonce}'")
+        csp_header_value = "; ".join(
+            [f"{key} {' '.join(value)}" for key, value in csp_directives.items()]
+        )
+        response.headers["Content-Security-Policy"] = csp_header_value
+
+    # Set additional secure headers
+    for key, value in Config.SECURE_HEADERS.items():
+        response.headers[key] = value
+
+    return response
+
+
+# Inject nonce from 'g' to all templates requiring it
+def inject_nonce():
+    return dict(nonce=g.get("nonce"))
+
+
 def create_app() -> Flask:
     app: Flask = Flask(__name__)  # Create Flask application instance
     app.config.from_object(Config)  # Load configuration from Config class in 'config.py'
@@ -67,39 +97,6 @@ def create_app() -> Flask:
     # Configure Flask-Session to use SQLAlchemy
     app.config["SESSION_SQLALCHEMY"] = db
     Session(app)
-
-    # Set up user loader to load user by querying database for 'User' entity
-    @login_manager.user_loader
-    def load_user(user_id: int) -> User:
-        return User.query.get(int(user_id))
-
-    @app.before_request
-    def set_nonce():
-        g.nonce = generate_nonce()
-
-    # Set Content Security Policy header to mitigate XSS attacks
-    @app.after_request
-    def set_security_headers(response: Response) -> Response:
-        nonce = g.get("nonce")
-        if nonce:
-            csp_directives = app.config["CSP_DIRECTIVES"].copy()
-            csp_directives["style-src"].append(f"'nonce-{nonce}'")
-            csp_directives["script-src"].append(f"'nonce-{nonce}'")
-            csp_directives["script-src-attr"].append(f"'nonce-{nonce}'")
-            csp_header_value = "; ".join(
-                [f"{key} {' '.join(value)}" for key, value in csp_directives.items()]
-            )
-            response.headers["Content-Security-Policy"] = csp_header_value
-
-        # Set additional secure headers
-        for key, value in app.config["SECURE_HEADERS"].items():
-            response.headers[key] = value
-
-        return response
-
-    @app.context_processor
-    def inject_nonce():
-        return dict(nonce=g.get("nonce"))
 
     # Register blueprints
     from app.blueprints.authentication.signup_auth_bp import signup_auth_bp
@@ -127,6 +124,11 @@ def create_app() -> Flask:
 
     # Register CLI commands
     register_commands(app)
+
+    # Register before request, after request, and context processor functions
+    app.before_request(set_nonce)
+    app.context_processor(inject_nonce)
+    app.after_request(set_security_headers)
 
     # Return Flask app instance
     return app

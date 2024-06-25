@@ -33,7 +33,7 @@ class PhoneAddressForm(FlaskForm):
 # Manual Login phase 1 form, requires username & password
 class InitialLoginForm(FlaskForm):
     username = StringField("Username", validators=[DataRequired(), Length(min=2, max=20)])
-    password = PasswordField("Password", validators=[DataRequired(), Length(min=6), validate_password_complexity])
+    password = PasswordField("Password", validators=[DataRequired(), Length(min=6)])
 
 
 # Account Recovery Phase 2 - Choosing to recover username or set new password

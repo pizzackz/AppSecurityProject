@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 {% extends "base.html" %}
 
-{% block title %}Verify Email{% endblock %}
+{% block title %}Account Recovery - Verify Email{% endblock %}
 
 {% block content %}
 {% from "includes/_form_helper.html" import render_field %}
@@ -10,7 +10,8 @@
 <!-- Message with resend otp below -->
 <p>We have sent you a verification email, please verify your email address.</p>
 
-<a href="{{ url_for('signup_auth_bp.resend_otp') }}">Resend it</a>
+<!-- TODO: Replace link with actual resend otp route -->
+<a href="">Resend it</a>
 
 <form action="" method="post" id="verify-otp-form">
     {{ form.hidden_tag() }}
@@ -20,7 +21,7 @@
 
     <!-- Submit buttons (Back, Next) -->
     <div>
-        <a href="{{ url_for('signup_auth_bp.verify_otp', action='back') }}" class="btn btn-light btn-outline-primary rounded-pill">Back</a>
+        <a href="{{ url_for('login_auth_bp.verify_otp', action='back') }}" class="btn btn-light btn-outline-primary rounded-pill">Back</a>
         <button type="submit" name="action" value="next" class="btn btn-primary rounded-pill submit-disabler">Next</button>
     </div>
 </form>

@@ -5,7 +5,7 @@
 
 {% block content %}
 {% from "includes/_form_helper.html" import render_field %}
-<h1>Signup</h1>
+<h1>Sign In</h1>
 
 <!-- Link to guest recipes page -->
 <p>Just browsing? Our recipes are <a href="">here</a></p>
@@ -13,7 +13,7 @@
 <!-- Google Signin button to use Google Signin API -->
 <button type="button" class="btn btn-light">Sign in with Google</button>
 
-<form action="" method="post">
+<form action="" method="post" id="initial-login-form">
     {{ form.hidden_tag() }}
     <div>
         {{ render_field(form.username, class="form-control", placeholder="Enter your username") }}
@@ -28,8 +28,8 @@
 
     <!-- Submit buttons (Create Account, Signin) -->
     <div>
-        <button type="submit" name="action" value="sign_in" class="btn btn-light btn-outline-primary rounded-pill">Create Account</button>
-        <button type="submit" name="action" value="next" class="btn btn-primary rounded-pill submit-disabler">Signin</button>
+        <a href="{{ url_for('login_auth_bp.initial_login', action='create_account') }}" class="btn btn-light btn-outline-primary rounded-pill">Create Account</a>
+        <button type="submit" name="action" value="login" class="btn btn-primary rounded-pill submit-disabler">Signin</button>
     </div>
 </form>
 
