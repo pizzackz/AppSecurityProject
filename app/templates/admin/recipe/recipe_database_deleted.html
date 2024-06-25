@@ -8,7 +8,7 @@
 
 {% block scripts %}
 {{ super() }}
-<script nonce="{{ nonce }}" src="{{ url_for('static', filename='js/recipe/recipe_database_deleted.js' ) }}"></script>
+<script nonce="{{ nonce }}" src="{{ url_for('static', filename='js/recipe/recipe_database_delete.js' ) }}"></script>
 {% endblock %}
 
 {% block navbar %} {% include "includes/_admin_navbar.html" %} {% endblock %}
@@ -43,7 +43,7 @@
         </h5>
       </div>
       <br>
-      <form class="form-inline" id="form1" method="post" action="{{ url_for('admin_recipe_bp.recipe_database')}}">
+      <form class="form-inline" id="form1" method="post" action="{{ url_for('admin_recipe_bp.deleted_recipe_database')}}">
         {{ form.csrf_token }}
         <div class="input_ingredient">
           <input type="text" class="form-control form-control-lg mb-2" name="ingredient" id="ingredient" placeholder="chicken, salad">
@@ -73,7 +73,7 @@
               {{ recipe.ingredients }}
             </p>
             <a href="/admin/view_deleted_recipe/{{ recipe.id }}" class="btn btn-success m-2">View Recipe</a>
-            <a nonce="{{ nonce }}" id="/admin/delete_{{ recipe.id }}" class="btn btn-danger m-2" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
+            <a nonce="{{ nonce }}" id="delete_{{ recipe.id }}" class="btn btn-danger m-2" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
             <p class="card-text user">By {{ recipe.user_created }}</p>
             <script nonce="{{ nonce }}">
               var selected = document.getElementById('delete_{{ recipe.id }}');
@@ -93,8 +93,7 @@
               <p class="card-text">
                 {{ recipe.ingredients }}
               </p>
-              <a href="/admin/view_recipe/{{ recipe.id }}" class="btn btn-success m-2">View Recipe</a>
-              <a href="/admin/update_recipe/{{ recipe.id }}" class="btn btn-primary m-2">Edit Recipe</a>
+              <a href="/admin/view_deleted_recipe/{{ recipe.id }}" class="btn btn-success m-2">View Recipe</a>
               <a nonce="{{ nonce }}" id="delete_{{ recipe.id }}" class="btn btn-danger m-2" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
               <p class="card-text user">By {{ recipe.user_created }}</p>
               <script nonce="{{ nonce }}">
@@ -129,7 +128,7 @@
     console.log(content);
     document.getElementById('modal-body').innerHTML = 'Are you sure you want to remove ' + content + '?';
     document.getElementById('delete').onclick = function () {
-      window.location.href = "delete_recipe/" + id;
+      window.location.href = "delete_recipe_forever/" + id;
     }
   }
 </script>

@@ -392,7 +392,7 @@ def update_recipe(recipe_id):
         if instructions != '':
             if len(instructions) > 1000:
                 flash('Instructions cannot be more than 1000 characters', 'error')
-                return redirect(url_for('admin_recipe_bp.create_recipe'))
+                return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
             html.unescape(instructions)
             # Parse HTML
             soup = BeautifulSoup(instructions, 'html.parser')
@@ -408,37 +408,37 @@ def update_recipe(recipe_id):
         if calories != '':
             if type(calories) != int:
                 flash('Calories must be an integer', 'error')
-                return redirect(url_for('admin_recipe_bp.create_recipe'))
+                return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
             if calories < 0:
                 flash('Calories cannot be negative', 'error')
-                return redirect(url_for('admin_recipe_bp.create_recipe'))
+                return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
             if calories > 3000:
                 flash('Calories cannot be more than 3000', 'error')
-                return redirect(url_for('admin_recipe_bp.create_recipe'))
+                return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
 
         # PROCESS PREP TIME
         if prep_time != '':
             if type(prep_time) != int:
                 flash('Prep time must be an integer', 'error')
-                return redirect(url_for('admin_recipe_bp.create_recipe'))
+                return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
             if prep_time < 0:
                 flash('Prep time cannot be negative', 'error')
-                return redirect(url_for('admin_recipe_bp.create_recipe'))
+                return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
             if prep_time > 300:
                 flash('Prep time cannot be more than 300 minutes', 'error')
-                return redirect(url_for('admin_recipe_bp.create_recipe'))
+                return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
 
         # PROCESS RECIPE TYPE
         if recipe_type != 'Standard' and recipe_type != 'Premium':
             flash('Invalid recipe type', 'error')
-            return redirect(url_for('admin_recipe_bp.create_recipe'))
+            return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
 
         # PROCESS INGREDIENTS
         try:
             ingredients = ingredients.split(',')
         except:
             flash('Error processing ingredients', 'error')
-            return redirect(url_for('admin_recipe_bp.create_recipe'))
+            return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
 
         # Clean data
         if ingredients != []:
@@ -449,14 +449,14 @@ def update_recipe(recipe_id):
                 ingredients[i] = (ingredients[i]).strip()
                 if ingredients[i] == '':
                     flash('Ingredients are empty!', 'error')
-                    return redirect(url_for('admin_recipe_bp.create_recipe'))
+                    return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
                 if not re.fullmatch(regex, ingredients[i]):
                     print(f'Error here, {ingredients[i]}')
                     flash('Only letters and spaces allowed', 'error')
-                    return redirect(url_for('admin_recipe_bp.create_recipe'))
+                    return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
                 if len(ingredients[i]) > 20:
                     flash('Ingredient cannot be more than 20 characters', 'error')
-                    return redirect(url_for('admin_recipe_bp.create_recipe'))
+                    return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
                 ingredients[i] = (ingredients[i]).lower()
             ingredient_cleaned = ''
 
@@ -469,7 +469,7 @@ def update_recipe(recipe_id):
         if picture.filename != '':
             if not is_image(picture):
                 flash('Invalid image format', 'error')
-                return redirect(url_for('admin_recipe_bp.create_recipe'))
+                return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
                 # Save the image file
             picture_filename = picture.filename
             picture_filename = picture_filename.split('.')
