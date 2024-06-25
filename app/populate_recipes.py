@@ -39,7 +39,7 @@ recipes = [
         'calories': 450,
         'prep_time': 60
     },
-    # Adding 24 more recipes
+    # Adding 24 more recipe
     {
         'name': 'Spaghetti Carbonara',
         'ingredients': json.dumps(['Spaghetti', 'Eggs', 'Parmesan cheese', 'Pancetta', 'Black pepper']),

@@ -6,15 +6,22 @@ function remove_ingredient(num) {
     display_ingredient();
 }
 
+// Display ingredient
 function display_ingredient() {
     var ingredient_itemHTML = ""
     for (i = 0; i < ingredient_list.length; i++) {
         ingredient_itemHTML += '<div class="ingredient_item" id="' + ingredient_list[i] +  `" style="width:fit-content">
-        <i class="bi bi-x remove_ingredient" id="remove_` + ingredient_list[i] + '" onclick="remove_ingredient(' + i + `)"></i>
+        <i class="bi bi-x remove_ingredient" id="remove_` + ingredient_list[i] + `"></i>
         <span class="item">` + ingredient_list[i] + "</span></div>";
     }
     document.getElementById('ingredient_items_list').innerHTML = ingredient_itemHTML;
-    remove_all.classList.remove('disabled')
+    for (i = 0; i < ingredient_list.length; i++) {
+        remove_button = document.getElementById('remove_' + ingredient_list[i]);
+        remove_button.addEventListener('click', function() {
+            remove_ingredient(i);
+       })
+    }
+    remove_all.classList.remove('disabled');
     if (ingredient_itemHTML == "") {
         const remove_all = document.getElementById('remove_all');
         const search = document.getElementById('search');
@@ -162,9 +169,6 @@ function submit_recipe1() {
         if (recipe_instruction_input.trim() == '') {
             document.getElementById('instructions').value = '';
         }
-
-
-
         document.getElementById('ingredients').value = ingredient_list;
         document.getElementById('create_recipe_form').submit();
     }
@@ -173,7 +177,10 @@ function submit_recipe1() {
     }
 }
     
-  
+var submit_button = document.getElementById('submit_button');
+submit_button.addEventListener('click', function() {
+  submit_recipe1();
+})
   
   // Sending POST request
   function search_ingredients() {
@@ -190,7 +197,6 @@ function add_ingredient_item(string1) {
         if (regex.test(ingredient)) {
             for (i=0;i<ingredient.length;i++) {
                 if (ingredient_list.includes(ingredient)) {
-
                 }
                 else {
                     if (ingredient.trim() == '') {

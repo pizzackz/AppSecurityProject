@@ -87,7 +87,6 @@ document.addEventListener("DOMContentLoaded", function() {
 })
 
 // Display popup
-
 function hide_popup() {
     var popup = document.getElementById('popup');
     popup.classList.remove('show1');
@@ -171,7 +170,6 @@ document.addEventListener("click", function(e){
     }
 })
 
-
 // Checking inputs before submitting recipe
 function submit_recipe1() { 
   recipe_name_input = document.getElementById('name').value;
@@ -208,7 +206,10 @@ function submit_recipe1() {
   }
 }
 
-
+var submit_button = document.getElementById('submit_button');
+submit_button.addEventListener('click', function() {
+  submit_recipe1();
+})
 
 
 

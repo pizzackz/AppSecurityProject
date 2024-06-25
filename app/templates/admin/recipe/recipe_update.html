@@ -19,8 +19,9 @@
 
 {% block content %}
 {% from "includes/_form_helper.html" import render_field, render_field_picture %}
+<script nonce src="https://cdn.tiny.cloud/1/no-origin/tinymce/7.2.0-70/icons/default/icons.min.js"></script>
 <div>
-    <h1 class="mb-4" id="add_recipe_title">Update Recipe</h1>
+    <h1 class="mb-4" id="add_recipe_title">Add Recipe</h1>
     <div class="container mt-5">
         <h1 id="general_information_title">General Information</h1><br>
         <form class="justify-content-center" method="post" enctype="multipart/form-data" id="create_recipe_form">
@@ -54,7 +55,6 @@
                     <input type="button" value="+" id="add_ingredient" class="btn btn-success btn-lg col">
                 </div>
                 <div id="ingredient_items_list">
-
                 </div>
                 <div class="input_ingredient">
                     <input type="button" value="Remove All" class="btn btn-danger btn-lg" id="remove_all">
@@ -72,7 +72,7 @@
             <div id="button-section">
                 <a href="{{ url_for('admin_recipe_bp.recipe_database', id=id) }}" class="btn btn-secondary mt-3 mb-4">Back to
                     Home</a>
-                <input type="submit" class="btn btn-primary mt-3 mb-4" value="Add Recipe">
+                <input type="submit" id="submit_button" class="btn btn-primary mt-3 mb-4" value="Add Recipe">
             </div>
         </form>
 

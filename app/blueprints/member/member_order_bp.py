@@ -19,7 +19,7 @@ from app.models import MenuItem, db
 
 @member_order_bp.route('/home', methods=['POST', 'GET'])
 def home():
-    return render_template('member/transaction-processing/index.html')
+    return render_template('recipe/transaction-processing/index.html')
 
 
 @member_order_bp.route('/menu', methods=['POST', 'GET'])
@@ -31,7 +31,7 @@ def menu():
         selected_items = request.form.getlist('menu_item_id')
         return redirect(url_for('member_order_bp.order', selected_items=selected_items))
 
-    return render_template('member/order/menu.html', menu_items=items, form=form)
+    return render_template('recipe/order/menu.html', menu_items=items, form=form)
 
 
 @member_order_bp.route('/order', methods=['GET', 'POST'])
@@ -67,7 +67,7 @@ def order():
         flash('Please fill in all the required fields.', 'danger')
         print(form.errors)
 
-    return render_template('member/order/orders.html', form=form, menu_items=items)
+    return render_template('recipe/order/orders.html', form=form, menu_items=items)
 
 
 
@@ -76,5 +76,5 @@ def success():
     if request.method == "POST":
         if request.form.get('return') == 'True':
             return redirect(url_for('member_subscription_bp.home'))
-    return render_template('member/order/success.html')
+    return render_template('recipe/order/success.html')
 
