@@ -8,7 +8,7 @@ from werkzeug.security import check_password_hash
 from typing import Optional, Dict, List
 
 from app import db, login_manager
-from app.models import User
+from app.models import User, Authentication
 from app.forms.auth_forms import InitialLoginForm, VerifyOtpForm, RecoverOptionsForm
 from app.utils import session_required, clean_input, generate_otp, send_otp_email, set_session_data, validate_otp_data
 
@@ -49,17 +49,30 @@ def initial_login():
             # Retrieve user from database
             user: User = User.query.filter_by(username=username).first()
 
-            # Handle no user account or incorrect password
+            # Handle no user account or user type not allowed
             if not user:
                 logger.error(f"Login attempt failed: Username '{username}' not found.")
                 flash("Invalid username or password", "error")
                 return render_template("authentication/login/initial_login.html", form=form)
-            elif not check_password_hash(user.password, password):
+            elif user.type not in ("member", "admin"):
+                logger.error(f"User type '{user.type}' for user '{username}' not allowed.")
+                flash("An error occurred. Please try signing in again later.", "error")
+                return render_template("authentication/login/initial_login.html", form=form)
+            
+            # Retrieve authentication record using user.id
+            authentication: Authentication = Authentication.query.filter_by(id=user.id).first()
+
+            # Handle no authentication record or incorrect password
+            if not (authentication and authentication.password_hash == password):
                 logger.error(f"Login attempt failed: Incorrect password for username '{username}'.")
                 flash("Invalid username or password", "error")
                 return render_template("authentication/login/initial_login.html", form=form)
+            # if not (authentication and check_password_hash(authentication.password_hash, password)):
+            #     logger.error(f"Login attempt failed: Incorrect password for username '{username}'.")
+            #     flash("Invalid username or password", "error")
+            #     return render_template("authentication/login/initial_login.html", form=form)
 
-            # Generate & current time
+            # Generate & send OTP
             email: str = user.email
             otp: str = generate_otp()
             current_time: datetime = datetime.now()
@@ -67,9 +80,7 @@ def initial_login():
                 "value": otp,
                 "generation_time": current_time.strftime("%d/%b/%Y %H:%M:%S")
             }
-
-            # Store session data (username, email, otp_data)
-            set_session_data({"username": username, "email": email, "otp_data": otp_data, "login_stage": "otp"})
+            set_session_data({"username": username, "email": email, "otp_data": otp_data, "login_stage": "otp"})  # Store session data (username, email, otp_data)
 
             # Send OTP email
             if send_otp_email(email, otp):
@@ -82,14 +93,18 @@ def initial_login():
             flash("Failed to send OTP. Please try again.", "error")
             logger.error(f"Failed to send OTP to {email} for user {username}")
 
+        # Handle invalid action type
+        if action != "login":
+            logger.warning(f"Attempted form submission with action '{action}'.")
+
     return render_template("authentication/login/initial_login.html", form=form)
 
 
 # OTP verification route
-@login_auth_bp.route("/verify_otp", methods=["POST", "GET"])
+@login_auth_bp.route("/login/verify_otp", methods=["POST", "GET"])
 @session_required(
     keys=["username", "email", "otp_data"],
-    redirect_link="login_auth_bp.initial_signup",
+    redirect_link="login_auth_bp.initial_login",
     flash_message="Your session has expired or you have not started the login process",
     log_message="Session keys missing for OTP verification: {missing_keys}"
 )
@@ -103,7 +118,7 @@ def verify_otp():
         return redirect(url_for("login_auth_bp.initial_login"))
 
     # Create form to render
-    form: VerifyOtpForm
+    form: VerifyOtpForm = VerifyOtpForm()
 
     if request.method == "POST":
         action: str = request.form.get("action")
@@ -153,11 +168,11 @@ def verify_otp():
             flash("User account not found. Please try again.", "error")
             logger.error(f"User '{session['username']}' not found after OTP verification.")
 
-    return render_template("authentication/signup/verify_otp.html", form=form)
+    return render_template("authentication/login/verify_otp.html", form=form)
 
 
 # Resend OTP route
-@login_auth_bp.route("/resend_otp", methods=["GET"])
+@login_auth_bp.route("/login/resend_otp", methods=["GET"])
 @session_required(
     keys=["username", "email"],
     flash_message="Your session has expired. Please start the signup process again.",
@@ -195,7 +210,7 @@ def resend_otp():
 
 
 # Account recovery options route
-@login_auth_bp.route("/account_recovery", methods=["POST", "GET"])
+@login_auth_bp.route("/login/account_recovery", methods=["POST", "GET"])
 def account_recovery():
     """Handle account recovery process based on selected option"""
     # Create form to render

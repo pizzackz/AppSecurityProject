@@ -82,7 +82,7 @@ def initial_signup():
 
 
 # OTP verification route
-@signup_auth_bp.route("/verify_otp", methods=["POST", "GET"])
+@signup_auth_bp.route("/signup/verify_otp", methods=["POST", "GET"])
 @session_required(
     keys=["username", "email", "otp_data"],
     flash_message="Your session has expired or you have not started the signup process.",
@@ -138,7 +138,7 @@ def verify_otp():
 
 
 # Resend OTP route
-@signup_auth_bp.route("/resend_otp", methods=["GET"])
+@signup_auth_bp.route("/signup/resend_otp", methods=["GET"])
 @session_required(
     keys=["username", "email"],
     flash_message="Your session has expired. Please start the signup process again.",
@@ -177,7 +177,7 @@ def resend_otp():
 
 
 # Set password route (For initial signups)
-@signup_auth_bp.route("/set_password", methods=["POST", "GET"])
+@signup_auth_bp.route("/signup/set_password", methods=["POST", "GET"])
 @session_required(["username", "email", "otp_data"],
     log_message="Session keys missing for setting password: {missing_keys}"
 )
@@ -245,7 +245,7 @@ def set_password():
 
 
 # Additional info route (Phone number, address, postal code)
-@signup_auth_bp.route("/additional_info", methods=["POST", "GET"])
+@signup_auth_bp.route("/signup/additional_info", methods=["POST", "GET"])
 @session_required(["username", "email"])
 def additional_info():
     """Capture additional user information after account creation."""

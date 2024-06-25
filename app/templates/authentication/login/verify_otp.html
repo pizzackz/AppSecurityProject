@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 {% extends "base.html" %}
 
-{% block title %}Account Recovery - Verify Email{% endblock %}
+{% block title %}Verify Email{% endblock %}
 
 {% block content %}
 {% from "includes/_form_helper.html" import render_field %}
@@ -11,7 +11,7 @@
 <p>We have sent you a verification email, please verify your email address.</p>
 
 <!-- TODO: Replace link with actual resend otp route -->
-<a href="">Resend it</a>
+<a href="{{ url_for('login_auth_bp.resend_otp') }}">Resend it</a>
 
 <form action="" method="post" id="verify-otp-form">
     {{ form.hidden_tag() }}
