@@ -64,24 +64,49 @@
   <div id="parent2">
     <div id="recipe_items" class="row card-deck justify-content-center">
       {% for recipe in recipes %}
-      <div class="card m-2 recipe_card">
-        <img src="{{ url_for('static', filename='images_recipe/' + recipe.picture) }}" class="card-img-top" alt="{{ recipe.name }}">
-        <div class="card-body">
-          <h5 class="card-title">{{ recipe.name }}</h5>
-          <p class="card-text">
-            {{ recipe.ingredients }}
-          </p>
-          <a href="/admin/view_recipe/{{ recipe.id }}" class="btn btn-success m-2">View Recipe</a>
-          <a href="/admin/update_recipe/{{ recipe.id }}" class="btn btn-primary m-2">Edit Recipe</a>
-          <a nonce="{{ nonce }}" id="delete_{{ recipe.id }}" class="btn btn-danger m-2" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
-          <script nonce="{{ nonce }}">
-            var selected = document.getElementById('delete_{{ recipe.id }}');
-            selected.onclick = function () {
-              confirmdelete('{{ recipe.name }}', '{{ recipe.id }}')
-            }
-          </script>
+        {% if recipe.type == 'Standard' %}
+        <div class="card m-2 recipe_card">
+          <img src="{{ url_for('static', filename='images_recipe/' + recipe.picture) }}" class="card-img-top" alt="{{ recipe.name }}">
+          <div class="card-body">
+            <h5 class="card-title">{{ recipe.name }}</h5>
+            <p class="card-text">
+              {{ recipe.ingredients }}
+            </p>
+            <a href="/admin/view_recipe/{{ recipe.id }}" class="btn btn-success m-2">View Recipe</a>
+            <a href="/admin/update_recipe/{{ recipe.id }}" class="btn btn-primary m-2">Edit Recipe</a>
+            <a nonce="{{ nonce }}" id="delete_{{ recipe.id }}" class="btn btn-danger m-2" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
+            <p class="card-text user">By {{ recipe.user_created }}</p>
+            <script nonce="{{ nonce }}">
+              var selected = document.getElementById('delete_{{ recipe.id }}');
+              selected.onclick = function () {
+                confirmdelete('{{ recipe.name }}', '{{ recipe.id }}')
+              }
+            </script>
+          </div>
         </div>
-      </div>
+        {% endif %}
+        {% if recipe.type == 'Premium' %}
+          <div class="card m-2 recipe_card">
+            <img src="{{ url_for('static', filename='images_recipe/' + recipe.picture) }}" class="card-img-top" alt="{{ recipe.name }}">
+            <div class="card-body">
+              <h6 class="premium">PREMIUM</h6>
+              <h5 class="card-title">{{ recipe.name }}</h5>
+              <p class="card-text">
+                {{ recipe.ingredients }}
+              </p>
+              <a href="/admin/view_recipe/{{ recipe.id }}" class="btn btn-success m-2">View Recipe</a>
+              <a href="/admin/update_recipe/{{ recipe.id }}" class="btn btn-primary m-2">Edit Recipe</a>
+              <a nonce="{{ nonce }}" id="delete_{{ recipe.id }}" class="btn btn-danger m-2" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
+              <p class="card-text user">By {{ recipe.user_created }}</p>
+              <script nonce="{{ nonce }}">
+                var selected = document.getElementById('delete_{{ recipe.id }}');
+                selected.onclick = function () {
+                  confirmdelete('{{ recipe.name }}', '{{ recipe.id }}')
+                }
+              </script>
+            </div>
+          </div>
+        {% endif %}
       {% endfor %}
     </div>
   </div>

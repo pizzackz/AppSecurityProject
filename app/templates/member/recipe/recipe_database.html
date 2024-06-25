@@ -87,11 +87,13 @@
       <div class="card m-2 recipe_card">
         <img src="{{ url_for('static', filename='images_recipe/' + recipe.picture) }}" class="card-img-top" alt="{{ recipe.name }}">
         <div class="card-body">
+          <h6 class="premium">PREMIUM</h6>
           <h5 class="card-title">{{ recipe.name }}</h5>
           <p class="card-text">
             {{ recipe.ingredients }}
           </p>
           <a href="/member/view_recipe/{{ recipe.id }}" class="btn btn-success m-2">View Recipe</a>
+          <p class="card-text user">By {{ recipe.user_created }}</p>
            </div>
       </div>
       {% endif %}
