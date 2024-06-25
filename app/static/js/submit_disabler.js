@@ -37,12 +37,14 @@ function toggleSubmitButtons(buttons, condition) {
 // Main function to check fields and update submit buttons
 function checkFields(formId) {
     const form = document.getElementById(formId);
-    if (!form) return;
+    if (!form) {
+        return;
+    }
 
-    const fields = form.querySelectorAll("input, textarea");  // Get all fields initially
+    const fields = form.querySelectorAll("input:not(#csrf_token), textarea");  // Get all fields initially
     const mandatorySubmitButtons = form.querySelectorAll("button:not(.optional-submit).submit-disabler");  // Get all mandatory submit buttons
     const optionalSubmitButtons = form.querySelectorAll("button.optional-submit.submit-disabler");  // Get all optional submit buttons
-
+    
     const allMandatoryFieldsFilled = checkMandatoryFields(fields);
     const anyOptionalFieldFilled = checkAnyOptionalFields(fields);
 

@@ -5,7 +5,7 @@ from flask import Blueprint, request, redirect, render_template, url_for
 
 from app import db
 from app.models import User
-# from app.forms.forms import InitialLoginForm
+from app.forms.auth_forms import InitialLoginForm
 
 
 # Initialise flask blueprint - 'login_aut_bp'
@@ -19,7 +19,7 @@ logger: Logger = logging.getLogger('tastefully')
 @login_auth_bp.route("/login", methods=["POST", "GET"])
 def initial_login():
     # Create form to render
-    # form: InitialLoginForm = InitialLoginForm()
+    form: InitialLoginForm = InitialLoginForm()
 
     if request.method == "POST":
         # TODO: Initial login processes

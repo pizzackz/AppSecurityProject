@@ -19,12 +19,12 @@ class VerifyOtpForm(FlaskForm):
 # Manual Signup & 1st time google signin - Set password
 class SetPasswordForm(FlaskForm):
     password = PasswordField("Password", validators=[DataRequired(), Length(min=6), validate_password_complexity])
-    confirm_password = PasswordField("Confirm Password", validators=[DataRequired(), EqualTo("password")])
+    confirm_password = PasswordField("Confirm Password", validators=[DataRequired(), EqualTo("password", "Confirm password must be equal to your password")])
 
 
 # Signup optional fields - Save phone & address
 class PhoneAddressForm(FlaskForm):
-    phone_number = StringField('Phone', [validate_phone_number, Optional()],render_kw={"placeholder": "E.g. 9123 4567"})
+    phone_number = StringField('Phone Number', [validate_phone_number, Optional()],render_kw={"placeholder": "E.g. 9123 4567"})
     address = StringField('Address', [Length(min=1, max=150), Optional()], render_kw={"placeholder": "E.g. 123 ABC Street"})
     postal_code = StringField('Postal Code', [validate_postal_code, Optional()], render_kw={"placeholder": "E.g. 123456"})
 

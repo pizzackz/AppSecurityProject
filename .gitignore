@@ -8,3 +8,4 @@ app/blueprints/member/__pycache__
 app/blueprints/guest/__pycache__
 app/blueprints/authentication/__pycache__
 app/forms/__pycache__
+*.pyc

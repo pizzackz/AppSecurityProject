@@ -13,7 +13,7 @@
 <!-- Google Signin button to use Google Signin API -->
 <button type="button" class="btn btn-light">Sign in with Google</button>
 
-<form action="" method="post">
+<form action="" method="post" id="initial-signup-form">
     {{ form.hidden_tag() }}
     <div>
         {{ render_field(form.username, class="form-control", placeholder="Enter your username") }}
@@ -26,7 +26,7 @@
     <!-- Submit buttons (Sign in, Next) -->
     <div>
         <button type="submit" name="action" value="sign_in" class="btn btn-light btn-outline-primary rounded-pill">Sign In</button>
-        <button type="submit" name="action" value="next" class="btn btn-primary rounded-pill">Next</button>
+        <button type="submit" name="action" value="next" class="btn btn-primary rounded-pill submit-disabler">Next</button>
     </div>
 </form>
 

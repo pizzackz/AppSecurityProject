@@ -251,7 +251,6 @@ def set_password():
 @session_required(["username", "email"])
 def additional_info():
     """Capture additional user information after account creation."""
-    print(session.items())
     # If signup_stage in session != "additional_info", redirect to correct stage
     if session.get("signup_stage") != "additional_info":
         return signup_stage_redirect("additional_info")
@@ -283,12 +282,15 @@ def additional_info():
             login_user(member)
 
         # Handle 'complete' action
-        if action == "complete" and form.validate_on_submit():
+        if action == "complete":
+            if not form.validate_on_submit():
+                return render_template("authentication/signup/additional_info.html", form=form)
+
             try:
                 # 'member' exists, inputted data validated, save additional info
-                member.phone_number = clean_input(form.phone_number.data) if form.phone_number.data else None
-                member.address = clean_input(form.address.data) if form.address.data else None
-                member.postal_code = clean_input(form.postal_code.data) if form.postal_code.data else None
+                member.phone_number= clean_input(form.phone_number.data)
+                member.address = clean_input(form.address.data)
+                member.postal_code = clean_input(form.postal_code.data)
                 db.session.commit()
 
                 # Log member in, display success message
@@ -300,6 +302,7 @@ def additional_info():
                 db.session.rollback()
                 flash(f"An error occurred when trying to save your data. Please try again", "error")
                 logger.error(f"Failed to save additional info for user {username}, email {email}. Error: {e}")
+                print("error")
 
                 return redirect(url_for("signup_auth_bp.additional_info"))
     

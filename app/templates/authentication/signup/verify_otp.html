@@ -12,7 +12,7 @@
 
 <a href="{{ url_for('signup_auth_bp.resend_otp') }}">Resend it</a>
 
-<form action="" method="post">
+<form action="" method="post" id="verify-otp-form">
     {{ form.hidden_tag() }}
     <div>
         {{ render_field(form.otp, class="form-control", placeholder="Enter the code") }}
