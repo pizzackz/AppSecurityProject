@@ -206,11 +206,6 @@ def set_password():
     if request.method == "POST":
         action: str = request.form.get("action")
 
-        # Handle if pressed 'Back'
-        if action == "back":
-            # Redirect to 'initial_signup'
-            return redirect(url_for("signup_auth_bp.initial_signup"))
-
         if action == "signup" and form.validate_on_submit():
             # Retrieve & sanitise provided password
             # Retrieve stored username and email

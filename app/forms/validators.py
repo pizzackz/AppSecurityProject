@@ -92,15 +92,18 @@ def validate_password_complexity(form, field):
     Raises:
         ValidationError: If the password does not meet complexity requirements.
     """
-    errors = []
+    errors: list = list()
+    data: str = sanitise_data(field.data)
 
-    if not validate_password_length(field.data):
+    if not validate_password_length(data):
         errors.append("Password must be at least 8 characters long.")
-    if not validate_password_upper(field.data):
+    if not validate_password_upper(data):
         errors.append("Password must contain at least 1 uppercase letter.")
-    if not validate_password_lower(field.data):
+    if not validate_password_lower(data):
         errors.append("Password must contain at least 1 lowercase letter.")
-    if not validate_password_symbol(field.data):
+    if not validate_password_number(data):
+        errors.append("Password must contain at least 1 number.")
+    if not validate_password_symbol(data):
         errors.append("Password must contain at least 1 symbol.")
 
     if errors:
@@ -144,6 +147,19 @@ def validate_password_lower(password: str) -> bool:
         bool: True if the validation passes, False otherwise.
     """
     return bool(re.search(r"[a-z]", password))
+
+
+# Validate password at least 1 number
+def validate_password_number(password: str) -> bool:
+    """Validate that the password contains at least one number.
+
+    Args:
+        password (str): The password to validate.
+
+    Returns:
+        bool: True if the validation passes, False otherwise.
+    """
+    return bool(re.search(r"\d", password))
 
 
 # Validate password at least 1 symbol

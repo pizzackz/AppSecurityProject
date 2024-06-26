@@ -63,14 +63,10 @@ def initial_login():
             authentication: Authentication = Authentication.query.filter_by(id=user.id).first()
 
             # Handle no authentication record or incorrect password
-            if not (authentication and authentication.password_hash == password):
+            if not (authentication and check_password_hash(authentication.password_hash, password)):
                 logger.error(f"Login attempt failed: Incorrect password for username '{username}'.")
                 flash("Invalid username or password", "error")
                 return render_template("authentication/login/initial_login.html", form=form)
-            # if not (authentication and check_password_hash(authentication.password_hash, password)):
-            #     logger.error(f"Login attempt failed: Incorrect password for username '{username}'.")
-            #     flash("Invalid username or password", "error")
-            #     return render_template("authentication/login/initial_login.html", form=form)
 
             # Generate & send OTP
             email: str = user.email

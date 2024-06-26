@@ -1,12 +1,5 @@
 .venv/
 .idea/
 .mypy_cache/
-app/__pycache__
-app/blueprints/__pycache__
-app/blueprints/admin/__pycache__
-app/blueprints/member/__pycache__
-app/blueprints/guest/__pycache__
-app/blueprints/authentication/__pycache__
-app/forms/__pycache__
-*.pyc
+**/__pycache__/
 .env

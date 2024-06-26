@@ -9,7 +9,7 @@ from flask import (
     flash,
     url_for,
 )
-from models import Feedback
+from app.models import Feedback
 from app import db
 
 from app.forms.forms import CreateFeedback
