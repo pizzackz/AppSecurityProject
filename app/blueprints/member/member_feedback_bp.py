@@ -9,15 +9,32 @@ from flask import (
     flash,
     url_for,
 )
+from models import Feedback
+from app import db
 
-from app.forms.forms import createFeedback
+from app.forms.forms import CreateFeedback
 
 member_feedback_bp = Blueprint("member_feedback_bp", __name__)
 
 
 @member_feedback_bp.route("/feedback", methods=["GET", "POST"])
 def feedback():
-    feedback_form = createFeedback(request.form)
+    feedback_form = CreateFeedback(request.form)
+    if request.method == 'POST':
+        name = feedback_form.name.data
+        category = feedback_form.category.data
+        rating = feedback_form.rating.data
+        comment = feedback_form.comment.data
+
+
+        # Storing in database
+        new_feedback = Feedback(name=name, category=category, rating=rating, comment=comment)
+        try:
+            db.session.add(new_feedback)
+            db.session.commit()
+        except:
+            print('Error in creating feedback')
+            flash('An error occurred while creating the feedback. Please try again.', 'danger')
     # if request.method == 'POST' and feedback_form.validate():
     # feedback_dict = {}
     # db = shelve.open('feedback.db', 'c')

@@ -286,6 +286,16 @@ class RecipeDeleted(db.Model):
     def __repr__(self):
         return f"Recipe('{self.name}')"
 
+class Feedback(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    category = db.Column(db.String(100), nullable=False)
+    rating = db.Column(db.Integer, nullable=False, default=5)
+    comment = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=func.current_timestamp(), nullable=False)
+
+    def __repr__(self):
+        return f'<Feedback {self.name}>'
 
 # Payment model to store payment related information
 class Payment(db.Model):
