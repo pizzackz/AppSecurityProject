@@ -36,10 +36,15 @@ class InitialLoginForm(FlaskForm):
     password = PasswordField("Password", validators=[DataRequired(), Length(min=6)])
 
 
+# Account Recovery Phase 1 - Inputting email to get account details for
+class AccountRecoveryForm(FlaskForm):
+    email = StringField("Email", validators=[DataRequired(), validate_email_format])
+
+
 # Account Recovery Phase 2 - Choosing to recover username or set new password
 # May or may not use a flask form, for now, just create 1
 class RecoverOptionsForm(FlaskForm):
-    recovery_option = RadioField("", choices=[("recover_username", "Recover Username"), ("change_password", "Change Password")], default="username")
+    recovery_option = RadioField("", choices=[("recover_username", "Recover Username"), ("change_password", "Change Password")], default="username", validate_choice=True)
 
 
 # Account Recovery Phase 3 - Set new password

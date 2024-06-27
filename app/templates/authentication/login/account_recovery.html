@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+
+{% block title %}Account Recovery{% endblock %}
+
+{% block content %}
+{% from "includes/_form_helper.html" import render_field %}
+
+<h1>Account Recovery</h1>
+<!-- Message -->
+<p>To help keep your account safe, we want to make sure it's really you trying to sign in</p>
+
+<form action="" method="post" id="verify-otp-form">
+    {{ form.hidden_tag() }}
+    <div>
+        {{ render_field(form.email, class="form-control", placeholder="Enter your email") }}
+    </div>
+
+    <!-- Submit buttons (Back, Next) -->
+    <div>
+        <a href="{{ url_for('login_auth_bp.account_recovery', action='back') }}" class="btn btn-light btn-outline-primary rounded-pill">Back</a>
+        <button type="submit" name="action" value="next" class="btn btn-primary rounded-pill submit-disabler">Next</button>
+    </div>
+</form>
+
+{% endblock %}

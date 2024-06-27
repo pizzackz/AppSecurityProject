@@ -2,7 +2,7 @@ import logging
 
 from logging import Logger, StreamHandler, Formatter
 from dotenv import load_dotenv
-from flask import Flask, Response, g
+from flask import Flask, Response, g, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
 from flask_limiter import Limiter

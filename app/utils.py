@@ -13,7 +13,7 @@ from functools import wraps
 from typing import List, Optional
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from typing import Optional, Union, Dict, List, Tuple
+from typing import Optional, Any, Dict, List, Tuple
 
 
 # Use logger configured in '__init__.py'
@@ -87,7 +87,7 @@ def clear_session_data(keys: List[str]) -> None:
 
 
 # Set session data function
-def set_session_data(data: Dict) -> None:
+def set_session_data(data: Dict[str, Any]) -> None:
     """Set multiple session data keys at once."""
     for key, value in data.items():
         if value is None:

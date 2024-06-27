@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+
+{% block title %}Recovery Options{% endblock %}
+
+{% block content %}
+{% from "includes/_form_helper.html" import render_field %}
+
+<h1>Account Recovery</h1>
+
+<form action="" method="post" id="verify-otp-form">
+    {{ form.hidden_tag() }}
+    <div>
+        {{ form.recovery_option }}
+    </div>
+
+    <!-- Submit buttons (Back, Next) -->
+    <div>
+        <a href="{{ url_for('login_auth_bp.recovery_options', action='back') }}" class="btn btn-light btn-outline-primary rounded-pill">Back</a>
+        <button type="submit" name="action" value="next" class="btn btn-primary rounded-pill submit-disabler">Next</button>
+    </div>
+</form>
+
+{% endblock %}

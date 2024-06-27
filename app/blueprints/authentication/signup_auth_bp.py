@@ -45,14 +45,6 @@ def initial_signup():
             # Sanitise inputs
             username: str = clean_input(form.username.data)
             email: str = clean_input(form.email.data)
-            
-            # Check whether account already exists
-            if User.query.filter_by(username=username, email=email).first():
-                # 'user' found, redirect to login
-                flash("User already exists. Please login.", "info")
-                logger.info(f"User {username} with email {email} tried to signup but account already exists.")
-
-                return redirect(url_for("login_auth_bp.initial_login"))
 
             # Generate OTP & current time
             otp: str = generate_otp()
@@ -269,10 +261,8 @@ def additional_info():
 
         # Handle 'skip' action
         if action == "skip":
-            # 'member' exists, log member in
             flash("Logged in successfully.", "success")
             logger.info(f"Member {username} logged in without providing additional info.")
-            login_user(member)
 
         # Handle 'complete' action
         if action == "complete":
@@ -286,10 +276,8 @@ def additional_info():
                 member.postal_code = clean_input(form.postal_code.data)
                 db.session.commit()
 
-                # Log member in, display success message
                 flash("Addtional information saved and logged in successfully.", "success")
                 logger.info(f"Additional info saved for member {username}.")
-                login_user(member)
 
             except Exception as e:
                 db.session.rollback()
@@ -299,12 +287,14 @@ def additional_info():
 
                 return redirect(url_for("signup_auth_bp.additional_info"))
     
-        # Remove temporary session data (otp_data), retain username and email for logging in
+        # Remove temporary session data (otp_data, signup_stage), retain username and email for logging in
         clear_session_data(["otp_data", "signup_stage"])
 
-        # Redirect to homapge upon successful handling of 'skip' and 'complete' actions
+        # Login user, Redirect to homepage upon successful handling of 'skip' and 'complete' actions
+        # login_user(member)
         # TODO: Redirect to standard member homepage
         # return redirect(url_for("member_bp.home"))
-        return "Extra info saved, redirect to homepage"
+        # return "Extra info saved, redirect to homepage"
+        return redirect(url_for("login_auth_bp.login"))
 
     return render_template("authentication/signup/additional_info.html", form=form)
