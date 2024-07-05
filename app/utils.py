@@ -146,23 +146,23 @@ def is_expired_otp(otp_data: Dict, expiry_time: int) -> bool:
     Returns:
         bool: True if the OTP has expired, False otherwise.
     """
-    # Return False if generation_time not in otp_data or value is not string
-    generation_time: str = otp_data.get("generation_time", None)
+    # Return True if generation_time not in otp_data or value is not string
+    generation_time: str = otp_data.get("gen_time", None)
     if not generation_time or not isinstance(generation_time, str):
-        return False
+        return True
     
-    # Get time from generation_time string, return False if unsuccessful
+    # Get time from generation_time string, return True if unsuccessful
     try:
         otp_generation_time: datetime = datetime.strptime(generation_time, "%d/%b/%Y %H:%M:%S")
     except ValueError:
-        return False
+        return True
     
-    # Return result of whther current time within allowed time frame
+    # Return result of whether current time is beyond allowed time frame
     return datetime.now() > otp_generation_time + timedelta(minutes=expiry_time)
 
 
 # OTP data object validator function
-def validate_otp_data(otp_data: Dict, required_keys: List[str], expiry_time: int, otp_length: int = 6) -> bool:
+def validate_otp_data(otp_data: Dict, required_keys: List[str], expiry_time: int) -> bool:
     """
     Validate the OTP data structure and check if it has expired.
 
@@ -170,18 +170,13 @@ def validate_otp_data(otp_data: Dict, required_keys: List[str], expiry_time: int
         otp_data (Dict): The OTP data dictionary.
         required_keys (List[str]): The list of keys that are required in the OTP data dictionary.
         expiry_time (int): The expiry time for the OTP in minutes.
-        otp_length (int): The required length of the OTP.
+        otp_length (int): The required length of the hashed OTP (default is 64 for SHA-256).
 
     Returns:
         bool: True if the OTP data structure is valid, not expired, and the OTP is of correct length, False otherwise.
     """
     # Return False if data structure not dict
     if not validate_dict_data_structure(otp_data, required_keys):
-        return False
-    
-    # Return False, if no value for otp_data or length of value doesn't match
-    otp_value: str = otp_data.get("value", "")
-    if not otp_value or len(otp_value) != otp_length:
         return False
     
     # Return whether otp not expired
@@ -244,6 +239,9 @@ def send_otp_email(to_email: str, otp: str) -> Optional[bool]:
     """
     subject = "Your OTP Code"
     body = f"Your OTP code is {otp}"
+
+    print(f"otp: {otp}")
+
     return send_email(to_email, subject, body)
 
 

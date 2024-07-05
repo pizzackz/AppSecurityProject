@@ -6,6 +6,7 @@ import string
 from flask_login import UserMixin
 from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, ForeignKey
 from sqlalchemy.sql import func
+from typing import Union
 
 from app import db
 
@@ -78,27 +79,49 @@ class Member(User):
     def __repr__(self):
         return f"<Member(id='{self.id}', username='{self.username}', subscription_plan='{self.subscription_plan}')>"
 
-    # Static methods for CRUD functionalities
+    # Methods for CRUD functionalities
     # Create new member
     @staticmethod
     def create(username: str, email: str, password_hash: str, subscription_plan: str = "standard"):
         try:
             # Create new member object
-            new_member: Member = Member(username=username, email=email, subscription_plan=subscription_plan, type="member")
+            new_member = Member(username=username, email=email, subscription_plan=subscription_plan, type="member")
             db.session.add(new_member)
             db.session.flush()
 
             # Create related records
-            Authentication.create(id=new_member.id, password_hash=password_hash)
-            AccountStatus.create(id=new_member.id)
-            LoginDetails.create(id=new_member.id)
+            auth = Authentication.create(id=new_member.id, password_hash=password_hash)
+            if not auth:
+                raise Exception("Failed to create authentication record for member")
+            
+            acc_status = AccountStatus.create(id=new_member.id)
+            if not acc_status:
+                raise Exception("Failed to create account status record for member")
+
+            login_details = LoginDetails.create(id=new_member.id)
+            if not login_details:
+                raise Exception("Failed to create login details record for member")
 
             db.session.commit()
 
             return new_member
         except Exception as e:
             db.session.rollback()
-            print(f"An error occurred: {e}")
+            print(f"An error occurred while creating member: {e}")
+            return None
+    
+    # Update
+    def update(self, **attrs):
+        try:            
+            # Set new attribute values if it exists in model
+            for key, value in attrs.items():
+                if hasattr(self, key):
+                    setattr(self, key, value)
+            db.session.commit()
+            return self
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error in updating member: {e}")
             return None
 
 
@@ -116,7 +139,7 @@ class Admin(User):
     def __repr__(self):
         return f"<Admin(id='{self.id}', username='{self.username}', master_key='{self.master_key}')>"
 
-    # Static methods for CRUD functionalities
+    # Methods for CRUD functionalities
     # Generate master keys
     @staticmethod
     def generate_master_key(length: int = 64) -> str:
@@ -129,21 +152,42 @@ class Admin(User):
     def create(username: str, email: str, password_hash: str):
         try:
             # Create new admin object
-            new_admin: Admin = Admin(username=username, email=email, type="admin")
+            new_admin = Admin(username=username, email=email, type="admin")
             db.session.add(new_admin)
             db.session.flush()
 
             # Create related records
-            Authentication.create(id=new_admin.id, password_hash=password_hash)
-            AccountStatus.create(id=new_admin.id)
-            LoginDetails.create(id=new_admin.id)
+            auth = Authentication.create(id=new_admin.id, password_hash=password_hash)
+            if not auth:
+                raise Exception("Failed to create authentication record for admin")
+
+            acc_status = AccountStatus.create(id=new_admin.id)
+            if not acc_status:
+                raise Exception("Failed to create account status record for admin")
+
+            login_details = LoginDetails.create(id=new_admin.id)
+            if not login_details:
+                raise Exception("Failed to create login details record for admin")
 
             db.session.commit()
-
             return new_admin
         except Exception as e:
             db.session.rollback()
             print(f"An error occurred: {e}")
+            return None
+    
+    # Update
+    def update(self, **attrs):
+        try:
+            # Set new attribute values if it exists in model
+            for key, value in attrs.items():
+                if hasattr(self, key):
+                    setattr(self, key, value)
+            db.session.commit()
+            return self
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error in updating admin: {e}")
             return None
 
 
@@ -154,26 +198,42 @@ class Authentication(db.Model):
     # ForeignKey reference to 'user.id' and primary key for 'authentication'
     id = Column(Integer, ForeignKey("user.id"), primary_key=True, nullable=False)
     password_hash = Column(String(255), default="", nullable=False)
-    google_id = Column(
-        String(255), nullable=True
-    )  # 'NULL' when user does manual sign up
+    google_id = Column(String(255), nullable=True)  # 'NULL' when user does manual sign up
 
     # Relationship back to 'User'
     user = db.relationship("User", back_populates="authentication")
     
-
     def __repr__(self):
         return f"<Authentication(id='{self.id}', username='{self.user.username}', password_hash='{self.password_hash}')>"
     
-    # Static methods for CRUD functionalities
-    # Create new authentications
+    # Methods for CRUD functionalities
+    # Create
     @staticmethod
     def create(id: Column[int], password_hash: str):
-        authentication: Authentication = Authentication(id=id, password_hash=password_hash)
-        db.session.add(authentication)
-        db.session.flush()
-        return authentication
-
+        try:
+            auth = Authentication(id=id, password_hash=password_hash)
+            db.session.add(auth)
+            db.session.commit()
+            return auth
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error occurred when creating new authentication: {e}")
+            return None
+    
+    # Update
+    def update(self, **attrs):
+        try:
+            # Set new attribute values if it exists in model
+            for key, value in attrs.items():
+                if hasattr(self, key):
+                    setattr(self, key, value)
+            db.session.commit()
+            return self
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error in updating authentication: {e}")
+            return None
+        
 
 # AccountStatus model to store important info about current 'User' model's account status such as lock related info or failed login attempts
 # related info
@@ -193,14 +253,77 @@ class AccountStatus(db.Model):
     def __repr__(self):
         return f"<AccountStatus(id='{self.id}', username='{self.user.username}', locked='{self.is_locked}')>"
     
-    # Static methods for CRUD functionalities
-    # Create new account statuses
+    # Methods for CRUD functionalities
+    # Create
     @staticmethod
     def create(id: Column[int]):
-        account_status: AccountStatus = AccountStatus(id=id)
-        db.session.add(account_status)
-        db.session.flush()
-        return account_status
+        try:
+            account_status: AccountStatus = AccountStatus(id=id)
+            db.session.add(account_status)
+            db.session.commit()
+            return account_status
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error occurred when creating new account status: {e}")
+            return None
+    
+    # Update
+    def update(self, **attrs):
+        try:
+            # Set new attribute values if it exists in model
+            for key, value in attrs.items():
+                if hasattr(self, key):
+                    setattr(self, key, value)
+            db.session.commit()
+            return self
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error in updating account status: {e}")
+            return None
+    
+
+# LoginDetails model to store info about last login and logout times
+class LoginDetails(db.Model):
+    __tablename__ = "login_details"
+
+    # ForeignKey reference to 'user.id' and primary key for 'login_details'
+    id = Column(Integer, ForeignKey("user.id"), primary_key=True)
+    last_login = Column(DateTime, nullable=True)
+    last_logout = Column(DateTime, nullable=True)
+
+    # Relationship back to 'User'
+    user = db.relationship("User", back_populates="login_details")
+
+    def __repr__(self):
+        return f"<LoginDetails(id='{self.id}', username='{self.user.username}', last_login='{self.last_login}', last_logout='{self.last_logout}')>"
+    
+    # Static methods for CRUD functionalities
+    # Create
+    @staticmethod
+    def create(id: Column[int]):
+        try:
+            login_details: LoginDetails = LoginDetails(id=id)
+            db.session.add(login_details)
+            db.session.commit()
+            return login_details
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error occurred when creating new login details: {e}")
+            return None
+    
+    # Update
+    def update(self, **attrs):
+        try:
+            # Set new attribute values if it exists in model
+            for key, value in attrs.items():
+                if hasattr(self, key):
+                    setattr(self, key, value)
+            db.session.commit()
+            return self
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error in updating login details: {e}")
+            return None
 
 
 # LockedAccount model to store locking related information about all locked accounts, including admin accounts
@@ -221,31 +344,6 @@ class LockedAccount(db.Model):
 
     def __repr__(self):
         return f"<LockedAccount(id='{self.id}', locker_id='{self.locker_id}', locked_reason='{self.locked_reason}')>"
-
-
-# LoginDetails model to store info about last login and logout times
-class LoginDetails(db.Model):
-    __tablename__ = "login_details"
-
-    # ForeignKey reference to 'user.id' and primary key for 'login_details'
-    id = Column(Integer, ForeignKey("user.id"), primary_key=True)
-    last_login = Column(DateTime, nullable=True)
-    last_logout = Column(DateTime, nullable=True)
-
-    # Relationship back to 'User'
-    user = db.relationship("User", back_populates="login_details")
-
-    def __repr__(self):
-        return f"<LoginDetails(id='{self.id}', username='{self.user.username}', last_login='{self.last_login}', last_logout='{self.last_logout}')>"
-    
-    # Static methods for CRUD functionalities
-    # Create new login details
-    @staticmethod
-    def create(id: Column[int]):
-        login_details: LoginDetails = LoginDetails(id=id)
-        db.session.add(login_details)
-        db.session.flush()
-        return login_details
 
 
 # Recipe model to store recipe related information

@@ -24,8 +24,9 @@
     </div>
 
     <!-- Submit buttons (Sign in, Next) -->
+     <!-- Replace link to signup to some action -->
     <div>
-        <a href="{{ url_for('signup_auth_bp.initial_signup', action='login') }}" class="btn btn-light btn-outline-primary rounded-pill">Sign In</a>
+        <a href="{{ url_for('signup_auth_bp.signup', action='login') }}" class="btn btn-light btn-outline-primary rounded-pill">Sign In</a>
         <button type="submit" name="action" value="next" class="btn btn-primary rounded-pill submit-disabler">Next</button>
     </div>
 </form>
