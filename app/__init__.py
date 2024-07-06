@@ -11,7 +11,7 @@ from flask_login import LoginManager
 from flask_session import Session
 
 from app.config import Config
-from app.utils import generate_nonce, register_commands
+from app.utilities.utils import generate_nonce, register_commands
 
 
 # Load environment variables from .env file
@@ -22,7 +22,7 @@ load_dotenv()
 # Initialise CSRF protection, SQLAlchemy, LoginManager, Rate Limiter
 csrf: CSRFProtect = CSRFProtect()
 db: SQLAlchemy = SQLAlchemy()
-# login_manager: LoginManager = LoginManager()
+login_manager: LoginManager = LoginManager()
 limiter = Limiter(key_func=get_remote_address, default_limits=Config.RATELIMIT_DEFAULT, storage_uri=Config.RATELIMIT_STORAGE_URL)
 
 
@@ -87,7 +87,7 @@ def create_app() -> Flask:
     # Initialise extensions
     csrf.init_app(app)
     db.init_app(app)
-    # login_manager.init_app(app)
+    login_manager.init_app(app)
     limiter.init_app(app)
     
     # Custom logger for app logic
@@ -100,7 +100,11 @@ def create_app() -> Flask:
 
     # Register blueprints
     from app.blueprints.authentication.signup_auth_bp import signup_auth_bp
+    from app.blueprints.authentication.login_auth_bp import login_auth_bp
+    from app.blueprints.authentication.recovery_auth_bp import recovery_auth_bp
     app.register_blueprint(signup_auth_bp)
+    app.register_blueprint(login_auth_bp)
+    app.register_blueprint(recovery_auth_bp)
     
     from app.blueprints.member.member_subscription_bp import member_subscription_bp
     from app.blueprints.member.member_order_bp import member_order_bp

@@ -24,12 +24,12 @@
     </div>
 
     <!-- Account recovery (get username or set new password) -->
-    <a href="{{ url_for('login_auth_bp.account_recovery') }}">Forgot Username or Password?</a>
+    <a href="{{ url_for('login_auth_bp.login', action='recover') }}">Forgot Username or Password?</a>
 
     <!-- Submit buttons (Create Account, Signin) -->
     <div>
-        <a href="{{ url_for('login_auth_bp.initial_login', action='create_account') }}" class="btn btn-light btn-outline-primary rounded-pill">Create Account</a>
-        <button type="submit" name="action" value="login" class="btn btn-primary rounded-pill submit-disabler">Signin</button>
+        <a href="{{ url_for('login_auth_bp.login', action='signup') }}" class="btn btn-light btn-outline-primary rounded-pill">Create Account</a>
+        <button type="submit" class="btn btn-primary rounded-pill submit-disabler">Signin</button>
     </div>
 </form>
 

@@ -18,8 +18,8 @@ class VerifyOtpForm(FlaskForm):
 
 # Manual Signup & 1st time google signin - Set password
 class SetPasswordForm(FlaskForm):
-    password = PasswordField("Password", validators=[DataRequired(), Length(min=6), validate_password_complexity])
-    confirm_password = PasswordField("Confirm Password", validators=[DataRequired(), EqualTo("password", "Confirm password must be equal to your password")])
+    password = PasswordField("Password", validators=[DataRequired(), Length(min=8), validate_password_complexity])
+    confirm_password = PasswordField("Confirm Password", validators=[DataRequired(), Length(min=8), EqualTo("password", "Confirm password must be equal to your password")])
 
 
 # Signup optional fields - Save phone & address
@@ -33,7 +33,7 @@ class PhoneAddressForm(FlaskForm):
 # Manual Login phase 1 form, requires username & password
 class InitialLoginForm(FlaskForm):
     username = StringField("Username", validators=[DataRequired(), Length(min=2, max=20)])
-    password = PasswordField("Password", validators=[DataRequired(), Length(min=6)])
+    password = PasswordField("Password", validators=[DataRequired(), Length(min=8)])
 
 
 # Account Recovery Phase 1 - Inputting email to get account details for

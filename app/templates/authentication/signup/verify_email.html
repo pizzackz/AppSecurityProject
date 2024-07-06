@@ -10,7 +10,7 @@
 <!-- Message with resend otp below -->
 <p>We have sent you a verification email, please verify your email address.</p>
 
-<a href="{{ url_for('signup_auth_bp.send_otp') }}">Resend it</a>
+<a href="{{ url_for('signup_auth_bp.send_otp', resend=True) }}">Resend it</a>
 
 <form action="" method="post" id="verify-otp-form">
     {{ form.hidden_tag() }}
@@ -20,7 +20,7 @@
 
     <!-- Submit buttons (Back, Next) -->
     <div>
-        <a href="{{ url_for('signup_auth_bp.verify_otp', action='back') }}" class="btn btn-light btn-outline-primary rounded-pill">Back</a>
+        <a href="{{ url_for('signup_auth_bp.verify_email', action='back') }}" class="btn btn-light btn-outline-primary rounded-pill">Back</a>
         <button type="submit" name="action" value="next" class="btn btn-primary rounded-pill submit-disabler">Next</button>
     </div>
 </form>
