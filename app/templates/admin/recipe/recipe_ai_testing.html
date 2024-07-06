@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Recipe Creator</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+
+<div class="container">
+  <!-- Page 1: Select Cuisine -->
+  <div id="page1" class="page">
+    <h2>Select Cuisine</h2>
+    <form>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="cuisineAny" value="any">
+        <label class="form-check-label" for="cuisineAny">
+          Any Cuisine
+        </label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="cuisineOthers" value="others">
+        <label class="form-check-label" for="cuisineOthers">
+          Others
+        </label>
+      </div>
+      <!-- Add more checkboxes for specific cuisines -->
+    </form>
+  </div>
+
+  <!-- Page 2: Choose Ingredients -->
+  <div id="page2" class="page">
+    <h2>Choose Ingredients to Include</h2>
+    <!-- Ingredient checkboxes will go here -->
+  </div>
+
+  <!-- Page 3: Choose Dietary Preferences and Allergies -->
+  <div id="page3" class="page">
+    <h2>Choose Dietary Preferences and Allergies</h2>
+    <h3>Dietary Preferences</h3>
+    <form>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="dietaryVegetarian" value="vegetarian">
+        <label class="form-check-label" for="dietaryVegetarian">
+          Vegetarian
+        </label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="dietaryVegan" value="vegan">
+        <label class="form-check-label" for="dietaryVegan">
+          Vegan
+        </label>
+      </div>
+      <!-- Add more dietary checkboxes -->
+    </form>
+    <h3>Allergies</h3>
+    <form>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="allergyNuts" value="nuts">
+        <label class="form-check-label" for="allergyNuts">
+          Nuts
+        </label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="allergyDairy" value="dairy">
+        <label class="form-check-label" for="allergyDairy">
+          Dairy
+        </label>
+      </div>
+      <!-- Add more allergy checkboxes -->
+    </form>
+  </div>
+
+  <!-- Page 4: Cooking Time and Difficulty -->
+  <div id="page4" class="page">
+    <h2>Cooking Time and Difficulty</h2>
+    <div class="form-group">
+      <label for="cookingTime">Cooking Time:</label>
+      <input type="range" class="form-control-range" id="cookingTime" min="1" max="5">
+    </div>
+    <div class="form-group">
+      <label for="difficulty">Difficulty:</label>
+      <input type="range" class="form-control-range" id="difficulty" min="1" max="3">
+    </div>
+  </div>
+
+  <!-- Page 5: Remarks -->
+  <div id="page5" class="page">
+    <h2>Remarks</h2>
+    <div class="form-group">
+      <label for="remarks">Any Remarks:</label>
+      <textarea class="form-control" id="remarks" rows="3"></textarea>
+    </div>
+  </div>
+
+  <!-- Navigation Buttons -->
+  <div class="text-center mt-3">
+    <button type="button" class="btn btn-primary" onclick="previousPage()">Previous</button>
+    <button type="button" class="btn btn-primary" onclick="nextPage()">Next</button>
+  </div>
+
+</div>
+
+<!-- Bootstrap JS and custom script -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+  // JavaScript for navigation between pages
+  let currentPage = 1;
+  const totalPages = 5;
+
+  function nextPage() {
+    if (currentPage < totalPages) {
+      document.getElementById('page' + currentPage).style.display = 'none';
+      currentPage++;
+      document.getElementById('page' + currentPage).style.display = 'block';
+    }
+  }
+
+  function previousPage() {
+    if (currentPage > 1) {
+      document.getElementById('page' + currentPage).style.display = 'none';
+      currentPage--;
+      document.getElementById('page' + currentPage).style.display = 'block';
+    }
+  }
+</script>
+
+</body>
+</html>

@@ -21,8 +21,8 @@ stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 publishable_key = os.getenv('STRIPE_PUBLISHABLE_KEY')
 endpoint_secret = os.getenv('STRIPE_ENDPOINT_SECRET')
 
-if not stripe.api_key:
-    raise ValueError("No Stripe API key provided")
+# if not stripe.api_key:
+#     raise ValueError("No Stripe API key provided")
 
 
 @member_subscription_bp.route('/home', methods=['POST', 'GET'])

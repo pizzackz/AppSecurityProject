@@ -13,7 +13,7 @@ class CreateRecipeForm(FlaskForm):
     picture = FileField("Picture", render_kw={"class": "form-control", "accept": "image/*"})
     calories = IntegerField("Calories", validators=[DataRequired(), NumberRange(min=0)], render_kw={"class": "form-control"})
     prep_time = IntegerField("Preparation Time (minutes)", validators=[DataRequired(), NumberRange(min=0)], render_kw={"class": "form-control"})
-    recipe_type = SelectField("Type", choices=[("Standard", "Standard"), ("Premium", "Premium")], validators=[DataRequired()], render_kw={"class": "form-control"})
+    recipe_type = SelectField("Type", choices=[("Standard", "Standard"), ("Premium", "Premium"), ("Private", "Private")], validators=[DataRequired()], render_kw={"class": "form-control"})
     submit = SubmitField("Create Recipe", render_kw={"class": "btn btn-primary"})
 
 

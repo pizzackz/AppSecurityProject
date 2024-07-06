@@ -14,31 +14,28 @@ import imghdr
 import imageio
 import requests
 from werkzeug.utils import secure_filename
-from app.models import Recipe, RecipeDeleted
+from app.models import Recipe, RecipeDeleted, RecipeConfig
 import os
-from sqlalchemy import or_
+from sqlalchemy import or_, and_, case
+
+from datetime import datetime, timedelta
+import html
+from app.forms.forms import CreateRecipeForm, RecipeSearch
+from app import db
+from bs4 import BeautifulSoup
+import openai
+
 import json
-
-
 from PIL import Image
 # import flask_sqlalchemy
 # from app.models import Recipe
 # from werkzeug.utils import secure_filename
 # from werkzeug.security import generate_password_hash, check_password_hash
 
-from datetime import datetime, timedelta
-
-# import random
-# import sys
-import html
-
-from app.forms.forms import CreateRecipeForm, RecipeSearch
-from app import db
-from bs4 import BeautifulSoup
 
 admin_recipe_bp = Blueprint("admin_recipe_bp", __name__)
 
-locked_recipes = False
+openai.api_key = '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'
 
 def clean_input(html):
     cleaned = html.unescape(html)
@@ -70,8 +67,6 @@ def recipe_database():
     # Getting pages (For Pagination)
     page = request.args.get('page', 1, type=int)
     per_page = 16
-    start = (page - 1) * per_page
-    end = start + per_page
 
     if request.method == 'POST':
         if not form.validate_on_submit():
@@ -92,6 +87,10 @@ def recipe_database():
                 flash('Ingredients are empty!', 'error')
                 return redirect(url_for('admin_recipe_bp.recipe_database'))
                 # return redirect
+
+            if len(ingredients) > 12:
+                flash('Max ingredients is 12!', 'error')
+                return redirect(url_for('admin_recipe_bp.recipe_database'))
 
             # If not pass regex, redirect
             regex = r'^[a-zA-Z ]+$'  # Regex pattern allowing only letters and spaces
@@ -139,9 +138,11 @@ def recipe_database():
                 match.append(count)
             print(match)
 
-
-            total_pages = (len(search_results) // per_page) + 1
+            # Pagination for POST
+            start = (page - 1) * per_page
+            end = start + per_page
             search_results = search_results[start:end]
+            total_pages = (len(search_results) // per_page) + 1
 
             return render_template("admin/recipe/recipe_database.html", form=form, recipes=search_results, total_pages=total_pages, page=page)
 
@@ -150,7 +151,7 @@ def recipe_database():
     print(f'Total pages: {total_pages}')
     print(f'There are {Recipe.query.count()} recipe')
 
-    items_on_page = Recipe.query.slice(start, end)
+    items_on_page = Recipe.query.order_by(db.case((Recipe.type == 'private', 0),else_=1)).paginate(page=page, per_page=per_page)
 
     return render_template("admin/recipe/recipe_database.html", form=form, recipes=items_on_page, total_pages=total_pages, page=page)
 
@@ -158,9 +159,20 @@ def recipe_database():
 def create_recipe():
     form = CreateRecipeForm()
     if request.method == "POST":
-        if locked_recipes == True:
-            flash('Recipes are locked', 'danger')
-            return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
+        try:
+            # Try to fetch the row with name 'locked_recipes'
+            locked_recipes = RecipeConfig.query.filter_by(name='locked_recipes').first()
+        except:
+            locked_recipes = RecipeConfig(name='locked_recipes', status='False')
+            db.session.add(locked_recipes)
+            db.session.commit()
+        if not locked_recipes:
+            locked_recipes = RecipeConfig(name='locked_recipes', status='False')
+            db.session.add(locked_recipes)
+            db.session.commit()
+        if locked_recipes.status == 'True':
+            flash('Action cannot be done at the moment.', 'danger')
+            return redirect(url_for('admin_recipe_bp.create_recipe'))
         # Handles invalidated form
         if not form.validate_on_submit():
             print('failed')
@@ -189,6 +201,11 @@ def create_recipe():
             if len(name) > 20:
                 flash('Name cannot be more than 20 characters', 'error')
                 return redirect(url_for('admin_recipe_bp.create_recipe'))
+            existing_recipe_in_database = Recipe.query.filter(Recipe.name == name).first()
+            if existing_recipe_in_database:
+                flash(f'{name} exists in database', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+
 
             # PROCESS INSTRUCTIONS
             instructions = instructions.strip()
@@ -198,7 +215,6 @@ def create_recipe():
             if len(instructions) > 1000:
                 flash('Instructions cannot be more than 1000 characters', 'error')
                 return redirect(url_for('admin_recipe_bp.create_recipe'))
-            html.unescape(instructions)
             # Parse HTML
             soup = BeautifulSoup(instructions, 'html.parser')
 
@@ -208,6 +224,8 @@ def create_recipe():
             # Remove all iFrame and input tags
             for iframe in soup(["iframe", "input", "link", "submit", "link", "meta"]):
                 iframe.decompose()
+            instructions = soup.prettify()
+            instructions = html.unescape(instructions)
 
             # PROCESS CALORIES
             if type(calories) != int:
@@ -232,7 +250,7 @@ def create_recipe():
                 return redirect(url_for('admin_recipe_bp.create_recipe'))
 
             # PROCESS RECIPE TYPE
-            if recipe_type != 'Standard' and recipe_type != 'Premium':
+            if recipe_type != 'Standard' and recipe_type != 'Premium' and recipe_type != 'Private':
                 flash('Invalid recipe type', 'error')
                 return redirect(url_for('admin_recipe_bp.create_recipe'))
 
@@ -319,7 +337,7 @@ def create_recipe():
             picture.save(os.path.join('app/static/images_recipe', picture_filename))
 
             # Store in database
-            new_recipe = Recipe(name=name, ingredients=ingredient_cleaned, instructions=soup.prettify(), picture=picture_filename, type=recipe_type, calories=calories, prep_time=prep_time, user_created='JohnDoeTesting')
+            new_recipe = Recipe(name=name, ingredients=ingredient_cleaned, instructions=instructions, picture=picture_filename, type=recipe_type, calories=calories, prep_time=prep_time, user_created='JohnDoeTesting')
             try:
                 db.session.add(new_recipe)
                 db.session.commit()
@@ -353,9 +371,21 @@ def view_recipe(recipe_id):
 @admin_recipe_bp.route('/admin/delete_recipe/<recipe_id>', methods=['GET', 'POST'])
 def delete_recipe(recipe_id):
     global locked_recipes
-    if locked_recipes == True:
-        flash('Recipes are locked', 'danger')
-        return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
+    try:
+        # Try to fetch the row with name 'locked_recipes'
+        locked_recipes = RecipeConfig.query.filter_by(name='locked_recipes').first()
+    except:
+        locked_recipes = RecipeConfig(name='locked_recipes', status='False')
+        db.session.add(locked_recipes)
+        db.session.commit()
+    if not locked_recipes:
+        locked_recipes = RecipeConfig(name='locked_recipes', status='False')
+        db.session.add(locked_recipes)
+        db.session.commit()
+    if locked_recipes.status == 'True':
+        flash('Action cannot be done at the moment.', 'danger')
+        print(locked_recipes.status)
+        return redirect(url_for('admin_recipe_bp.recipe_database'))
     recipe = Recipe.query.filter_by(id=recipe_id).first()
     flash(f'{recipe.name} was deleted', 'info')
     old_recipe = RecipeDeleted(name=recipe.name, ingredients=recipe.ingredients, instructions=recipe.instructions, picture=recipe.picture, type=recipe.type, calories=recipe.calories, prep_time=recipe.prep_time, user_created=recipe.user_created, date_created=recipe.date_created)
@@ -369,9 +399,20 @@ def update_recipe(recipe_id):
     recipe = Recipe.query.filter_by(id=recipe_id).first()
     form = CreateRecipeForm()
     if request.method == 'POST':
-        if locked_recipes == True:
-            flash('Recipes are locked', 'danger')
-            return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
+        try:
+            # Try to fetch the row with name 'locked_recipes'
+            locked_recipes = RecipeConfig.query.filter_by(name='locked_recipes').first()
+        except:
+            locked_recipes = RecipeConfig(name='locked_recipes', status='False')
+            db.session.add(locked_recipes)
+            db.session.commit()
+        if not locked_recipes:
+            locked_recipes = RecipeConfig(name='locked_recipes', status='False')
+            db.session.add(locked_recipes)
+            db.session.commit()
+        if locked_recipes.status == 'True':
+            flash('Action cannot be done at the moment.', 'danger')
+            return redirect(url_for('admin_recipe_bp.update_recipe'))
         name = form.name.data
         ingredients = form.ingredients.data
         instructions = form.instructions.data
@@ -387,6 +428,11 @@ def update_recipe(recipe_id):
                 return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
             if len(name) > 20:
                 flash('Name cannot be more than 20 characters', 'error')
+                return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
+            existing_recipe_in_database = Recipe.query.filter(and_(Recipe.name == name, Recipe.id != recipe_id)).first()
+            print(existing_recipe_in_database)
+            if existing_recipe_in_database:
+                flash(f'{name} exists in database', 'error')
                 return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
 
         if instructions != '':
@@ -429,7 +475,7 @@ def update_recipe(recipe_id):
                 return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
 
         # PROCESS RECIPE TYPE
-        if recipe_type != 'Standard' and recipe_type != 'Premium':
+        if recipe_type != 'Standard' and recipe_type != 'Premium' and recipe_type != 'Private':
             flash('Invalid recipe type', 'error')
             return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
 
@@ -537,31 +583,58 @@ def recipe_dashboard():
     data = {
         'recipe_count': Recipe.query.count(),
         'premium_recipe': Recipe.query.filter_by(type='Premium').count(),
-        'standard_recipe': Recipe.query.filter_by(type='Standard').count()
+        'standard_recipe': Recipe.query.filter_by(type='Standard').count(),
+        'private_recipe': Recipe.query.filter_by(type='Private').count()
     }
+    try:
+        locked_recipe_object = RecipeConfig.query.filter_by(name='locked_recipes').first()
+        print(locked_recipe_object)
+    except:
+        locked_recipe_object = RecipeConfig(name='locked_recipes', status='False')
+        db.session.add(locked_recipe_object)
+        db.session.commit()
+    if not locked_recipe_object:
+        locked_recipe_object = RecipeConfig(name='locked_recipes', status='False')
+        db.session.add(locked_recipe_object)
+        db.session.commit()
+    locked_recipes = locked_recipe_object.status
+    print(locked_recipes)
+
     return render_template('admin/recipe/recipe_dashboard.html', recipes=recipes, locked_recipes=locked_recipes, data=data, deletedrecipes=deletedrecipes, recipe_count_list=recipe_count_last_12_hours)
 
 @admin_recipe_bp.route('/admin/lock_recipes')
 def lock_recipes():
-    global locked_recipes
-    locked_recipes = True
+    try:
+        locked_recipes = RecipeConfig.query.filter_by(name='locked_recipes').first()
+    except:
+        locked_recipes = RecipeConfig(name='locked_recipes', status='True')
+        db.session.add(locked_recipes)
+    if not locked_recipes:
+        locked_recipes = RecipeConfig(name='locked_recipes', status='True')
+        db.session.add(locked_recipes)
+
+    locked_recipes.status = 'True'
+    print(locked_recipes.status)
+    db.session.commit()
     flash('Recipes locked', 'info')
     return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
 
 @admin_recipe_bp.route('/admin/unlock_recipes')
 def unlock_recipes():
-    global locked_recipes
-    locked_recipes = False
+    try:
+        locked_recipes = RecipeConfig.query.filter_by(name='locked_recipes').first()
+    except:
+        locked_recipes = RecipeConfig(name='locked_recipes', status='False')
+        db.session.add(locked_recipes)
+    if not locked_recipes:
+        locked_recipes = RecipeConfig(name='locked_recipes', status='False')
+        db.session.add(locked_recipes)
+
+    locked_recipes.status = 'False'
+    print(locked_recipes.status)
+    db.session.commit()
     flash('Recipes unlocked', 'info')
     return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
-
-def check_locked_recipes():
-    global locked_recipes
-    print(f'Passed through function, {locked_recipes}')
-    if locked_recipes == True:
-        flash('Recipes are locked', 'danger')
-        return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
-
 
 @admin_recipe_bp.route('/admin/populate_recipes')
 def populate_recipes():
@@ -710,7 +783,9 @@ def restore_recipe(recipe_id):
     db.session.commit()
     return redirect(url_for('admin_recipe_bp.recipe_database'))
 
-
+@admin_recipe_bp.route('/api/ai-recipe-creator', methods=['POST'])
+def ai_recipe_creator():
+    return render_template('admin/recipe/ai_recipe_creator.html')
 
 
 
