@@ -266,3 +266,7 @@ def signup_stage_redirect(current_stage: str):
     logger.warning(f"Redirected user from {current_stage} stage to {expected_stage} stage.")
     
     return redirect(url_for(endpoint))  # Redirect user
+
+
+# if __name__ == "__main__":
+#     send_email("insert-mail@gmail.com", "insert-header", "insert-body")
