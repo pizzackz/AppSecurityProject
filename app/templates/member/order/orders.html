@@ -85,9 +85,22 @@
             <button type="submit" class="btn btn-primary">Confirm</button>
     </div>
         </form>
+
+        <div id="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <script nonce="{{ nonce }}">
+                        display_popup("{{ message|escapejs }}", "{{ category|escapejs }}");
+                    </script>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        </div>
     </div>
 </div>
 {% endblock %}
+
 
 {% block scripts %}
 {{ super() }}
