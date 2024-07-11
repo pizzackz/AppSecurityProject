@@ -3,7 +3,6 @@
     flex-wrap: wrap;
     justify-content: space-between;
     max-height: 80vh; /* Adjust the height as needed */
-    overflow-y: auto; /* Enables vertical scrolling */
 }
 
 .image-control{
@@ -15,8 +14,6 @@
     border-radius: 10px;
     overflow: hidden;
 }
-
-
 
 
 
@@ -41,7 +38,7 @@
     border: 1px solid #888;
     width: 70%; /* Could be more or less, depending on screen size */
     border-radius: 10px; /* Optional: to make rounded corners */
-    display: flex;
+    overflow-y: auto;
 }
 
 .close {

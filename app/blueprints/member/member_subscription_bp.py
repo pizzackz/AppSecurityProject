@@ -21,8 +21,8 @@ stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 publishable_key = os.getenv('STRIPE_PUBLISHABLE_KEY')
 endpoint_secret = os.getenv('STRIPE_ENDPOINT_SECRET')
 
-# if not stripe.api_key:
-#     raise ValueError("No Stripe API key provided")
+if not stripe.api_key:
+    raise ValueError("No Stripe API key provided")
 
 
 @member_subscription_bp.route('/home', methods=['POST', 'GET'])
@@ -35,13 +35,13 @@ def plan_select():
     if request.method == "POST":
         if request.form.get('return') == 'True':
             return redirect(url_for('member_subscription_bp.home'))
-        return redirect(url_for("member_subscription_bp.checkout"))
+        return redirect(url_for('member_subscription_bp.create_checkout_session'))
     return render_template('member/transaction-processing/plan_select.html')
 
-
-@member_subscription_bp.route('/checkout', methods=['POST', 'GET'])
-def checkout():
-    return render_template('member/transaction-processing/checkout.html', publishable_key=publishable_key)
+# Tempoarily removed the checkout route
+# @member_subscription_bp.route('/checkout', methods=['POST', 'GET'])
+# def checkout():
+#     return render_template('member/transaction-processing/checkout.html', publishable_key=publishable_key)
 
 
 @member_subscription_bp.route('/create-checkout-session', methods=['POST'])
@@ -58,7 +58,7 @@ def create_checkout_session():
             success_url=url_for('member_subscription_bp.success', _external=True),
             cancel_url=url_for('member_subscription_bp.cancel', _external=True),
         )
-        return jsonify({'id': stripe_session.id})
+        return redirect(stripe_session.url, code=303)
     except stripe.error.StripeError as e:
         logger.error(f"Stripe error: {e.user_message}")
         return jsonify(error=e.user_message), 403
