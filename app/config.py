@@ -16,8 +16,16 @@ class Config:
     # Secret key
     SECRET_KEY = os.urandom(32).hex()
 
-    # JWT secret key
+    # JWT configuration
     JWT_SECRET_KEY = os.urandom(32).hex()
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=30)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
+    JWT_TOKEN_LOCATION = ['headers', 'cookies']
+    JWT_COOKIE_SECURE = True
+    JWT_ACCESS_COOKIE_PATH = '/'
+    JWT_REFRESH_COOKIE_PATH = '/'
+    JWT_COOKIE_CSRF_PROTECT = True
+    JWT_COOKIE_CSRF_FIELD_NAME = 'csrf_token'
 
     # Change the value for 'SQLALCHEMY_DATABASE_URI' to whatever you used on your local computer to connect
     # to your local database
