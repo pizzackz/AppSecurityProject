@@ -1,11 +1,11 @@
 import os
-import random  # Might be used for more secure secret keys
 from datetime import timedelta
-from dotenv import load_dotenv
+from dotenv import load_dotenv, dotenv_values, find_dotenv
+from typing import Dict
 
 
-# Load environment file
-load_dotenv("../.env")
+# Load .env file variables
+load_dotenv()
 
 # Base directory path
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -13,19 +13,21 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 # Define 'Config' class for all app configurations
 class Config:
-    # Secret key for session management & CSRF protection
-    SECRET_KEY = (
-        os.environ.get("SECRET_KEY") or os.urandom(24).hex()
-    )
+    # Secret key
+    SECRET_KEY = os.urandom(32).hex()
+
+    # JWT secret key
+    JWT_SECRET_KEY = os.urandom(32).hex()
 
     # Change the value for 'SQLALCHEMY_DATABASE_URI' to whatever you used on your local computer to connect
     # to your local database
-    SQLALCHEMY_DATABASE_URI = "mysql://root:password123@localhost/tastefully"
+    SQLALCHEMY_DATABASE_URI = os.getenv("SQLALCHEMY_DATABASE_URI")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # CSRF protection
+    WTF_CSRF_SECRET_KEY = os.urandom(32).hex()
     WTF_CSRF_ENABLED = True
-    WTF_CSRF_SECRET_KEY = os.environ.get("WTF_CSRF_SECRET_KEY") or os.urandom(24).hex()
+    WTF_CSRF_SECRET_KEY = os.urandom(32).hex()
 
     # Secure cookie settings
     SESSION_COOKIE_HTTPONLY = True  # Prevent Javascript from accessing session cookies
@@ -63,8 +65,13 @@ class Config:
     }
 
     # Email configuration
-    GMAIL_USER = os.getenv("GMAIL_USER")
-    GMAIL_PASSWORD = os.getenv("GMAIL_PASSWORD")
+    MAIL_SERVER = os.getenv("MAIL_SERVER")
+    MAIL_PORT = os.getenv("MAIL_PORT")
+    MAIL_USER = os.getenv("MAIL_USER")
+    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
+    MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER")
+    MAIL_USE_SSL = False
+    MAIL_USE_TLS = True
 
     # Stripe configuration
     STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')

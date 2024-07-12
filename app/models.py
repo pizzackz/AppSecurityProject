@@ -19,11 +19,9 @@ class User(UserMixin, db.Model):
     id = Column(Integer, primary_key=True)
     username = Column(String(255), unique=True, index=True, nullable=False)
     email = Column(String(255), unique=True, index=True, nullable=False)
-    profile_picture = Column(
-        String(255),
-        default=os.path.join("static", "uploads", "profile_pictures", "ZGVmYXVsdA.png"),
-        nullable=True,
-    )
+    password_hash = Column(String(255), default="", nullable=False)
+    google_id = Column(String(255), nullable=True)  # 'NULL' when user does manual sign up
+    profile_picture = Column(String(255), default=os.path.join("static", "uploads", "profile_pictures", "ZGVmYXVsdA.png"), nullable=True)
     phone_number = Column(String(20), nullable=True)
     address = Column(String(255), nullable=True)
     postal_code = Column(String(20), nullable=True)
@@ -33,30 +31,9 @@ class User(UserMixin, db.Model):
     type = Column(String(50), default="member", nullable=False)  # "member" or "admin", defaulted to 'member'
 
     # Defining relationships with other models
-    authentication = db.relationship(
-        "Authentication",
-        back_populates="user",
-        uselist=False,
-        cascade="all, delete-orphan",
-    )
-    account_status = db.relationship(
-        "AccountStatus",
-        back_populates="user",
-        uselist=False,
-        cascade="all, delete-orphan",
-    )
-    login_details = db.relationship(
-        "LoginDetails",
-        back_populates="user",
-        uselist=False,
-        cascade="all, delete-orphan",
-    )
-    locked_accounts = db.relationship(
-        "LockedAccount",
-        back_populates="user",
-        uselist=False,
-        cascade="all, delete-orphan",
-    )
+    account_status = db.relationship("AccountStatus", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    login_details = db.relationship("LoginDetails", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    locked_accounts = db.relationship("LockedAccount", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
     # Joined Table Inheritance polymorphic properties
     __mapper_args__ = {"polymorphic_identity": "user", "polymorphic_on": type}
@@ -88,11 +65,6 @@ class Member(User):
             new_member = Member(username=username, email=email, subscription_plan=subscription_plan, type="member")
             db.session.add(new_member)
             db.session.flush()
-
-            # Create related records
-            auth = Authentication.create(id=new_member.id, password_hash=password_hash)
-            if not auth:
-                raise Exception("Failed to create authentication record for member")
             
             acc_status = AccountStatus.create(id=new_member.id)
             if not acc_status:
@@ -108,20 +80,6 @@ class Member(User):
         except Exception as e:
             db.session.rollback()
             print(f"An error occurred while creating member: {e}")
-            return None
-    
-    # Update
-    def update(self, **attrs):
-        try:            
-            # Set new attribute values if it exists in model
-            for key, value in attrs.items():
-                if hasattr(self, key):
-                    setattr(self, key, value)
-            db.session.commit()
-            return self
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error in updating member: {e}")
             return None
 
 
@@ -175,65 +133,7 @@ class Admin(User):
             db.session.rollback()
             print(f"An error occurred: {e}")
             return None
-    
-    # Update
-    def update(self, **attrs):
-        try:
-            # Set new attribute values if it exists in model
-            for key, value in attrs.items():
-                if hasattr(self, key):
-                    setattr(self, key, value)
-            db.session.commit()
-            return self
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error in updating admin: {e}")
-            return None
 
-
-# Authentication model to store 'password_hash' (mandatory) for manual sign in & 'google_id' for google sign in
-class Authentication(db.Model):
-    __tablename__ = "authentication"
-
-    # ForeignKey reference to 'user.id' and primary key for 'authentication'
-    id = Column(Integer, ForeignKey("user.id"), primary_key=True, nullable=False)
-    password_hash = Column(String(255), default="", nullable=False)
-    google_id = Column(String(255), nullable=True)  # 'NULL' when user does manual sign up
-
-    # Relationship back to 'User'
-    user = db.relationship("User", back_populates="authentication")
-    
-    def __repr__(self):
-        return f"<Authentication(id='{self.id}', username='{self.user.username}', password_hash='{self.password_hash}')>"
-    
-    # Methods for CRUD functionalities
-    # Create
-    @staticmethod
-    def create(id: Column[int], password_hash: str):
-        try:
-            auth = Authentication(id=id, password_hash=password_hash)
-            db.session.add(auth)
-            db.session.commit()
-            return auth
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error occurred when creating new authentication: {e}")
-            return None
-    
-    # Update
-    def update(self, **attrs):
-        try:
-            # Set new attribute values if it exists in model
-            for key, value in attrs.items():
-                if hasattr(self, key):
-                    setattr(self, key, value)
-            db.session.commit()
-            return self
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error in updating authentication: {e}")
-            return None
-        
 
 # AccountStatus model to store important info about current 'User' model's account status such as lock related info or failed login attempts
 # related info
@@ -267,20 +167,6 @@ class AccountStatus(db.Model):
             print(f"Error occurred when creating new account status: {e}")
             return None
     
-    # Update
-    def update(self, **attrs):
-        try:
-            # Set new attribute values if it exists in model
-            for key, value in attrs.items():
-                if hasattr(self, key):
-                    setattr(self, key, value)
-            db.session.commit()
-            return self
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error in updating account status: {e}")
-            return None
-    
 
 # LoginDetails model to store info about last login and logout times
 class LoginDetails(db.Model):
@@ -310,20 +196,6 @@ class LoginDetails(db.Model):
             db.session.rollback()
             print(f"Error occurred when creating new login details: {e}")
             return None
-    
-    # Update
-    def update(self, **attrs):
-        try:
-            # Set new attribute values if it exists in model
-            for key, value in attrs.items():
-                if hasattr(self, key):
-                    setattr(self, key, value)
-            db.session.commit()
-            return self
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error in updating login details: {e}")
-            return None
 
 
 # LockedAccount model to store locking related information about all locked accounts, including admin accounts
@@ -338,9 +210,7 @@ class LockedAccount(db.Model):
 
     # Relationship 'id' back to 'User', 'locker' back to 'Admin'
     user = db.relationship("User", back_populates="locked_accounts")
-    locker = db.relationship(
-        "Admin", back_populates="locked_accounts", foreign_keys=[locker_id]
-    )
+    locker = db.relationship("Admin", back_populates="locked_accounts", foreign_keys=[locker_id])
 
     def __repr__(self):
         return f"<LockedAccount(id='{self.id}', locker_id='{self.locker_id}', locked_reason='{self.locked_reason}')>"

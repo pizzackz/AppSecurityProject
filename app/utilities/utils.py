@@ -1,42 +1,85 @@
-import os
-import base64
-import smtplib
-import random
+import hashlib
+import secrets
 import string
 import bleach
 import logging
-import hashlib
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from logging import Logger
-from flask import Flask, session, flash, current_app
-from functools import wraps
-from typing import List, Optional
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from typing import Optional, Any, Dict, List
+from flask import current_app, session, redirect, url_for, flash
+from flask_mail import Message
+from typing import List
 
 
 # Use logger configured in '__init__.py'
 logger: Logger = logging.getLogger('tastefully')
 
 
+# OTP data class
+class OTPData:
+    def __init__(self, otp: str, expiration_minutes: int = 5):
+        self.otp = otp
+        self.hashed_otp = self.hash_otp(otp)
+        self.expiration_time = datetime.now(timezone.utc) + timedelta(minutes=expiration_minutes)
+
+    @staticmethod
+    def hash_otp(otp: str) -> str:
+        """Hash the OTP using SHA-256."""
+        return hashlib.sha256(otp.encode()).hexdigest()
+
+    def is_expired(self) -> bool:
+        """Check if the OTP is expired."""
+        return datetime.now(timezone.utc) > self.expiration_time
+
+    def to_dict(self) -> dict:
+        """Convert OTPData to a dictionary for session storage."""
+        return {
+            'hashed_otp': self.hashed_otp,
+            'expiration_time': self.expiration_time.isoformat()
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        """Create an OTPData object from a dictionary."""
+        obj = cls.__new__(cls)
+        obj.hashed_otp = data['hashed_otp']
+        obj.expiration_time = datetime.fromisoformat(data['expiration_time'])
+        return obj
+
+
+# Authentication data class
+class AuthData:
+    def __init__(self, email, auth_stage, next_step, fallback_step, default_step, username=None):
+        self.username = username
+        self.email = email
+        self.auth_stage = auth_stage
+        self.next_step = next_step
+        self.fallback_step = fallback_step
+        self.default_step = default_step
+
+    def to_dict(self):
+        return {
+            'username': self.username,
+            'email': self.email,
+            'auth_stage': self.auth_stage,
+            'next_step': self.next_step,
+            'fallback_step': self.fallback_step,
+            'default_step': self.default_step
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            username=data.get('username'),
+            email=data['email'],
+            auth_stage=data['auth_stage'],
+            next_step=data['next_step'],
+            fallback_step=data['fallback_step'],
+            default_step=data['default_step']
+        )
+
+
 # Functions
-# Registering cli commands function
-def register_commands(app: Flask) -> None:
-    @app.cli.command("seed-db")
-    def seed_db():
-        """Seed the database with test data"""
-        from app.populate_database import seed_database
-        with app.app_context():
-            seed_database()
-
-
-# Generate nonce (number used once) function
-def generate_nonce() -> str:
-    return base64.b64encode(os.urandom(16)).decode("utf-8")
-
-
 # Clean input function
 def clean_input(data: str, strip: bool = True) -> str:
     """Sanitise and strip input data using bleach."""
@@ -45,149 +88,32 @@ def clean_input(data: str, strip: bool = True) -> str:
     return bleach.clean(data.strip())
 
 
-# Clear specific session data
-def clear_session_data(keys: List[str]) -> None:
-    """Clear specific session data keys."""
-    for key in keys:
-        session.pop(key, None)
-
-
-# Set session data function
-def set_session_data(data: Dict[str, Any]) -> None:
-    """Set multiple session data keys at once."""
-    for key, value in data.items():
-        if value is None:
-            session.pop(key, None)
-            continue
-        session[key] = value
-
-
-# Set otp session data function
-def set_otp_session_data(otp: str) -> None:
-    """Set the OTP session data."""
-    otp_hash = hashlib.sha256(otp.encode()).hexdigest()
-    current_time = datetime.now().strftime("%d/%b/%Y %H:%M:%S")
-    otp_data = {"value": otp_hash, "gen_time": current_time, "verified": False}
-    session["otp_data"] = otp_data
-
-
 # Generate OTP function
 def generate_otp(length: int = 6) -> str:
-    """Generate a one-time password (OTP) with a specified length.
-    
-    Args:
-        length (int): The length of the OTP to generate. Default is 6.
-
-    Returns:
-        str: The generated OTP.
-    """
-    return ''.join(random.choices(string.digits, k=length))
+    """Generate a secure OTP using a cryptographically secure random number generator."""
+    characters = string.digits
+    otp = ''.join(secrets.choice(characters) for _ in range(length))
+    return otp
 
 
-# Validate otp data based on data type, keys and expiry time
-def validate_otp(otp_data: Dict, required_keys: List[str], expiry_time: int = 5) -> None:
-    """Validate OTP data structure, keys, and expiry time."""
-    validate_otp_data_type(otp_data)
-    validate_otp_keys(otp_data, required_keys)
-    validate_otp_expiry(otp_data, expiry_time)
-
-
-# Validate dictionary data structure function
-def validate_otp_data_type(otp_data: Dict) -> None:
-    """Check it OTP data is a dictionary."""
-    if not isinstance(otp_data, dict):
-        raise TypeError(f"Session OTP data object has incorrect data type: {type(otp_data)}")
-
-
-# Validate otp keys
-def validate_otp_keys(otp_data: Dict, required_keys: List[str]) -> None:
-    """Check if OTP data has all required keys."""
-    missing_keys = [key for key in required_keys if key not in otp_data]
-    if missing_keys:
-        raise KeyError(f"Otp data object has missing keys: {missing_keys}.")
-
-
-# Validate otp expiry
-def validate_otp_expiry(otp_data: Dict, expiry_time: int) -> None:
-    """Check if OTP has expired."""
-    gen_time = datetime.strptime(otp_data['gen_time'], "%d/%b/%Y %H:%M:%S")
-    if datetime.now() > gen_time + timedelta(minutes=expiry_time):
-        raise ValueError("Otp has expired.")
-
-
-# Check otp value
-def check_otp_hash(otp_hash: str, otp: str) -> None:
-    """Compare the input otp with the otp_hash."""
-    input_otp_hash = hashlib.sha256(otp.encode()).hexdigest()
-    if otp_hash != input_otp_hash:
-        raise ValueError(f"Incorrect OTP value.")
+# Hash otp
+def hash_otp(otp):
+    """Hash the OTP using SHA-256."""
+    return hashlib.sha256(otp.encode()).hexdigest()
 
 
 # General send email function
-def send_email(to_email: str, subject: str, body: str) -> Optional[bool]:
-    """
-    Send an email securely using Gmail's SMTP server.
+def send_email(to_email: str, subject: str, body: str) -> bool:
+    """Send an email using Flask-Mail."""
+    from app import mail
 
-    Args:
-        to_email (str): The recipient's email address.
-        subject (str): The subject of the email.
-        body (str): The body of the email.
-    
-    Raises:
-        Exception: If there is an issue sending the email.
-    """
-    GMAIL_USER: str = current_app.config.get("GMAIL_USER")
-    GMAIL_PASSWORD: str = current_app.config.get("GMAIL_PASSWORD")
-
-    msg = MIMEMultipart()
-    msg["From"] = GMAIL_USER
-    msg["To"] = to_email
-    msg["subject"] = subject
-
-    msg.attach(MIMEText(body, "plain"))
+    msg = Message(subject, sender=current_app.config['MAIL_USERNAME'], recipients=[to_email])
+    msg.body = body
 
     try:
-        # Establish secure session with Gmail's outgoing SMTP server using TLS
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.starttls()  # Start TLS for security
-        server.login(GMAIL_USER, GMAIL_PASSWORD)  # Login with credentials
-
-        # Send email
-        text = msg.as_string()
-        server.sendmail(GMAIL_USER, to_email, text)
-
-        print("Email sent successfully")
+        mail.send(msg)
+        logger.info(f'Email sent to {to_email} with subject "{subject}"')
         return True
     except Exception as e:
-        print(f"Failed to send email: {e}")
+        logger.error(f"Failed to send email to {to_email} with subject '{subject}': {e}")
         return False
-    finally:
-        if server:
-            server.quit()  # Terminate SMTP session
-
-
-# Send OTP to stated email function
-def send_otp_email(to_email: str, otp: str) -> Optional[bool]:
-    """
-    Send an OTP email to the specified email address.
-
-    Args:
-        to_email (str): The recipient's email address.
-        otp (str): The one-time password to send.
-    
-    Raises:
-        Exception: If there is an issue sending the email.
-    """
-    subject = "Your OTP Code"
-    body = f"Your OTP code is {otp}"
-
-    print(f"otp: {otp}")
-
-    return send_email(to_email, subject, body)
-
-
-# Handle email verification errors -- flash message & log error message
-def handle_email_verify_error(message: str):
-    """Handle email verification errors by flashing a message and logging the error."""
-    flash("Invalid OTP. Please try again.", "error")
-    logger.error(f"Invalid email verification attempt: {message}")

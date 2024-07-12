@@ -1,29 +1,32 @@
 import logging
+import base64
+import os
 
 from logging import Logger, StreamHandler, Formatter
 from dotenv import load_dotenv
-from flask import Flask, Response, g, session
+from flask import Flask, Response, g
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_login import LoginManager
 from flask_session import Session
+from flask_mail import Mail
+from flask_jwt_extended import JWTManager
 
 from app.config import Config
-from app.utilities.utils import generate_nonce, register_commands
 
 
 # Load environment variables from .env file
 load_dotenv()
 
-# Main file to define a function to create a flask application instance
-# Used to "combine" all important blueprints & configurations together in order to run flask app
-# Initialise CSRF protection, SQLAlchemy, LoginManager, Rate Limiter
+# Initialise CSRF protection, SQLAlchemy, LoginManager, Rate Limiter, Mail
 csrf: CSRFProtect = CSRFProtect()
 db: SQLAlchemy = SQLAlchemy()
-login_manager: LoginManager = LoginManager()
-limiter = Limiter(key_func=get_remote_address, default_limits=Config.RATELIMIT_DEFAULT, storage_uri=Config.RATELIMIT_STORAGE_URL)
+jwt: JWTManager = JWTManager()
+# login_manager: LoginManager = LoginManager()
+limiter: Limiter = Limiter(key_func=get_remote_address, default_limits=Config.RATELIMIT_DEFAULT, storage_uri=Config.RATELIMIT_STORAGE_URL)
+mail: Mail = Mail()
 
 
 # Setup logger for own logs function
@@ -48,6 +51,21 @@ def setup_custom_logger(name: str) -> Logger:
     logger.propagate = False  # Prevents log messages from being propagated to Flask default logger
 
     return logger
+
+
+# Registering cli commands function
+def register_commands(app: Flask) -> None:
+    @app.cli.command("seed-db")
+    def seed_db():
+        """Seed the database with test data"""
+        from app.populate_database import seed_database
+        with app.app_context():
+            seed_database()
+
+
+# Generate nonce (number used once) function
+def generate_nonce() -> str:
+    return base64.b64encode(os.urandom(16)).decode("utf-8")
 
 
 # Generate and save nonce (number used once) to request specific object (flask.g)
@@ -87,24 +105,23 @@ def create_app() -> Flask:
     # Initialise extensions
     csrf.init_app(app)
     db.init_app(app)
-    login_manager.init_app(app)
+    # login_manager.init_app(app)
     limiter.init_app(app)
+    jwt.init_app(app)
     
     # Custom logger for app logic
-    custom_logger: Logger = setup_custom_logger("tastefully")
-    app.config["CUSTOM_LOGGER"] = custom_logger
+    setup_custom_logger("tastefully")
 
     # Configure Flask-Session to use SQLAlchemy
     app.config["SESSION_SQLALCHEMY"] = db
     Session(app)
 
     # Register blueprints
+    from app.blueprints.authentication.auth_bp import auth_bp
     from app.blueprints.authentication.signup_auth_bp import signup_auth_bp
-    from app.blueprints.authentication.login_auth_bp import login_auth_bp
-    from app.blueprints.authentication.recovery_auth_bp import recovery_auth_bp
+    app.register_blueprint(auth_bp)
     app.register_blueprint(signup_auth_bp)
-    app.register_blueprint(login_auth_bp)
-    app.register_blueprint(recovery_auth_bp)
+    
     
     from app.blueprints.member.member_subscription_bp import member_subscription_bp
     from app.blueprints.member.member_order_bp import member_order_bp
@@ -134,7 +151,3 @@ def create_app() -> Flask:
 
     # Return Flask app instance
     return app
-
-
-# Import the User model here to avoid circular import issues
-from app.models import User

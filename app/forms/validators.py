@@ -92,8 +92,8 @@ def validate_password_complexity(form, field):
     Raises:
         ValidationError: If the password does not meet complexity requirements.
     """
-    errors: list = list()
-    data: str = sanitise_data(field.data)
+    errors = list()
+    data = sanitise_data(field.data)
 
     if not validate_password_length(data):
         errors.append("Password must be at least 8 characters long.")
