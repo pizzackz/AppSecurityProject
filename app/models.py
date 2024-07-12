@@ -2,6 +2,7 @@ import os
 import datetime
 import secrets
 import string
+import logging
 
 from flask_login import UserMixin
 from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, ForeignKey
@@ -9,6 +10,9 @@ from sqlalchemy.sql import func
 from typing import Union
 
 from app import db
+
+
+logger = logging.getLogger("tastefully")
 
 
 # User model acting as superclass to 'Member' and 'Admin' models while also allowing extension for common models like 'Authentication' and 'AccountStatus'
@@ -79,7 +83,7 @@ class Member(User):
             return new_member
         except Exception as e:
             db.session.rollback()
-            print(f"An error occurred while creating member: {e}")
+            logger.error(f"An error occurred while creating member: {e}")
             return None
 
 
@@ -115,10 +119,6 @@ class Admin(User):
             db.session.flush()
 
             # Create related records
-            auth = Authentication.create(id=new_admin.id, password_hash=password_hash)
-            if not auth:
-                raise Exception("Failed to create authentication record for admin")
-
             acc_status = AccountStatus.create(id=new_admin.id)
             if not acc_status:
                 raise Exception("Failed to create account status record for admin")

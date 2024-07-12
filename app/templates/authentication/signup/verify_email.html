@@ -10,7 +10,7 @@
 <!-- Message with resend otp below -->
 <p>We have sent you a verification email, please verify your email address.</p>
 
-<a href="{{ url_for('signup_auth_bp.send_otp', resend=True) }}">Resend it</a>
+<a href="{{ url_for('signup_auth_bp.verify_email', resend=True) }}">Resend it</a>
 
 <form action="" method="post" id="verify-otp-form">
     {{ form.hidden_tag() }}

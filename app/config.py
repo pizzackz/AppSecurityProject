@@ -1,7 +1,6 @@
 import os
 from datetime import timedelta
-from dotenv import load_dotenv, dotenv_values, find_dotenv
-from typing import Dict
+from dotenv import load_dotenv
 
 
 # Load .env file variables
@@ -25,7 +24,7 @@ class Config:
     JWT_ACCESS_COOKIE_PATH = '/'
     JWT_REFRESH_COOKIE_PATH = '/'
     JWT_COOKIE_CSRF_PROTECT = True
-    JWT_COOKIE_CSRF_FIELD_NAME = 'csrf_token'
+    JWT_COOKIE_CSRF_FIELD_NAME = '_csrf_token'
 
     # Change the value for 'SQLALCHEMY_DATABASE_URI' to whatever you used on your local computer to connect
     # to your local database
@@ -35,7 +34,7 @@ class Config:
     # CSRF protection
     WTF_CSRF_SECRET_KEY = os.urandom(32).hex()
     WTF_CSRF_ENABLED = True
-    WTF_CSRF_SECRET_KEY = os.urandom(32).hex()
+    WTF_CSRF_FIELD_NAME = "_csrf_token"
 
     # Secure cookie settings
     SESSION_COOKIE_HTTPONLY = True  # Prevent Javascript from accessing session cookies

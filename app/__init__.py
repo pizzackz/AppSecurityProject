@@ -108,6 +108,7 @@ def create_app() -> Flask:
     # login_manager.init_app(app)
     limiter.init_app(app)
     jwt.init_app(app)
+    mail.init_app(app)
     
     # Custom logger for app logic
     setup_custom_logger("tastefully")
@@ -117,9 +118,7 @@ def create_app() -> Flask:
     Session(app)
 
     # Register blueprints
-    from app.blueprints.authentication.auth_bp import auth_bp
     from app.blueprints.authentication.signup_auth_bp import signup_auth_bp
-    app.register_blueprint(auth_bp)
     app.register_blueprint(signup_auth_bp)
     
     
