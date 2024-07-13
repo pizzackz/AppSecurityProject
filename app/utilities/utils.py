@@ -45,19 +45,6 @@ def generate_otp(length: int = 6) -> str:
     return otp
 
 
-def hash_otp(otp: str) -> str:
-    """
-    Hash the OTP using SHA-256.
-    
-    Args:
-        otp (str): The OTP to hash.
-
-    Returns:
-        str: The hashed OTP.
-    """
-    return hashlib.sha256(otp.encode()).hexdigest()
-
-
 def send_email(to_email: str, subject: str, body: str) -> bool:
     """
     Send an email using Flask-Mail.
@@ -70,15 +57,18 @@ def send_email(to_email: str, subject: str, body: str) -> bool:
     Returns:
         bool: True if email sent successfully, False otherwise.
     """
-    from app import mail
+    # from app import mail
 
-    msg = Message(subject, sender=current_app.config['MAIL_USERNAME'], recipients=[to_email])
-    msg.body = body
+    # msg = Message(subject, sender=current_app.config['MAIL_USERNAME'], recipients=[to_email])
+    # msg.body = body
 
-    try:
-        mail.send(msg)
-        logger.info(f'Email sent to {to_email} with subject "{subject}"')
-        return True
-    except Exception as e:
-        logger.error(f"Failed to send email to {to_email} with subject '{subject}': {e}")
-        return False
+    # try:
+    #     mail.send(msg)
+    #     logger.info(f'Email sent to {to_email} with subject "{subject}"')
+    #     return True
+    # except Exception as e:
+    #     logger.error(f"Failed to send email to {to_email} with subject '{subject}': {e}")
+    #     return False
+
+    print(f"Mail message body:\n{body}")
+    return True

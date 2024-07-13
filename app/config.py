@@ -13,18 +13,13 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 # Define 'Config' class for all app configurations
 class Config:
     # Secret key
-    SECRET_KEY = os.urandom(32).hex()
+    SECRET_KEY = os.getenv('SECRET_KEY', os.urandom(32).hex())
 
     # JWT configuration
-    JWT_SECRET_KEY = os.urandom(32).hex()
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=30)
-    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
-    JWT_TOKEN_LOCATION = ['headers', 'cookies']
+    JWT_TOKEN_LOCATION = ['cookies']
     JWT_COOKIE_SECURE = True
-    JWT_ACCESS_COOKIE_PATH = '/'
-    JWT_REFRESH_COOKIE_PATH = '/'
-    JWT_COOKIE_CSRF_PROTECT = True
-    JWT_COOKIE_CSRF_FIELD_NAME = '_csrf_token'
+    JWT_COOKIE_CSRF_PROTECT = False
 
     # Change the value for 'SQLALCHEMY_DATABASE_URI' to whatever you used on your local computer to connect
     # to your local database
@@ -32,7 +27,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # CSRF protection
-    WTF_CSRF_SECRET_KEY = os.urandom(32).hex()
+    WTF_CSRF_SECRET_KEY = os.getenv('WTF_CSRF_SECRET_KEY', os.urandom(32).hex())
     WTF_CSRF_ENABLED = True
     WTF_CSRF_FIELD_NAME = "_csrf_token"
 
