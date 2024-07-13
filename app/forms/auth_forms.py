@@ -30,7 +30,7 @@ class OtpForm(FlaskForm):
 # Manual Signup phase 3 | 1st time Google Sign-in - Set password for account
 class PasswordForm(FlaskForm):
     password = PasswordField("Password", validators=[DataRequired(), Length(min=8), validate_password_complexity])
-    confirm_password = PasswordField("Confirm Password", validators=[DataRequired(), Length(min=8), EqualTo("password", "Confirm password must be equal to your password")])
+    confirm_password = PasswordField("Confirm Password", validators=[DataRequired(), Length(min=8), EqualTo("password", "Passwords must match")])
 
 
 # Account Recovery Phase 2 - Choosing to recover username or set new password
@@ -48,4 +48,4 @@ class ExtraInfoForm(FlaskForm):
 # Account Recovery Phase 3 - Set new password
 class NewPasswordForm(FlaskForm):
     password = PasswordField("New Password", validators=[DataRequired(), Length(min=6), validate_password_complexity])
-    confirm_password = PasswordField("Confirm Password", validators=[DataRequired(), EqualTo("password")])
+    confirm_password = PasswordField("Confirm Password", validators=[DataRequired(), EqualTo("password", "Passwords must match")])

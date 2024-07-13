@@ -66,7 +66,7 @@ class Member(User):
     def create(username: str, email: str, password_hash: str, subscription_plan: str = "standard"):
         try:
             # Create new member object
-            new_member = Member(username=username, email=email, subscription_plan=subscription_plan, type="member")
+            new_member = Member(username=username, email=email, password_hash=password_hash, subscription_plan=subscription_plan, type="member")
             db.session.add(new_member)
             db.session.flush()
             
@@ -114,7 +114,7 @@ class Admin(User):
     def create(username: str, email: str, password_hash: str):
         try:
             # Create new admin object
-            new_admin = Admin(username=username, email=email, type="admin")
+            new_admin = Admin(username=username, email=email, password_hash=password_hash, type="admin")
             db.session.add(new_admin)
             db.session.flush()
 

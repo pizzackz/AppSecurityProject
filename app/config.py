@@ -39,6 +39,7 @@ class Config:
 
     # Session storage configurations
     SESSION_TYPE = "sqlalchemy"  # Store session data in database
+    SESSION_PERMANENT = True
 
     # Base CSP settings
     CSP_DIRECTIVES = {
