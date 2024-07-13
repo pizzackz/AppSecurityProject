@@ -308,5 +308,3 @@ def some_route():
     return "It worked"
 
 
-# TODO: Write jwt checkers to simplify
-# TODO: Write handlers for any jwt required & missing csrf

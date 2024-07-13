@@ -1,0 +1,3 @@
+signup_auth_bp:
+    Write jwt checkers to simplify
+    Write handlers for any jwt required & missing csrf
