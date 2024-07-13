@@ -9,7 +9,7 @@ from werkzeug.security import generate_password_hash
 from app import db
 from app.models import Member
 from app.forms.auth_forms import SignupForm, OtpForm
-from app.utilities.utils import clean_input, generate_otp, hash_otp, send_email, create_jwt_token, decode_jwt_token
+from app.utilities.utils import clean_input, generate_otp, send_email
 
 
 signup_auth_bp: Blueprint = Blueprint("signup_auth_bp", __name__, url_prefix="/signup")
@@ -37,7 +37,7 @@ def signup():
         set_access_cookies(request, token)
 
         # Store intermediate stage in session
-        session['signup_stage'] = 'otp_sent'
+        session['signup_stage'] = 'send_otp'
 
         return redirect(url_for('signup_auth_bp.send_otp'))
 
@@ -45,7 +45,9 @@ def signup():
 
 
 # Send otp route
-@signup_auth_bp('/', methods=["GET"])
-@jwt_required
+@signup_auth_bp.route('/send-otp', methods=["GET"])
 def send_otp():
-    
+    # Test to see if this works
+    otp = generate_otp()
+    send_email("ongzhaohan03@gmail.com", "test", "This is a test.")
+    return "Sending email for testing..."
