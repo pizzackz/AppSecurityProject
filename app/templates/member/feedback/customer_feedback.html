@@ -20,8 +20,9 @@
 
 {% block content %}
   <form method="POST" action="">
+    {{ form.csrf_token }}
       <h3 class="card-title">Feedback</h3>
-        {{ form.csrf_token }}
+
             <div class="form-group">
                 {{ form.name.label }}
                 {{ form.name(class="form-control") }}

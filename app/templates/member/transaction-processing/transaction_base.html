@@ -1,21 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8" />
-    <title>{% block title %}Base{% endblock %}</title>
-    {% block css %}
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/main.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/flash_message.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/transaction/base.css') }}">
-    {% endblock %}
-</head>
+{% block title %}Base{% endblock %}
+
+{% block css %}
+{{ super() }}
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/main.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/flash_message.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/order/base.css') }}">
+{% endblock %}
+
+{% block content %}
 
 <body class="bg-gray-100 flex items-center justify-center h-screen">
     <script src="{{ url_for('static', filename='js/flash_message.js') }}" nonce="{{ nonce }}"></script>
+    <script href="{{ url_for('static', filename='js/order_popup.js') }}" nonce="{{ nonce }}"></script>
     <div id="popup"></div>
 
     {% block navbar %} {% endblock %}
@@ -40,9 +42,6 @@
     {% endfor %}
     {% endblock %}
 
-    <div>
-        {% block content %}{% endblock %}
-    </div>
 
     {% block scripts %}
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"
@@ -52,9 +51,10 @@
         integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"
         nonce="{{ nonce }}"></script>
     {% endblock %}
-    
+
     {% block footer %}
     {% endblock %}
 
+
 </body>
-</html>
+{% endblock %}

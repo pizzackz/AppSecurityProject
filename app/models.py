@@ -254,6 +254,14 @@ class RecipeDeleted(db.Model):
     def __repr__(self):
         return f"Recipe('{self.name}')"
 
+# To store the configuration status of recipes (Lock recipes)
+class RecipeConfig(db.Model):
+    name = db.Column(db.String(100), primary_key=True, nullable=False)
+    status = db.Column(db.String(5), nullable=False)
+
+    def __repr__(self):
+        return f"{self.name}: {self.status}"
+
 class Feedback(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)

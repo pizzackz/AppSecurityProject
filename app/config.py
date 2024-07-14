@@ -80,3 +80,6 @@ class Config:
     STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
     STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
 
+    # OpenAI API key
+    OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+

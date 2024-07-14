@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Customer Feeddback{% endblock %}
+{% block title %}Customer Feedback{% endblock %}
 {% block content %}
 <h1 class="display-4">Customer Feedback</h1>
 <div>
@@ -15,20 +15,23 @@
     <table class="table table-striped">
         <thead>
             <tr>
+                <th>ID</th>
                 <th>Name</th>
                 <th>Category</th>
                 <th>Rating</th>
                 <th>Comment</th>
+                <th>Created at</th>
             </tr>
         </thead>
         <tbody>
-            {% for customer in customers_list %}
+            {% for Feedback in feedback %}
             <tr>
-                <td>{{ member.get_name() }}</td>
-                <td>{{ member.get_category() }}</td>
-                <td>{{ member.get_rating() }}</td>
-                <td>{{ member.get_comment() }}</td>
-                <td><a href="#" class="btn btn-warning">Update</a></td>
+                <td>{{ Feedback.id }}</td>
+                <td>{{ Feedback.name }}</td>
+                <td>{{ Feedback.category }}</td>
+                <td>{{ Feedback.rating }}</td>
+                <td>{{ Feedback.comment }}</td>
+                <td>{{ Feedback.created_at }}</td>
                 <td>
                     <form action="" method="POST">
                         <input type="submit" value="Delete" class="btn btn-danger">

@@ -19,8 +19,8 @@ member_feedback_bp = Blueprint("member_feedback_bp", __name__)
 
 @member_feedback_bp.route("/feedback", methods=["GET", "POST"])
 def feedback():
-    feedback_form = CreateFeedback(request.form)
-    if request.method == 'POST':
+    feedback_form = CreateFeedback()
+    if request.method == 'POST' and feedback_form.validate_on_submit():
         name = feedback_form.name.data
         category = feedback_form.category.data
         rating = feedback_form.rating.data
@@ -52,4 +52,4 @@ def feedback():
 
     # # change redirect to homepage
     # return redirect(url_for('menu'))
-    return render_template("member/feedback/feedback.html", form=feedback_form)
+    return render_template("member/feedback/customer_feedback.html", form=feedback_form)

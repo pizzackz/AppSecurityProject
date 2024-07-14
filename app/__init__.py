@@ -133,8 +133,10 @@ def create_app() -> Flask:
 
     from app.blueprints.admin.admin_log_bp import admin_log_bp
     from app.blueprints.admin.admin_recipe_bp import admin_recipe_bp
+    from app.blueprints.admin.admin_feedback_bp import admin_feedback_bp
     app.register_blueprint(admin_recipe_bp)
     app.register_blueprint(admin_log_bp)
+    app.register_blueprint(admin_feedback_bp)
 
     # Create all database tables
     with app.app_context():

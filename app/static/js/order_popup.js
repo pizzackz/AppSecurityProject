@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", function () {
             var modalId = this.getAttribute("data-modal");
             var modal = document.getElementById(modalId);
             modal.style.display = "block";
+            document.body.style.overflow = "hidden";
         });
     });
 
@@ -20,6 +21,7 @@ document.addEventListener("DOMContentLoaded", function () {
             var modalId = this.getAttribute("data-modal");
             var modal = document.getElementById(modalId);
             modal.style.display = "none";
+            document.body.style.overflow = "auto";
         });
     });
 
@@ -27,6 +29,7 @@ document.addEventListener("DOMContentLoaded", function () {
     window.addEventListener("click", function(event) {
         if (event.target.classList.contains("modal")) {
             event.target.style.display = "none";
+            document.body.style.overflow = "auto";
         }
     });
 });

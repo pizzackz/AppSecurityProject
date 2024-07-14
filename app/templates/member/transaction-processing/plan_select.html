@@ -4,9 +4,7 @@
 
 {% block css %}
 {{ super() }}
-<link href="{{ url_for('static', filename='#') }}" rel="stylesheet">
-<link rel="stylesheet" type="text/css"
-    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
 {% endblock %}
 
 {% block content %}
@@ -26,7 +24,7 @@
     </div>
 </div>
 <div class="container"> 
-    <form action="" method="post">
+    <form action="{{ url_for('member_subscription_bp.create_checkout_session') }}" method="post" id="plan-select-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="max-w-sm mx-auto bg-yellow-100 p-6 rounded-lg shadow-md text-center">
         <h2 class="text-xl font-bold mb-4">Premium Plan</h2>
@@ -40,16 +38,16 @@
         </ul>
     </div>
     </form>
-
+</div>
     <!-- Return Button -->
     <form action="" method="post">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}>
         <div class="text-center mt-4">
-            <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded" name="return" value="True">Return</button>
+            <button id="checkout-button" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded" name="return" value="True">Return</button>
         </div>
     </form>
     {% endblock %}
-</div>
+
 
 
 {% block scripts %}
@@ -77,4 +75,38 @@
         });
     });
 </script>
+<script nonce="{{ nonce }}" type="text/javascript">
+  var stripe = Stripe('{{ publishable_key }}');
+  var checkoutButton = document.getElementById('checkout-button');
+
+  checkoutButton.addEventListener('click', function () {
+    fetch('/create-checkout-session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token() }}'
+      },
+    })
+    .then(function (response) {
+      return response.json();
+    })
+    .then(function (session) {
+      return stripe.redirectToCheckout({ sessionId: session.id });
+    })
+    .then(function (result) {
+      if (result.error) {
+        alert(result.error.message);
+      }
+    })
+    .catch(function (error) {
+      console.error('Error:', error);
+    });
+  });
+
+  var returnButton = document.getElementById("return-button");
+  returnButton.addEventListener("click", function() {
+    window.history.back();
+  });
+</script>
+
 {% endblock %}

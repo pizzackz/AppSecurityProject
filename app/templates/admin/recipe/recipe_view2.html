@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 {% extends 'base.html' %}
-{% block title %}tastefully |  }}{% endblock %}
+{% block title %}tastefully | {{ recipe.name }}{% endblock %}
 
 {% block css %}
 {{ super() }}
@@ -24,6 +24,9 @@
                     <div id="a" class="card-body align-items-center" >
                         {% if recipe.type == 'Premium' %}
                         <h6>PREMIUM</h6>
+                        {% endif %}
+                        {% if recipe.type == 'Private' %}
+                        <h6>PRIVATE</h6>
                         {% endif %}
                         <h1 class="card-title">{{ recipe.name }}</h1>
                         <p class="card-text"><small class="text-muted">Created by {{ recipe.user_created }}</small></p>

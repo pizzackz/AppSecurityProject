@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}tastefully | Recipe Database{% endblock %}
+{% block title %}tastefully | Recipe Dashboard{% endblock %}
 
 {% block css %}
 {{ super() }}
@@ -31,6 +31,10 @@
           <h2>{{ data.standard_recipe }}</h2>
           <h3>Standard Recipes</h3>
         </div>
+        <div class="col items">
+          <h2>{{ data.private_recipe }}</h2>
+          <h3>Private Recipes</h3>
+        </div>
       </div>
         <div class="items">
           <canvas id="myChart"></canvas>
@@ -59,10 +63,10 @@
       <a href="/admin/create_recipe" class="btn btn-primary mb-2">Create Recipe</a><br>
       <a href="/admin/deleted_recipe_database" class="btn btn-info mb-2">View Deleted Recipes</a><br>
 
-      {% if locked_recipes == True %}
+      {% if locked_recipes == 'True' %}
         <a href="/admin/unlock_recipes" class="btn btn-success mb-2">Unlock Recipes</a><br>
       {% endif %}
-      {% if locked_recipes == False %}
+      {% if locked_recipes == 'False' %}
         <a href="/admin/lock_recipes" class="btn btn-danger mb-2">Lock Recipes</a><br>
       {% endif %}
       <a href="/admin/populate_recipes" class="btn btn-warning mb-2">Repopulate Database</a><br>
