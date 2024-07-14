@@ -174,7 +174,7 @@ def check_jwt_identity(fallback_endpoint: str, flash_message: str, log_message: 
     identity = get_jwt_identity()
     if not identity or not isinstance(identity, dict):
         session.clear()
-        response = redirect(url_for(fallback_endpoint))
+        response = make_response(redirect(url_for(fallback_endpoint)))
         unset_jwt_cookies(response)
         flash(flash_message, 'error')
         logger.error(f"{log_message}: identity is missing or not a dict")
@@ -201,7 +201,7 @@ def check_jwt_identity_keys(required_identity_keys: List[str], fallback_endpoint
     missing_keys = [key for key in required_identity_keys if key not in identity]
     if missing_keys:
         session.clear()
-        response = redirect(url_for(fallback_endpoint))
+        response = make_response(redirect(url_for(fallback_endpoint)))
         unset_jwt_cookies(response)
         flash(flash_message, 'error')
         logger.error(f"{log_message}: missing identity keys {missing_keys}")
@@ -228,7 +228,7 @@ def check_jwt_claims(required_claims: List[str], fallback_endpoint: str, flash_m
     missing_claims = [claim for claim in required_claims if claim not in jwt_claims]
     if missing_claims:
         session.clear()
-        response = redirect(url_for(fallback_endpoint))
+        response = make_response(redirect(url_for(fallback_endpoint)))
         unset_jwt_cookies(response)
         flash(flash_message, 'error')
         logger.error(f"{log_message}: missing claims {missing_claims}")
@@ -274,4 +274,3 @@ def check_jwt_values(
             return check
 
     return None
-
