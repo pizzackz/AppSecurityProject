@@ -5,7 +5,7 @@ from flask import Blueprint, request, redirect, render_template, url_for, flash,
 
 from app.models import User
 from app.forms.auth_forms import EmailForm, OtpForm, RecoverOptionsForm
-from app.utilities.utils import clean_input, generate_otp, send_otp_email
+from app.utils import clean_input, generate_otp, send_otp_email
 
 
 # Initialise flask blueprint - 'login_aut_bp'

@@ -10,7 +10,7 @@ from werkzeug.security import generate_password_hash
 from app import db
 from app.models import Member
 from app.forms.auth_forms import SignupForm, OtpForm, PasswordForm, ExtraInfoForm
-from app.utilities.utils import clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_signup_stage, check_jwt_values
+from app.utils import clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_signup_stage, check_jwt_values
 
 
 signup_auth_bp: Blueprint = Blueprint("signup_auth_bp", __name__, url_prefix="/signup")

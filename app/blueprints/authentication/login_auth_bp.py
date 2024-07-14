@@ -8,7 +8,7 @@ from typing import Union
 from app import db, login_manager
 from app.models import User, Member, Admin
 from app.forms.auth_forms import LoginForm, OtpForm
-from app.utilities.utils import clean_input, generate_otp, send_otp_email
+from app.utils import clean_input, generate_otp, send_otp_email
 
 
 login_auth_bp: Blueprint = Blueprint("login_auth_bp", __name__, url_prefix="/login")
@@ -26,5 +26,5 @@ def load_user(user_id: int) -> Union[User, Member, Admin]:
         return Member.query.get(user_id)
     elif user.type == "admin":
         return Admin.query.get(user_id)
-    
+
     return user
