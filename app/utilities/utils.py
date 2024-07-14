@@ -4,16 +4,17 @@ import bleach
 import logging
 
 from logging import Logger
-from flask import Response, session, redirect, url_for, flash
+from flask import Response, session, redirect, url_for, flash, make_response
 from flask_mail import Message
 from flask_jwt_extended import get_jwt, get_jwt_identity, unset_jwt_cookies
-from typing import Optional, List
+from typing import Optional, List, Set
 
 
 # Use logger configured in '__init__.py'
 logger: Logger = logging.getLogger('tastefully')
 
 
+# Simple clean input function using bleach
 def clean_input(data: str, strip: bool = True) -> str:
     """
     Sanitize and strip input data using bleach.
@@ -30,6 +31,7 @@ def clean_input(data: str, strip: bool = True) -> str:
     return bleach.clean(data.strip())
 
 
+# Generate fixed length otp function
 def generate_otp(length: int = 6) -> str:
     """
     Generate a secure OTP using a cryptographically secure random number generator.
@@ -45,6 +47,7 @@ def generate_otp(length: int = 6) -> str:
     return otp
 
 
+# Send email function (sending email not work, just printing out mail body for now)
 def send_email(to_email: str, subject: str, body: str) -> bool:
     """
     Send an email using Flask-Mail.
@@ -74,8 +77,60 @@ def send_email(to_email: str, subject: str, body: str) -> bool:
     return True
 
 
+# Clear unwanted session data (for clean session states, usually base routes)
+def clear_unwanted_session_keys(keys_to_keep: Set[str] = {"_permanent", "_csrf_token"}):
+    """
+    Utility function to clear specific session keys that are not needed.
+    
+    Parameters:
+    - keys_to_keep (set): A set of keys that should be retained in the session. Default is None.
+    
+    Returns:
+    - None
+    """
+    keys_to_remove = [key for key in session.keys() if key not in keys_to_keep]
+    for key in keys_to_remove:
+        session.pop(key, None)
+
+
+# Check session keys function
+def check_session_keys(
+    required_keys: List[str], 
+    fallback_endpoint: str, 
+    flash_message: str = "Your session has expired. Please restart the process.", 
+    log_message: str = "Session validation failed"
+) -> Optional[Response]:
+    """
+    Utility function to check if the session contains the necessary keys.
+
+    Parameters:
+    - required_keys (list): A list of required keys in the session.
+    - fallback_endpoint (str): The endpoint to redirect to if the session data is not valid.
+    - flash_message (str, optional): The message to flash if the session data is not valid. Defaults to a generic message.
+    - log_message (str, optional): The message to log if the session data is not valid. Defaults to a generic message.
+
+    Returns:
+    - None if the session data is valid.
+    - Redirect response if the session data is not valid.
+    """
+    missing_keys = [key for key in required_keys if key not in session]
+    if missing_keys:
+        session.clear()
+        response = make_response(redirect(url_for(fallback_endpoint)))
+        unset_jwt_cookies(response)
+        flash(flash_message, 'error')
+        logger.error(f"{log_message}: missing session keys {missing_keys}")
+        return response
+    return None
+
+
 # Check signup stage in session function
-def check_signup_stage(allowed_stages: List[str], fallback_endpoint: str, flash_message: str, log_message: str) -> Optional[Response]:
+def check_signup_stage(
+    allowed_stages: List[str], 
+    fallback_endpoint: str, 
+    flash_message: str = "Your session has expired. Please restart the signup process.", 
+    log_message: str = "Invalid signup stage"
+) -> Optional[Response]:
     """
     Utility function to check if the current signup stage is allowed.
 
@@ -93,10 +148,12 @@ def check_signup_stage(allowed_stages: List[str], fallback_endpoint: str, flash_
     
     if not signup_stage or signup_stage not in allowed_stages:
         session.clear()
+        response = make_response(redirect(url_for(fallback_endpoint)))
+        unset_jwt_cookies(response)
         flash(flash_message, 'error')
-        logger.error(log_message)
-        return redirect(url_for(fallback_endpoint))
-    
+        logger.error(f"{log_message}: {signup_stage} not in {allowed_stages}")
+        return make_response(response)
+
     return None
 
 

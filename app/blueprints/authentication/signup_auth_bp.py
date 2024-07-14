@@ -10,7 +10,7 @@ from werkzeug.security import generate_password_hash
 from app import db
 from app.models import Member
 from app.forms.auth_forms import SignupForm, OtpForm, PasswordForm, ExtraInfoForm
-from app.utilities.utils import clean_input, generate_otp, send_email, check_signup_stage, check_jwt_values
+from app.utilities.utils import clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_signup_stage, check_jwt_values
 
 
 signup_auth_bp: Blueprint = Blueprint("signup_auth_bp", __name__, url_prefix="/signup")
@@ -25,8 +25,11 @@ def signup():
     Signup route to initiate the user registration process.
     It validates the signup form, cleans inputs and stores intermediate stage in session.
     """
+    # Clear session keys that are not needed
+    clear_unwanted_session_keys()
+
     form = SignupForm()
-    
+
     if request.method == "POST" and form.validate_on_submit():
         # Clean inputs
         username = clean_input(form.username.data)
@@ -62,7 +65,7 @@ def send_otp():
         allowed_stages=['send_otp', 'verify_email'],
         fallback_endpoint='signup_auth_bp.signup',
         flash_message="Your session has expired. Please restart the signup process.",
-        log_message=f"Invalid signup stage: {session.get('signup_stage')}"
+        log_message="Invalid signup stage"
     )
     if check:
         return check
@@ -133,14 +136,10 @@ def verify_email():
         allowed_stages=['verify_email'],
         fallback_endpoint='signup_auth_bp.signup',
         flash_message="Your session has expired. Please restart the signup process.",
-        log_message=f"Invalid signup stage: {session.get('signup_stage')}"
+        log_message="Invalid signup stage"
     )
     if check:
         return check
-
-    # Get the JWT identity
-    identity = get_jwt_identity()
-    jwt = get_jwt()
 
     # Check jwt identity has username, email & jwt claims has otp_data
     check_jwt = check_jwt_values(
@@ -153,6 +152,7 @@ def verify_email():
 
     # Check whether otp_data expired
     jwt = get_jwt()
+    identity = get_jwt_identity()
     otp_data = jwt.get('otp_data')
     otp_expiry = datetime.fromisoformat(otp_data['expiry'])
     if otp_expiry < datetime.now(timezone.utc):
@@ -168,6 +168,7 @@ def verify_email():
         if hashed_user_otp == otp_data['otp']:
             # Update the JWT to clear otp_data and set email_verified flag
             response = redirect(url_for('signup_auth_bp.set_password'))
+            identity = get_jwt_identity()
             identity['email_verified'] = True
             new_token = create_access_token(identity=identity)
             set_access_cookies(response, new_token)
@@ -204,18 +205,19 @@ def set_password():
         allowed_stages=['set_password'],
         fallback_endpoint='signup_auth_bp.signup',
         flash_message="Your session has expired. Please restart the signup process.",
-        log_message=f"Invalid signup stage: {session.get('signup_stage')}"
+        log_message="Invalid signup stage"
     )
     if check:
         return check
 
     # Check jwt identity for username, email & verified email
+    identity = get_jwt_identity()
     check_jwt = check_jwt_values(
         required_identity_keys=['username', 'email', 'email_verified'],
         required_claims=None,
         fallback_endpoint='signup_auth_bp.signup'
     )
-    if check_jwt:
+    if check_jwt and not identity['email_verified']:
         return check_jwt
     
     form = PasswordForm()
@@ -250,7 +252,7 @@ def extra_info():
         allowed_stages=['extra_info'],
         fallback_endpoint='signup_auth_bp.signup',
         flash_message="Your session has expired. Please restart the signup process.",
-        log_message=f"Invalid signup stage: {session.get('signup_stage')}"
+        log_message="Invalid signup stage"
     )
     if check:
         return check
@@ -274,12 +276,16 @@ def extra_info():
 
     form = ExtraInfoForm()
 
-    if request.method == "POST":
-        if form.validate_on_submit() and request.form['action'] == 'complete':
+    if request.method == "POST" and form.validate_on_submit():
+        if request.form['action'] == 'complete':
+
             # Update member details
-            member.first_name = form.first_name.data
-            member.last_name = form.last_name.data
-            member.phone_number = form.phone_number.data
+            if form.phone_number.data:
+                member.phone_number = clean_input(form.phone_number.data)
+            if form.address.data:
+                member.address = clean_input(form.address.data)
+            if form.postal_code.data:
+                member.postal_code = clean_input(form.postal_code.data)
             db.session.commit()
 
             flash("Additional information saved successfully. Your account is now complete.", "success")
@@ -297,5 +303,4 @@ def extra_info():
 
     # Render the extra info template
     return render_template(f'{TEMPLATE_FOLDER}/extra_info.html', form=form)
-
 
