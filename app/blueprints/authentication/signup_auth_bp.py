@@ -10,7 +10,7 @@ from werkzeug.security import generate_password_hash
 from app import db
 from app.models import Member
 from app.forms.auth_forms import SignupForm, OtpForm, PasswordForm, ExtraInfoForm
-from app.utilities.utils import clean_input, generate_otp, send_email, check_signup_stage
+from app.utilities.utils import clean_input, generate_otp, send_email, check_signup_stage, check_jwt_values
 
 
 signup_auth_bp: Blueprint = Blueprint("signup_auth_bp", __name__, url_prefix="/signup")
@@ -67,14 +67,17 @@ def send_otp():
     if check:
         return check
 
-    # Get the JWT identity
-    identity = get_jwt_identity()
-    if not identity or not isinstance(identity, dict) or 'username' not in identity or 'email' not in identity:
-        flash("An error occurred. Please restart the signup process.", "error")
-        logger.error(f"Invalid token data: {identity}")
-        return redirect(url_for('signup_auth_bp.signup'))
+    # Check jwt identity has username, email
+    check_jwt = check_jwt_values(
+        required_identity_keys=['username', 'email'],
+        required_claims=None,
+        fallback_endpoint='signup_auth_bp.signup'
+    )
+    if check_jwt:
+        return check_jwt
 
     # Generate otp
+    identity = get_jwt_identity()
     otp = generate_otp()
     hashed_otp = hashlib.sha256(otp.encode("utf-8")).hexdigest()
     otp_expiry = (datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat()  # OTP valid for 10 minutes
@@ -87,18 +90,23 @@ def send_otp():
 
     # Try sending email using utility send_email function
     email_body = f"Your OTP is {otp}. It will expire in 10 minutes."
+    signup_stage = session.get("signup_stage")
     if send_email(identity['email'], "Your OTP Code", email_body):
         if signup_stage == 'send_otp':
-            flash("OTP has been sent to your email address.", "success")
+            flash("OTP has been sent to your email address.", "info")
             logger.info(f"OTP sent to {identity['email']}")
             session["signup_stage"] = "verify_email"
         elif request.args.get("expired_otp") == "True" and signup_stage == "verify_email":
-            flash("Your OTP has expired. A new OTP has been sent to your email address.", "success")
+            flash("Your OTP has expired. A new OTP has been sent to your email address.", "info")
             logger.info(f"OTP expired and re-sent to {identity['email']}")
         elif signup_stage == 'verify_email':
-            flash("OTP has been re-sent to your email address.", "success")
+            flash("OTP has been re-sent to your email address.", "info")
             logger.info(f"OTP re-sent to {identity['email']}")
     else:
+        if signup_stage == "send_otp":
+            response = redirect(url_for("signup_auth_bp.signup"))
+            session.clear()
+            unset_jwt_cookies(response)
         flash("An error occurred while sending the OTP. Please try again.", "error")
         logger.error(f"Failed to send OTP to {identity['email']}")
 
@@ -134,20 +142,18 @@ def verify_email():
     identity = get_jwt_identity()
     jwt = get_jwt()
 
-    # Check jwt identity has username, email
-    if not identity or not isinstance(identity, dict) or 'username' not in identity or 'email' not in identity:
-        flash("An error occurred. Please restart the signup process.", "error")
-        logger.error(f"Invalid token data: {identity}")
-        return redirect(url_for('signup_auth_bp.signup'))
-
-    # Check jwt has otp_data in claims
-    otp_data = jwt.get('otp_data')
-    if not otp_data:
-        flash("An error occurred. Please restart the signup process.", "error")
-        logger.error("Missing OTP data in token.")
-        return redirect(url_for('signup_auth_bp.signup'))
+    # Check jwt identity has username, email & jwt claims has otp_data
+    check_jwt = check_jwt_values(
+        required_identity_keys=['username', 'email'],
+        required_claims=['otp_data'],
+        fallback_endpoint='signup_auth_bp.signup'
+    )
+    if check_jwt:
+        return check_jwt
 
     # Check whether otp_data expired
+    jwt = get_jwt()
+    otp_data = jwt.get('otp_data')
     otp_expiry = datetime.fromisoformat(otp_data['expiry'])
     if otp_expiry < datetime.now(timezone.utc):
         return redirect(url_for('signup_auth_bp.send_otp', expired_otp=True))
@@ -204,13 +210,13 @@ def set_password():
         return check
 
     # Check jwt identity for username, email & verified email
-    identity = get_jwt_identity()
-    jwt = get_jwt()
-
-    if not identity or not isinstance(identity, dict) or 'username' not in identity or 'email' not in identity or not identity.get('email_verified'):
-        flash("An error occurred. Please restart the signup process.", "error")
-        logger.error(f"Invalid token data: {identity}")
-        return redirect(url_for('signup_auth_bp.signup'))
+    check_jwt = check_jwt_values(
+        required_identity_keys=['username', 'email', 'email_verified'],
+        required_claims=None,
+        fallback_endpoint='signup_auth_bp.signup'
+    )
+    if check_jwt:
+        return check_jwt
     
     form = PasswordForm()
 
@@ -219,6 +225,7 @@ def set_password():
         hashed_password = generate_password_hash(password)  # Hash the inputted password
 
         # Create new member using Member.create()
+        identity = get_jwt_identity()
         new_member = Member.create(username=identity['username'], email=identity['email'], password_hash=hashed_password)
         db.session.add(new_member)
         db.session.commit()
@@ -249,17 +256,16 @@ def extra_info():
         return check
 
     # Check jwt identity for username, email & verified email
-    identity = get_jwt_identity()
-    jwt = get_jwt()
-
-    if not identity or not isinstance(identity, dict) or \
-       'username' not in identity or 'email' not in identity or \
-       not identity.get('email_verified'):
-        flash("An error occurred. Please restart the signup process.", "error")
-        logger.error(f"Invalid token data: {identity}")
-        return redirect(url_for('signup_auth_bp.signup'))
+    check_jwt = check_jwt_values(
+        required_identity_keys=['username', 'email', 'email_verified'],
+        required_claims=None,
+        fallback_endpoint='signup_auth_bp.signup'
+    )
+    if check_jwt:
+        return check_jwt
 
     # Check if the member account exists
+    identity = get_jwt_identity()
     member = Member.query.filter_by(email=identity['email']).first()
     if not member:
         flash("An error occurred. Please restart the signup process.", "error")
@@ -281,7 +287,7 @@ def extra_info():
         elif request.form['action'] == 'skip':
             flash("You have skipped adding additional information. You can update them later.", "info")
             logger.info(f"User skipped additional information: {identity['email']}")
-        
+
         # Clear session and JWT cookies
         session.clear()
         response = redirect(url_for('login_auth_bp.login'))
@@ -291,20 +297,5 @@ def extra_info():
 
     # Render the extra info template
     return render_template(f'{TEMPLATE_FOLDER}/extra_info.html', form=form)
-
-
-# Test route
-@signup_auth_bp.route('/some_route', methods=['GET', 'POST'])
-def some_route():
-    check = check_signup_stage(
-        allowed_stages=['send_otp', 'verify_email'],
-        fallback_endpoint='signup_auth_bp.signup',
-        flash_message="An error occurred. Please restart the signup process.",
-        log_message=f"Invalid signup stage: {session.get('signup_stage')}"
-    )
-    if check:
-        return check
-
-    return "It worked"
 
 
