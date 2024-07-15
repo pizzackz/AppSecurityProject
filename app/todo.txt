@@ -1,12 +1,15 @@
 General:
+    Use reCaptcha to prevent brute force attempts
     Write handlers for any failed checks for jwt_required & csrf
-    Write general session checker to check for required keys
+    Review & enhance session handling mechanisms
 
-signup_auth_bp:
+Signup:
+    Implement rate limiting for OTP requests
+    Ensure password hashes are salted and verified
     Track otp attempts in session
     Use api to help in getting address & postal code in extra_info (Align with Ervyn)
 
-recovery_auth_bp:
+Recovery:
     Write session stage checker
     Write jwt value checkers
     Write route controllers (
@@ -14,7 +17,7 @@ recovery_auth_bp:
         recovery_options, send_username, set_new_password
     ) --> Routes subject to change
 
-login_auth_bp:
+Login:
     Write session stage checker
     Write route controllers (login, send_otp, verify_email)
     Use Google Sign-in API
