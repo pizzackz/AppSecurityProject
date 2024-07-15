@@ -95,20 +95,24 @@ def send_otp():
     email_body = f"Your OTP is {otp}. It will expire in 10 minutes."
     signup_stage = session.get("signup_stage")
     if send_email(identity['email'], "Your OTP Code", email_body):
+        flash_msg = "OTP has been sent to your email address."
+        log_msg = f"OTP sent to {identity['email']}"
+
         if signup_stage == 'send_otp':
-            flash("OTP has been sent to your email address.", "info")
-            logger.info(f"OTP sent to {identity['email']}")
             session["signup_stage"] = "verify_email"
         elif request.args.get("expired_otp") == "True" and signup_stage == "verify_email":
-            flash("Your OTP has expired. A new OTP has been sent to your email address.", "info")
-            logger.info(f"OTP expired and re-sent to {identity['email']}")
+            flash_msg = "Your OTP has expired. A new OTP has been sent to your email address."
+            log_msg = f"OTP expired and re-sent to {identity['email']}"
         elif signup_stage == 'verify_email':
-            flash("OTP has been re-sent to your email address.", "info")
-            logger.info(f"OTP re-sent to {identity['email']}")
+            flash_msg = "OTP has been re-sent to your email address."
+            log_msg = f"OTP re-sent to {identity['email']}"
+        
+        flash(flash_msg, 'info')
+        logger.info(log_msg)
     else:
         if signup_stage == "send_otp":
-            response = redirect(url_for("signup_auth_bp.signup"))
             session.clear()
+            response = redirect(url_for("signup_auth_bp.signup"))
             unset_jwt_cookies(response)
         flash("An error occurred while sending the OTP. Please try again.", "error")
         logger.error(f"Failed to send OTP to {identity['email']}")

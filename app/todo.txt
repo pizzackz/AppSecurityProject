@@ -4,6 +4,7 @@ General:
 
 signup_auth_bp:
     Track otp attempts in session
+    Use api to help in getting address & postal code in extra_info (Align with Ervyn)
 
 recovery_auth_bp:
     Write session stage checker
