@@ -7,15 +7,11 @@ Signup:
     Implement rate limiting for OTP requests
     Ensure password hashes are salted and verified
     Track otp attempts in session
-    Use api to help in getting address & postal code in extra_info (Align with Ervyn)
 
 Recovery:
     Write session stage checker
     Write jwt value checkers
-    Write route controllers (
-        account_recovery - base, send_otp, verify_email,
-        recovery_options, send_username, set_new_password
-    ) --> Routes subject to change
+    Write route controllers
 
 Login:
     Write session stage checker
