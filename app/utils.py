@@ -274,3 +274,24 @@ def check_jwt_values(
             return check
 
     return None
+
+
+# Store data in session
+def set_session_data(data):
+    for key, value in data.items():
+        session[key] = value
+    print(f"Session data set: {session}")
+
+
+# Retrieve data from session
+def get_session_data(keys):
+    data = {key: session.get(key) for key in keys}
+    print(f"Session data retrieved: {data}")
+    return data
+
+
+# Clear session data
+def clear_session_data(keys):
+    for key in keys:
+        session.pop(key, None)
+    print(f"Session data cleared: {keys}")

@@ -1,4 +1,4 @@
-from wtforms import Form, StringField, FileField, TextAreaField, IntegerField, SelectField, DecimalField, SubmitField, validators, HiddenField
+from wtforms import Form, StringField, FileField, TextAreaField, IntegerField, SelectField, DecimalField, SubmitField, validators, HiddenField, DateField, TimeField
 from wtforms.validators import DataRequired, Length, NumberRange
 from flask_wtf import FlaskForm
 
@@ -41,6 +41,7 @@ class OrderForm(FlaskForm):
     address = StringField('Address', [Length(min=1, max=150), DataRequired()], render_kw={"placeholder": "123 ABC Street"})
     postal_code = StringField('Postal Code', [six_digit_postal_code_validator, DataRequired()], render_kw={"placeholder": "123456"})
     phone_number = StringField('Phone', [phone_number_validator, DataRequired()], render_kw={"placeholder": "9123 4567"})
-    selected_date = HiddenField('Selected Date', validators=[DataRequired()])
-    selected_time = HiddenField('Selected Time', validators=[DataRequired()])
+    selected_date = DateField('Delivery Date', [validators.DataRequired()], format='%Y-%m-%d')
+    selected_time = TimeField('Delivery Time', [validators.DataRequired()], format='%H:%M')
+    selected_items = StringField('Selected Items', [validators.DataRequired()])
     submit = SubmitField('Schedule Delivery')

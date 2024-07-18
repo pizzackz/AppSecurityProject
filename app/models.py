@@ -311,6 +311,7 @@ class Order(db.Model):
     phone_number = db.Column(db.String(20), nullable=False)
     delivery_date = db.Column(db.String(20), nullable=False)
     delivery_time = db.Column(db.String(20), nullable=False)
+    selected_items = db.Column(db.String(20), nullable=False)
     created_at = db.Column(db.DateTime, default=func.current_timestamp())
 
     items = db.relationship("OrderItem", backref="order", lazy=True)

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+{% extends "member/order/order_base.html" %}
+{% block title %}tastefully | Booking {% endblock %}
+
+{% block css %}
+{{ super() }}
+<link href="{{ url_for('static', filename='css/order/order.css') }}" rel="stylesheet">
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css' rel='stylesheet' /> <!-- Delivery CSS-->
+{% endblock %}
+
+{% block content %}
+<br>
+<!-- Step Indicator -->
+<div class="step-container">
+   <div class="step step-inactive">
+    <span>1</span>
+    <span>Order</span>
+   </div>
+   <div class="step step-active">
+    <span>2</span>
+    <span>Booking</span>
+   </div>
+    <div class="step">
+        <span>3</span>
+        <span>Delivery Information</span>
+    </div>
+    <div class="step">
+        <span>4</span>
+        <span>Confirmation</span>
+    </div>
+</div>
+<br>
+
+<div class="bigger-container center1">
+    <h3 class="center1 top">Schedule Delivery</h3>
+    <div id='calendar'></div>
+</div>
+<br>
+<br>
+
+
+
+<form class="center1" method="POST" action="{{ url_for('member_order_bp.booking', selected_items=request.args.getlist('selected_items')) }}" id="delivery-time-form">
+    {{ form.hidden_tag() }}
+    <label for="delivery_time">Select a delivery time:</label>
+    <select id="delivery_time"  name="delivery_time">
+      <option value="11:00">11:00</option>
+      <option value="12:00">12:00</option>
+      <option value="13:00">13:00</option>
+      <option value="16:00">16:00</option>
+      <option value="17:00">17:00</option>
+      <option value="18:00">18:00</option>
+    </select>
+    <input type="hidden" name="delivery_date" id="delivery_date">
+    <button type="submit" class="btn btn-primary">Confirm Booking</button>
+    <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded" name="return" value="True">Return</button>
+</form>
+
+<br>
+<div id="flash-messages">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <script nonce="{{ nonce }}">
+                    display_popup("{{ message|escapejs }}", "{{ category|escapejs }}");
+                </script>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script nonce="{{ nonce }}" src="{{ url_for('static', filename='js/order_popup.js') }}"></script>
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js'></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            selectable: true,
+            validRange: {
+                start: new Date(new Date().setDate(new Date().getDate() + 3)).toISOString().split('T')[0],  // booking allowed 3 days from current date
+                end: new Date(new Date().setMonth(new Date().getMonth() + 2, 0)).toISOString().split('T')[0]
+            },
+            select: function(info) {
+                var start = info.startStr;
+                document.getElementById('delivery_date').value = start;
+            }
+        });
+        calendar.render();
+    });
+</script>
+
+{% endblock %}
