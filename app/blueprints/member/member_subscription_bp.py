@@ -15,8 +15,8 @@ logger = logging.getLogger('flask_app')
 # Create blueprint
 member_subscription_bp = Blueprint('member_subscription_bp', __name__)
 
-# Load environment variables from a .env file
-load_dotenv('.env')
+# Load environment variables from a ..env file
+load_dotenv('..env')
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 publishable_key = os.getenv('STRIPE_PUBLISHABLE_KEY')
 endpoint_secret = os.getenv('STRIPE_ENDPOINT_SECRET')

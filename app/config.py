@@ -3,7 +3,7 @@ from datetime import timedelta
 from dotenv import load_dotenv
 
 
-# Load .env file variables
+# Load ..env file variables
 load_dotenv()
 
 # Base directory path

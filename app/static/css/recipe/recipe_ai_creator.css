@@ -1,0 +1,22 @@
+#page_title {
+    font-size:3rem;
+    text-align:center;
+    margin-top:2rem;
+}
+#page_description {
+    font-size:1.2rem;
+    text-align:center;
+    margin-bottom:1.5rem;
+}
+#get_started {
+    margin-bottom:15rem;
+    text-align:center;
+}
+hr {
+    margin-bottom:1rem;
+}
+#generate_recipe {
+    font-size:2.4rem;
+    text-align:center;
+    margin-bottom:1.5rem;
+}

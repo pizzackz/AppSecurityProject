@@ -51,10 +51,8 @@ document.addEventListener("DOMContentLoaded", function() {
         else {
             var regex = /^[a-zA-Z\s,]+$/;
             var arr = ingredient.split(',');
-            console.log(arr); // TO BE DELETED
             if (regex.test(ingredient)) {
                 for (i=0;i<arr.length;i++) {
-                    console.log(arr[i]); // TO BE DELETED
                     if (ingredient_list.includes(arr[i])) {
                         display_popup(arr[i] + ' is already added.', 'error');
                     }

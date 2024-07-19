@@ -26,3 +26,4 @@
 2024-07-11 16:57:34,643 - flask_app - ERROR - Stripe error: No API key provided. (HINT: set your API key using "stripe.api_key = <API-KEY>"). You can generate API keys from the Stripe web interface.  See https://stripe.com/api for details, or email support@stripe.com if you have any questions.
 2024-07-11 16:57:34,828 - flask_app - ERROR - Stripe error: No API key provided. (HINT: set your API key using "stripe.api_key = <API-KEY>"). You can generate API keys from the Stripe web interface.  See https://stripe.com/api for details, or email support@stripe.com if you have any questions.
 2024-07-11 19:07:05,550 - flask_app - WARNING - Order form validation failed: {}
+2024-07-15 10:57:53,508 - flask_app - WARNING - Order form validation failed: {}

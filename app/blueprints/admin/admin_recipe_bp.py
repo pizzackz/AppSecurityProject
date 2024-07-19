@@ -8,6 +8,7 @@ from flask import (
     session,
     flash,
     url_for,
+jsonify
 )
 import re
 import imghdr
@@ -20,10 +21,14 @@ from sqlalchemy import or_, and_, case
 
 from datetime import datetime, timedelta
 import html
-from app.forms.forms import CreateRecipeForm, RecipeSearch
+from app.forms.forms import CreateRecipeForm, RecipeSearch, AICreateRecipeForm
 from app import db
 from bs4 import BeautifulSoup
 import openai
+from flask_limiter import Limiter
+from flask_jwt_extended import JWTManager
+from flask_limiter.util import get_remote_address
+import google.generativeai as genai
 
 import json
 from PIL import Image
@@ -35,7 +40,16 @@ from PIL import Image
 
 admin_recipe_bp = Blueprint("admin_recipe_bp", __name__)
 
-openai.api_key = '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'
+# Google Gemini API Setup
+genai.configure(api_key='AIzaSyAwIK-pEqrxbJKkJm32qPpqzN_snsZL7m8')
+model = genai.GenerativeModel('gemini-1.5-flash')
+
+limiter = Limiter(
+    get_remote_address,
+    app=current_app,
+    default_limits=["10 per hour", "40 per day"],
+    storage_uri="memory://"
+)
 
 def clean_input(html):
     cleaned = html.unescape(html)
@@ -783,9 +797,90 @@ def restore_recipe(recipe_id):
     db.session.commit()
     return redirect(url_for('admin_recipe_bp.recipe_database'))
 
-@admin_recipe_bp.route('/api/ai-recipe-creator', methods=['POST'])
+@admin_recipe_bp.route('/admin/ai_recipe_creator', methods=['GET', 'POST'])
 def ai_recipe_creator():
-    return render_template('admin/recipe/ai_recipe_creator.html')
+    form = AICreateRecipeForm()
+
+    return render_template('admin/recipe/recipe_ai_creator.html', form=form)
+
+# @jwt_required()
+@limiter.limit("1 per day")
+@admin_recipe_bp.route('/api/recipe-creator-ai', methods=['POST'])
+def recipe_creator_ai():
+    # Get user inputs from json data
+
+    cuisine = request.json.get('cuisine')
+    ingredients = request.json.get('ingredients')
+    dietary_preference = request.json.get('dietary_preference')
+    allergy = request.json.get('allergy')
+    meal_type = request.json.get('meal_type')
+    cooking_time = request.json.get('cooking_time')
+    difficulty = request.json.get('difficulty')
+    remarks = request.json.get('remarks')
+
+    if len(cuisine) > 10:
+        return jsonify({'content': 'Too long'})
+    # Clean inputs
+
+    messages = ''
+    messages += """You are a recipe creator.
+                       Ignore all unrelated inputs, and only output recipe in 
+                       the following format: Name, ingredients, description (Put in the other details 
+                       inside like calories, and other things the user specifies), and instructions. 
+                       Do not put #, * or any other special symbols."""
+
+    messages += f'''You are creating a recipe for {cuisine} cuisine. 
+                    Ensure {ingredients} are in the recipe. The dietary preference is
+                    {dietary_preference}. The allergies are {allergy}. The meal type is {meal_type}.
+                    The cooking time is {cooking_time}. The difficulty is {difficulty}.
+                    Remarks are (Ignore this part if irrelevant) {remarks}'''
+
+    print(messages)
+    print('AI Recipe Creator Activating')
+    response = model.generate_content(messages)
+    cleaned = response.text
+    cleaned = cleaned.replace("## ", "")
+    cleaned = cleaned.replace("**", "")
+    cleaned = cleaned.replace("* ", "- ")
+
+    print(cleaned)
+    return jsonify({'content': cleaned})
+
+
+# # @jwt_required()
+# @limiter.limit("10 per hour")
+# @admin_recipe_bp.route('/api/recipe-creator-ai', methods=['POST'])
+# def recipe_creator_ai():
+#     # Get user inputs from json data
+#
+#     # Clean inputs
+#
+#     messages = []
+#     messages.append({"role": "system",
+#                         "content":"""You are a recipe creator.
+#                        Ignore all unrelated inputs, and only output recipe in
+#                        the following format: Name, description (Put in the other details
+#                        inside like calories, and other things the user specifies."""})
+#     print('AI Recipe Creator Activating')
+#
+#     completion = openai.ChatCompletion.create(
+#         model="gpt-3.5-turbo",
+#         messages=[
+#             {"role": "system",
+#              "content":"You are a recipe creator. "
+#                        "Ignore all unrelated inputs, and only output recipe in "
+#                        "the following format: Name, description (Put in the other details "
+#                        "inside like calories, and other things the user specifies."}
+#         ]
+#     )
+#     print('Remarks are (Ignore this part if it is irrelevant)')
+#
+#     reply = completion["choices"][0]["message"]["content"]
+#     print(reply)
+#
+#     flash('Unauthorised response/request', 'error')
+#
+#     return 'Not yet'
 
 
 

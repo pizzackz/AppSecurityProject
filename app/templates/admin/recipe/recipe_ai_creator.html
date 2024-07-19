@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}tastefully | AI Recipe Creator{% endblock %}
+
+{% block css %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/recipe/recipe_ai_creator.css') }}">
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script nonce="{{ nonce }}" src="{{ url_for('static', filename='js/recipe/recipe_ai_creator.js' ) }}"></script>
+{% endblock %}
+
+{% block navbar %} {% include "includes/_admin_navbar.html" %} {% endblock %}
+
+{% block content %}
+{% from "includes/_form_helper.html" import render_field, render_field_picture %}
+
+<div class="container">
+  <h1 class="mb-4" id="page_title">Mr T.</h1>
+  <h4 id="page_description">An AI-powered tool that generates recipes tailored to your tastebuds.</h4>
+  <div id="get_started">
+      <a href="#form" class="btn btn-primary">Get Started</a>
+      <a href="#" class="btn btn-success" id="reset_button">View saved recipes</a>
+  </div>
+  <hr>
+  <h2 id="generate_recipe">Generate Recipe</h2>
+  <div class="row">
+    <div class="col-md">
+      <form id="form">
+        {{ form.csrf_token }}
+        {{ form.hidden_tag() }}
+
+        <input class="form-control" type="text" id="cuisine" placeholder="cuisine">
+        <input class="form-control" type="text" id="ingredients" placeholder="ingredients">
+        <input class="form-control" type="text" id="dietary_preference" placeholder="dietary preferences">
+        <input class="form-control" type="text" id="allergy" placeholder="allergy">
+        <input class="form-control" type="text" id="meal_type" placeholder="calories">
+        <input class="form-control" type="text" id="cooking_time" placeholder="cooking time">
+        <input class="form-control" type="text" id="difficulty" placeholder="difficulty">
+        <input class="form-control" type="text" id="remarks" placeholder="remarks">
+        <button type="button" class="btn btn-primary" id="generate_button">Generate</button>
+
+
+
+
+
+      </form>
+
+    </div>
+    <div class="col-md">
+      Output
+      <p id="output">
+
+      </p>
+    </div>
+  </div>
+
+
+</div>
+
+{% endblock %}
