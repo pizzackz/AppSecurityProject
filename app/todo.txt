@@ -3,6 +3,7 @@ General:
     Write handlers for any failed checks for jwt_required & csrf
     Ensure password hashes are salted and verified
     Review & enhance session handling mechanisms
+    Default store image directly in model, don't use file path if possible (mainly for account profile pics)
 
 Signup:
     Implement rate limiting for OTP requests
