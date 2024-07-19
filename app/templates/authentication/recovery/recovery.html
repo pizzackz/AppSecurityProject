@@ -8,9 +8,9 @@
 
 <h1>Account Recovery</h1>
 <!-- Message -->
-<p>To help keep your account safe, we want to make sure it's really you trying to sign in</p>
+<p>To help keep your account safe, we want to make sure it's really you trying to recover your account</p>
 
-<form action="" method="post" id="verify-otp-form">
+<form action="" method="post" id="send-email-form">
     {{ form.hidden_tag() }}
     <div>
         {{ render_field(form.email, class="form-control", placeholder="Enter your email") }}

@@ -1,10 +1,12 @@
 import os
-import datetime
 import secrets
 import string
 import logging
+import hashlib
 
+from datetime import datetime, timedelta, timezone
 from flask_login import UserMixin
+from flask_jwt_extended import create_access_token
 from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, ForeignKey
 from sqlalchemy.sql import func
 from typing import Union
@@ -216,6 +218,40 @@ class LockedAccount(db.Model):
         return f"<LockedAccount(id='{self.id}', locker_id='{self.locker_id}', locked_reason='{self.locked_reason}')>"
 
 
+# PassowrdResetToken model to store allowed password reset tokens whenever password reset is requested
+class PasswordResetToken(db.Model):
+    __tablename__ = "password_reset_token"
+
+    id = Column(Integer, primary_key=True)
+    email = Column(String(255), nullable=False)
+    token_hash = Column(String(255), nullable=False, unique=True)
+    created_at = Column(DateTime, default=func.current_timestamp(), nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+
+    def __repr__(self):
+        return f'<PasswordResetToken(email={self.email}, expires_at={self.expires_at})>'
+    
+    @staticmethod
+    def create(email: str):
+        # Generate secure token
+        token = create_access_token(identity={'email': email}, expires_delta=timedelta(hours=1))
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
+
+        # Calculate expiration time
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+
+        # Create token record
+        try:
+            reset_token = PasswordResetToken(email=email, token_hash=token_hash, expires_at=expires_at)
+            db.session.add(reset_token)
+            db.session.commit()
+            return token
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error occurred when creating new token record: {e}")
+            return None
+
+
 # Recipe model to store recipe related information
 class Recipe(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -226,7 +262,7 @@ class Recipe(db.Model):
     instructions = db.Column(db.Text, nullable=False)
     picture = db.Column(db.String(100))  # Assuming picture URL
     date_created = db.Column(
-        db.DateTime, nullable=False, default=datetime.datetime.utcnow
+        db.DateTime, nullable=False, default=func.current_timestamp()
     )
     user_created = db.Column(db.String(100), nullable=False)
     type = db.Column(db.String(50), nullable=False)  # Standard or Premium
@@ -245,7 +281,7 @@ class RecipeDeleted(db.Model):
     instructions = db.Column(db.Text, nullable=False)
     picture = db.Column(db.String(100))  # Assuming picture URL
     date_created = db.Column(db.DateTime, nullable=False)
-    date_deleted = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow)
+    date_deleted = db.Column(db.DateTime, nullable=False, default=func.current_timestamp())
     user_created = db.Column(db.String(100), nullable=False)
     type = db.Column(db.String(50), nullable=False)  # Standard or Premium
     calories = db.Column(db.Integer, nullable=False)

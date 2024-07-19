@@ -35,17 +35,18 @@ class PasswordForm(FlaskForm):
 
 # Account Recovery Phase 2 - Choosing to recover username or set new password
 class RecoverOptionsForm(FlaskForm):
-    recovery_option = RadioField("", choices=[("recover_username", "Recover Username"), ("change_password", "Change Password")], default="username", validate_choice=True)
+    recovery_option = RadioField("", choices=[("recover_username", "Recover Username"), ("reset_password", "Change Password")], default="username", validate_choice=True)
 
 
 # Signup optional fields - Save phone & address
 class ExtraInfoForm(FlaskForm):
-    phone_number = StringField('Phone Number', [validate_phone_number, Optional()],render_kw={"placeholder": "E.g. 9123 4567"})
+    phone_number = StringField('Phone Number', [validate_phone_number, Optional()], render_kw={"placeholder": "E.g. 9123 4567"})
     address = StringField('Address', [Length(min=1, max=150), Optional()], render_kw={"placeholder": "E.g. 123 ABC Street"})
     postal_code = StringField('Postal Code', [validate_postal_code, Optional()], render_kw={"placeholder": "E.g. 123456"})
 
 
 # Account Recovery Phase 3 - Set new password
-class NewPasswordForm(FlaskForm):
-    password = PasswordField("New Password", validators=[DataRequired(), Length(min=6), validate_password_complexity])
-    confirm_password = PasswordField("Confirm Password", validators=[DataRequired(), EqualTo("password", "Passwords must match")])
+class ResetPasswordForm(FlaskForm):
+    curr_password = PasswordField("Current Password", validators=[DataRequired(), Length(min=8)])
+    new_password = PasswordField("New Password", validators=[DataRequired(), Length(min=8), validate_password_complexity])
+    confirm_password = PasswordField("Confirm Password", validators=[DataRequired(), Length(min=8), EqualTo("new_password", "Passwords must match")])

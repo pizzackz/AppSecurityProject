@@ -1,17 +1,17 @@
 General:
     Use reCaptcha to prevent brute force attempts
     Write handlers for any failed checks for jwt_required & csrf
+    Ensure password hashes are salted and verified
     Review & enhance session handling mechanisms
 
 Signup:
     Implement rate limiting for OTP requests
-    Ensure password hashes are salted and verified
     Track otp attempts in session
 
 Recovery:
-    Write session stage checker
-    Write jwt value checkers
-    Write route controllers
+    Implement log out for active account using same username after successful reset of password
+    Implement rate limiting for OTP requests, recovery requests
+    Track otp attempts in session
 
 Login:
     Write session stage checker

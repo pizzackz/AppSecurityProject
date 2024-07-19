@@ -78,7 +78,7 @@ def send_email(to_email: str, subject: str, body: str) -> bool:
 
 
 # Clear unwanted session data (for clean session states, usually base routes)
-def clear_unwanted_session_keys(keys_to_keep: Set[str] = {"_permanent", "_csrf_token"}):
+def clear_unwanted_session_keys(keys_to_keep: Set[str] = {"_permanent", "_csrf_token", "_flashes"}):
     """
     Utility function to clear specific session keys that are not needed.
     
@@ -90,7 +90,8 @@ def clear_unwanted_session_keys(keys_to_keep: Set[str] = {"_permanent", "_csrf_t
     """
     keys_to_remove = [key for key in session.keys() if key not in keys_to_keep]
     for key in keys_to_remove:
-        session.pop(key, None)
+        value = session.pop(key, None)
+        print(f"Popped key-value = {{{key}: {value}}}")
 
 
 # Check session keys function
@@ -124,18 +125,20 @@ def check_session_keys(
     return None
 
 
-# Check signup stage in session function
-def check_signup_stage(
+# Check authentication stage (signup, login, recovery) in session function
+def check_auth_stage(
+    auth_process: str,
     allowed_stages: List[str], 
     fallback_endpoint: str, 
     flash_message: str = "Your session has expired. Please restart the signup process.", 
     log_message: str = "Invalid signup stage"
 ) -> Optional[Response]:
     """
-    Utility function to check if the current signup stage is allowed.
+    Utility function to check if the current stage is allowed.
 
     Parameters:
-    - allowed_stages (list): A list of allowed signup stages.
+    - auth_process (str): The name stored as key in the session to identify the authentication process stages.
+    - allowed_stages (list): A list of allowed authentication stages.
     - fallback_endpoint (str): The endpoint to redirect to if the current stage is not allowed.
     - flash_message (str): The message to flash if the current stage is not allowed.
     - log_message (str): The message to log if the current stage is not allowed.
@@ -144,16 +147,16 @@ def check_signup_stage(
     - None if the current stage is allowed.
     - Redirect response if the current stage is not allowed.
     """
-    signup_stage = session.get('signup_stage')
-    
-    if not signup_stage or signup_stage not in allowed_stages:
+    auth_stage = session.get(auth_process)
+
+    if not auth_stage or auth_stage not in allowed_stages:
         session.clear()
         response = make_response(redirect(url_for(fallback_endpoint)))
         unset_jwt_cookies(response)
         flash(flash_message, 'error')
-        logger.error(f"{log_message}: {signup_stage} not in {allowed_stages}")
+        logger.error(f"{log_message}: {auth_stage} not in {allowed_stages}")
         return make_response(response)
-
+    
     return None
 
 
@@ -291,7 +294,7 @@ def get_session_data(keys):
 
 
 # Clear session data
-def clear_session_data(keys):
+def clear_session_data(keys: List[str]):
     for key in keys:
         session.pop(key, None)
     print(f"Session data cleared: {keys}")

@@ -10,7 +10,7 @@ from werkzeug.security import generate_password_hash
 from app import db
 from app.models import Member
 from app.forms.auth_forms import SignupForm, OtpForm, PasswordForm, ExtraInfoForm
-from app.utils import clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_signup_stage, check_jwt_values
+from app.utils import clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_auth_stage, check_jwt_values
 
 
 signup_auth_bp: Blueprint = Blueprint("signup_auth_bp", __name__, url_prefix="/signup")
@@ -61,7 +61,8 @@ def send_otp():
         return redirect(url_for('signup_auth_bp.signup'))
 
     # Check whether signup stage correct (signup_stage == send_otp or verify_email)
-    check = check_signup_stage(
+    check = check_auth_stage(
+        auth_process="signup_stage",
         allowed_stages=['send_otp', 'verify_email'],
         fallback_endpoint='signup_auth_bp.signup',
         flash_message="Your session has expired. Please restart the signup process.",
@@ -136,7 +137,8 @@ def verify_email():
         return response
 
     # Check session not expired & signup_stage == verify_email
-    check = check_signup_stage(
+    check = check_auth_stage(
+        auth_process="signup_stage",
         allowed_stages=['verify_email'],
         fallback_endpoint='signup_auth_bp.signup',
         flash_message="Your session has expired. Please restart the signup process.",
@@ -205,7 +207,8 @@ def set_password():
         return response
 
     # Check if the session is expired and signup_stage == set_password
-    check = check_signup_stage(
+    check = check_auth_stage(
+        auth_process="signup_stage",
         allowed_stages=['set_password'],
         fallback_endpoint='signup_auth_bp.signup',
         flash_message="Your session has expired. Please restart the signup process.",
@@ -252,7 +255,8 @@ def set_password():
 @jwt_required()
 def extra_info():
     # Check not expired session and correct signup_stage == extra_info
-    check = check_signup_stage(
+    check = check_auth_stage(
+        auth_process="signup_stage",
         allowed_stages=['extra_info'],
         fallback_endpoint='signup_auth_bp.signup',
         flash_message="Your session has expired. Please restart the signup process.",

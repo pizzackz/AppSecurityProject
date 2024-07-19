@@ -119,7 +119,9 @@ def create_app() -> Flask:
 
     # Register blueprints
     from app.blueprints.authentication.signup_auth_bp import signup_auth_bp
+    from app.blueprints.authentication.recovery_auth_bp import recovery_auth_bp
     app.register_blueprint(signup_auth_bp)
+    app.register_blueprint(recovery_auth_bp)
     
     from app.blueprints.member.member_subscription_bp import member_subscription_bp
     from app.blueprints.member.member_order_bp import member_order_bp
@@ -131,9 +133,9 @@ def create_app() -> Flask:
     app.register_blueprint(member_recipe_bp)
 
     from app.blueprints.admin.admin_log_bp import admin_log_bp
-    from app.blueprints.admin.admin_recipe_bp import admin_recipe_bp
+    # from app.blueprints.admin.admin_recipe_bp import admin_recipe_bp
     from app.blueprints.admin.admin_feedback_bp import admin_feedback_bp
-    app.register_blueprint(admin_recipe_bp)
+    # app.register_blueprint(admin_recipe_bp)
     app.register_blueprint(admin_log_bp)
     app.register_blueprint(admin_feedback_bp)
 

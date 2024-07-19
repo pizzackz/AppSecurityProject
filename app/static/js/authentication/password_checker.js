@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const passwordField = document.getElementById("password");
+    const passwordField = document.getElementById("password") || document.getElementById("new_password");
     const confirmPasswordField = document.getElementById("confirm_password");
     const signupButton = document.querySelector("button[type='submit']");
 
