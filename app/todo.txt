@@ -4,6 +4,7 @@ General:
     Ensure password hashes are salted and verified
     Review & enhance session handling mechanisms
     Default store image directly in model, don't use file path if possible (mainly for account profile pics)
+    Write sql scripts for seeding of database
 
 Signup:
     Implement rate limiting for OTP requests
