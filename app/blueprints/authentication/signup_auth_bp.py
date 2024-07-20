@@ -285,6 +285,8 @@ def extra_info():
     form = ExtraInfoForm()
 
     if request.method == "POST" and form.validate_on_submit():
+        flash_msg = ["Additional information saved successfully. Your account is now complete.", "success"]
+        log_msg = f"Additional information saved for user: {identity['email']}"
         if request.form['action'] == 'complete':
 
             # Update member details
@@ -295,17 +297,16 @@ def extra_info():
             if form.postal_code.data:
                 member.postal_code = clean_input(form.postal_code.data)
             db.session.commit()
-
-            flash("Additional information saved successfully. Your account is now complete.", "success")
-            logger.info(f"Additional information saved for user: {identity['email']}")
         elif request.form['action'] == 'skip':
-            flash("You have skipped adding additional information. You can update them later.", "info")
-            logger.info(f"User skipped additional information: {identity['email']}")
+            flash_msg = ["Skipped adding additional information. You can update them later after loggin in.", "success"]
+            log_msg = f"User skipped additional information: {identity['email']}"
 
         # Clear session and JWT cookies
         session.clear()
         response = redirect(url_for('login_auth_bp.login'))
         unset_jwt_cookies(response)
+        flash(flash_msg[0], flash_msg[1])
+        logger.info(log_msg)
 
         return response
 

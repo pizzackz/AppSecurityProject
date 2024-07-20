@@ -467,6 +467,7 @@ def reset_password():
 
         # Update user's password
         user.password_hash = generate_password_hash(new_password)
+        user.updated_at = datetime.now(timezone.utc).isoformat()
         db.session.commit()
 
         # Invalidate token in db by deleting it

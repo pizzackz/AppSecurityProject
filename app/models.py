@@ -9,7 +9,7 @@ from flask_login import UserMixin
 from flask_jwt_extended import create_access_token
 from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, ForeignKey
 from sqlalchemy.sql import func
-from typing import Union
+from typing import Optional
 
 from app import db
 
@@ -46,7 +46,27 @@ class User(UserMixin, db.Model):
 
     def __repr__(self):
         return f"<User(id='{self.id}', username='{self.username}', type='{self.type}')>"
-
+    
+    # Lock account
+    def lock_account(self, locked_reason: str, lockout_duration: timedelta, locker_id: Optional[Column[int]] = None):
+        account_status = AccountStatus.lock_account(self.id, lockout_duration)
+        locked_account = LockedAccount.create(self.id, locked_reason, locker_id)
+        return account_status, locked_account
+    
+    # Increment failed attempts
+    def increment_failed_attempts(self):
+        return AccountStatus.increment_failed_attempts(self.id)
+    
+    # Reset failed attempts
+    def reset_failed_attempts(self):
+        account_status = AccountStatus.reset_failed_attempts(self.id)
+        locked_account = LockedAccount.delete(self.id)
+        return account_status, locked_account
+    
+    # Login successfully
+    def login(self):
+        return LoginDetails.login(self.id)
+    
 
 # Member model as subclass to 'User' and to store subscription plan (either standard by default or premium)
 class Member(User):
@@ -169,6 +189,53 @@ class AccountStatus(db.Model):
             print(f"Error occurred when creating new account status: {e}")
             return None
     
+    # Lock account
+    @staticmethod
+    def lock_account(user_id: Column[int], lockout_duration: timedelta):
+        try:
+            account_status = AccountStatus.query.get(user_id)
+            if account_status:
+                account_status.is_locked = True
+                account_status.lockout_time = datetime.now(timezone.utc) + lockout_duration
+                db.session.commit()
+            return account_status
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error occurred when locking account: {e}")
+            return None
+        
+    # Increment failed login attempts
+    @staticmethod
+    def increment_failed_attempts(user_id: Column[int]):
+        try:
+            account_status = AccountStatus.query.get(user_id)
+            if account_status:
+                account_status.failed_login_attempts += 1
+                account_status.last_failed_login_attempt = datetime.now(timezone.utc)
+                db.session.commit()
+            return account_status
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error occurred when incrementing failed attempts: {e}")
+            return None
+    
+    # Reset failed login attempts
+    @staticmethod
+    def reset_failed_attempts(user_id: Column[int]):
+        try:
+            account_status = AccountStatus.query(user_id)
+            locked_account = LockedAccount.query(user_id)
+            if account_status and locked_account:
+                account_status.failed_login_attempts = 0
+                account_status.lockout_time = False
+                account_status.is_locked = False
+                db.session.commit()
+            return account_status
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error occurred when resetting failed attempts: {e}")
+            return None
+    
 
 # LoginDetails model to store info about last login and logout times
 class LoginDetails(db.Model):
@@ -178,6 +245,7 @@ class LoginDetails(db.Model):
     id = Column(Integer, ForeignKey("user.id"), primary_key=True)
     last_login = Column(DateTime, nullable=True)
     last_logout = Column(DateTime, nullable=True)
+    is_active = Column(Boolean, default=False, nullable=False)
 
     # Relationship back to 'User'
     user = db.relationship("User", back_populates="login_details")
@@ -196,7 +264,22 @@ class LoginDetails(db.Model):
             return login_details
         except Exception as e:
             db.session.rollback()
-            print(f"Error occurred when creating new login details: {e}")
+            print(f"Error occurred when creating new locked account record: {e}")
+            return None
+
+    # Update login
+    @staticmethod
+    def login(id: Column[int]):
+        try:
+            login_details: LoginDetails = LoginDetails.query(id)
+            if login_details:
+                login_details.last_login = datetime.now(timezone.utc)
+                login_details.is_active = True
+                db.session.commit()
+            return login_details
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error occurred when creating new locked account record: {e}")
             return None
 
 
@@ -216,6 +299,33 @@ class LockedAccount(db.Model):
 
     def __repr__(self):
         return f"<LockedAccount(id='{self.id}', locker_id='{self.locker_id}', locked_reason='{self.locked_reason}')>"
+
+    # Static methods
+    # Create
+    @staticmethod
+    def create(id: Column[int], locked_reason: str, locker_id: Optional[Column[int]] = None):
+        try:
+            locked_account: LockedAccount = LockedAccount(id=id, locker_id=locker_id, locked_reason=locked_reason)
+            db.session.add(locked_account)
+            db.session.commit()
+            return locked_account
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error occurred when locking account: {e}")
+            return None
+    
+    # Delete
+    @staticmethod
+    def delete(id: Column[int]):
+        try:
+            locked_account: LockedAccount = LockedAccount.query(id)
+            if locked_account:
+                db.session.delete(locked_account)
+            return locked_account
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error occurred when creating new locked account record: {e}")
+            return None
 
 
 # PassowrdResetToken model to store allowed password reset tokens whenever password reset is requested

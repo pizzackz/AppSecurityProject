@@ -91,7 +91,6 @@ def clear_unwanted_session_keys(keys_to_keep: Set[str] = {"_permanent", "_csrf_t
     keys_to_remove = [key for key in session.keys() if key not in keys_to_keep]
     for key in keys_to_remove:
         value = session.pop(key, None)
-        print(f"Popped key-value = {{{key}: {value}}}")
 
 
 # Check session keys function

@@ -24,7 +24,7 @@ load_dotenv()
 csrf: CSRFProtect = CSRFProtect()
 db: SQLAlchemy = SQLAlchemy()
 jwt: JWTManager = JWTManager()
-# login_manager: LoginManager = LoginManager()
+login_manager: LoginManager = LoginManager()
 limiter: Limiter = Limiter(key_func=get_remote_address, default_limits=Config.RATELIMIT_DEFAULT, storage_uri=Config.RATELIMIT_STORAGE_URL)
 mail: Mail = Mail()
 
@@ -105,7 +105,7 @@ def create_app() -> Flask:
     # Initialise extensions
     csrf.init_app(app)
     db.init_app(app)
-    # login_manager.init_app(app)
+    login_manager.init_app(app)
     limiter.init_app(app)
     jwt.init_app(app)
     mail.init_app(app)
@@ -118,11 +118,13 @@ def create_app() -> Flask:
     Session(app)
 
     # Register blueprints
+    from app.blueprints.authentication.login_auth_bp import login_auth_bp
     from app.blueprints.authentication.signup_auth_bp import signup_auth_bp
     from app.blueprints.authentication.recovery_auth_bp import recovery_auth_bp
+    app.register_blueprint(login_auth_bp)
     app.register_blueprint(signup_auth_bp)
     app.register_blueprint(recovery_auth_bp)
-    
+
     from app.blueprints.member.member_subscription_bp import member_subscription_bp
     from app.blueprints.member.member_order_bp import member_order_bp
     from app.blueprints.member.member_feedback_bp import member_feedback_bp

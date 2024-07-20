@@ -8,14 +8,16 @@ General:
 
 Signup:
     Implement rate limiting for OTP requests
-    Track otp attempts in session
+    Track otp attempts
 
 Recovery:
     Implement log out for active account using same username after successful reset of password
     Implement rate limiting for OTP requests, recovery requests
-    Track otp attempts in session
+    Track otp attempts
 
 Login:
-    Write session stage checker
-    Write route controllers (login, send_otp, verify_email)
+    Implement rate limiting for login requests
+    Track login & otp attempts and lock accounts should failed login attempts exceed threshold
+        - Minorly completed (only incrementing failed attempts work)
+        - Might want to redo
     Use Google Sign-in API

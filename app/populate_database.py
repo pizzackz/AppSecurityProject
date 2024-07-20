@@ -1,5 +1,6 @@
 import logging
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash
 from app.models import db, User, Admin, Member, MenuItem
 
 
@@ -12,8 +13,8 @@ logger = logging.getLogger("flask_app")
 def seed_database():
     """Create all database tables and seed the database with test data."""
     db.create_all()
-    create_menu_items()
-    create_admins()
+    # create_menu_items()
+    # create_admins()
     create_members()
     logging.info("Database initialised and test data added.")
 
@@ -134,7 +135,7 @@ def create_members():
     """Create test data for members."""
     # Clear the database to avoid duplicate entries
     try:
-        members: list[Member] = Member.query.all()
+        members = Member.query.all()
 
         for member in members:
             db.session.delete(member)
@@ -148,18 +149,21 @@ def create_members():
     # Check if the test data already exists to avoid duplicate entries
     if Member.query.count() == 0:
         # Create sample members
+        password = "password"
+        hashed_password = generate_password_hash(password)
+
         sample_members = [
             Member.create(
                 username="member1",
                 email="member1@example.com",
                 subscription_plan="premium",
-                password_hash="hashed_password3"
+                password_hash=hashed_password
             ),
             Member.create(
                 username="member2",
                 email="member2@example.com",
                 subscription_plan="standard",
-                password_hash="hashed_password4"
+                password_hash=hashed_password
             ),
         ]
 

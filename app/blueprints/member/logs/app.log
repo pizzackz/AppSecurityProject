@@ -27,3 +27,12 @@
 2024-07-11 16:57:34,828 - flask_app - ERROR - Stripe error: No API key provided. (HINT: set your API key using "stripe.api_key = <API-KEY>"). You can generate API keys from the Stripe web interface.  See https://stripe.com/api for details, or email support@stripe.com if you have any questions.
 2024-07-11 19:07:05,550 - flask_app - WARNING - Order form validation failed: {}
 2024-07-15 10:57:53,508 - flask_app - WARNING - Order form validation failed: {}
+2024-07-20 16:52:03,026 - flask_app - ERROR - An error occurred while clearing Member table: (MySQLdb.OperationalError) (1054, "Unknown column 'login_details.is_active' in 'field list'")
+[SQL: SELECT login_details.id AS login_details_id, login_details.last_login AS login_details_last_login, login_details.last_logout AS login_details_last_logout, login_details.is_active AS login_details_is_active 
+FROM login_details 
+WHERE login_details.id = %s]
+[parameters: (1,)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-07-20 16:52:03,037 - flask_app - INFO - Members test data already exists.
+2024-07-20 16:53:18,037 - flask_app - INFO - Deleted 0 rows from Member table.
+2024-07-20 16:53:18,251 - flask_app - INFO - Members test data added!
