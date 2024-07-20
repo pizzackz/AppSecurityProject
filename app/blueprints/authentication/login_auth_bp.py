@@ -1,6 +1,8 @@
 import logging
 import hashlib
+import os
 
+from dotenv import load_dotenv
 from datetime import datetime, timedelta, timezone
 from logging import Logger
 from flask import Blueprint, request, session, redirect, render_template, flash, url_for
@@ -17,10 +19,15 @@ from app.utils import clean_input, clear_unwanted_session_keys, generate_otp, se
 
 login_auth_bp: Blueprint = Blueprint("login_auth_bp", __name__, url_prefix="/login")
 logger: Logger = logging.getLogger('tastefully')
+
+# Initialise variables
+load_dotenv()
 TEMPLATE_FOLDER = "authentication/login"
 MAX_FAILED_ATTEMPTS = 5
 LOCKOUT_DURATION = timedelta(minutes=30)
 LOCKED_REASON = "Too many failed login attempts"
+CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
+CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
 
 
 # User loader function to retrieve user object from database
@@ -61,23 +68,8 @@ def login():
             logger.warning(f"Login attempt with non-existent username: {username}")
             return redirect(url_for("login_auth_bp.login"))
 
-        # Check if account locked
-        if user.account_status.is_locked and user.account_status.lockout_time > datetime.now(timezone.utc):
-            flash(f"Your account is locked: {user.locked_account.locked_reason}. Please try again later.", "error")
-            logger.warning(f"User with username '{username}' tried logging in into a locked account.")
-            return redirect(url_for("login_auth_bp.login"))
-
         # Check input password not match stored password
         if not check_password_hash(user.password_hash, password):
-            account_status = user.increment_failed_attempts()
-
-            # Lock account if failed_attempts > max_attempts
-            if account_status.failed_login_attempts >= MAX_FAILED_ATTEMPTS:
-                user.lock_account(locked_reason=LOCKED_REASON, lockout_duration=LOCKOUT_DURATION)
-                flash("Your account is locked due to too many failed login attempts. Please try again later.", "error")
-                logger.warning(f"User with username '{username}' tried logging in into a locked account.")
-                return redirect(url_for("login_auth_bp.login"))
-
             flash("Invalid username or password. Please try again.", "error")
             logger.warning(f"Incorrect password attempt for username: {username}")
             return redirect(url_for("login_auth_bp.login"))
@@ -223,12 +215,6 @@ def verify_email():
         logger.error(f"User account not found for email: {identity['email']}")
         return redirect(url_for('login_auth_bp.login'))
 
-    # Check if account locked
-    if user.account_status.is_locked and user.account_status.lockout_time > datetime.now(timezone.utc):
-        flash("Your account is currently locked. Please try again later.", "error")
-        logger.warning(f"User with username '{identity['username']}' tried logging in into a locked account.")
-        return redirect(url_for("login_auth_bp.login"))
-
     form = OtpForm()
     if request.method == "POST" and form.validate_on_submit():
         # Retrieve user provided input, sanitize & hash it
@@ -243,11 +229,10 @@ def verify_email():
 
         # Get correct endpoint based on user type
         user = User.query.filter_by(username=identity['username'], email=identity['email']).first()
-        type = user.type
-        endpoint = "login_auth_bp.login"
-        # if type == "member": endpoint = "member_auth_bp.home"
-        # elif type == "admin": endpoint = "admin_auth_bp.home"
-        
+        endpoint = "login_auth_bp.login"  # For testing, use 'login_auth_bp.login', for actual just create an empty string
+        if user.type == "member": endpoint = "member_auth_bp.home"
+        elif user.type == "admin": endpoint = "admin_auth_bp.home"
+
         # Clear any jwt & session data, Log user in
         session.clear()
         response = redirect(url_for(endpoint))
@@ -257,8 +242,7 @@ def verify_email():
         # Display messages
         flash("Email verified successfully. You are now logged in.", "success")
         logger.info(f"Email verified for user - '{identity['username']}' and user is logged in")
-        
-        print(session)
+
         return response
 
     # Render the verify email template

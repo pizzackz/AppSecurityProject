@@ -17,7 +17,6 @@ Recovery:
 
 Login:
     Implement rate limiting for login requests
-    Track login & otp attempts and lock accounts should failed login attempts exceed threshold
-        - Minorly completed (only incrementing failed attempts work)
-        - Might want to redo
+    Track otp attempts
+    Track login attempts, check for locked accounts
     Use Google Sign-in API

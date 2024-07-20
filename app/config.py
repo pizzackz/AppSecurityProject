@@ -3,7 +3,7 @@ from datetime import timedelta
 from dotenv import load_dotenv
 
 
-# Load ..env file variables
+# Load .env file variables
 load_dotenv()
 
 # Base directory path
@@ -75,10 +75,6 @@ class Config:
     MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER")
     MAIL_USE_SSL = False
     MAIL_USE_TLS = True
-
-    # Stripe configuration
-    STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
-    STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
 
     # OpenAI API key
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
