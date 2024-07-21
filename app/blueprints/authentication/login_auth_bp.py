@@ -55,7 +55,7 @@ def login():
     clear_unwanted_session_keys()
 
     form = LoginForm()
-    
+
     if request.method == "POST" and form.validate_on_submit():
         # Retrieve & clean inputs
         username = clean_input(form.username.data)
@@ -73,9 +73,6 @@ def login():
             flash("Invalid username or password. Please try again.", "error")
             logger.warning(f"Incorrect password attempt for username: {username}")
             return redirect(url_for("login_auth_bp.login"))
-        
-        # Reset failed login attempts on correct username & password
-        user.reset_failed_attempts()
 
         # Create JWT token for sensitive data
         response = redirect(url_for('login_auth_bp.send_otp'))
