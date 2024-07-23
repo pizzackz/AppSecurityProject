@@ -14,7 +14,6 @@ async function sendMessage() {
     const dietary_preference = document.getElementById('dietary_preference').value;
     const allergy = document.getElementById('allergy').value;
     const meal_type = document.getElementById('meal_type').value;
-    const cooking_time = document.getElementById('cooking_time').value;
     const difficulty = document.getElementById('difficulty').value;
     const remarks = document.getElementById('remarks').value;
 
@@ -24,9 +23,9 @@ async function sendMessage() {
             'Content-Type': 'application/json',
             'X-CSRF-Token': csrfToken
         },
-        body: JSON.stringify({cuisine: cuisine}, { ingredients: ingredients },
-        { dietary_preference: dietary_preference }, { allergy: allergy }, { meal_type: meal_type },
-        { cooking_time: cooking_time }, { difficulty: difficulty }, { remarks: remarks })
+        body: JSON.stringify( {cuisine: cuisine, ingredients: ingredients ,
+         dietary_preference: dietary_preference , allergy: allergy , meal_type: meal_type ,
+         difficulty: difficulty , remarks: remarks })
 
     })
     const data = await response.json();

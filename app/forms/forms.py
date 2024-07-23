@@ -22,18 +22,27 @@ class RecipeSearch(FlaskForm):
     submit = SubmitField("Search", render_kw={"class": "btn btn-primary"})
 
 class AICreateRecipeForm(FlaskForm):
-    cuisine = SelectMultipleField('Cuisine', validators=[DataRequired()] ,choices=[("any", "Any"), ("chinese", "Chinese"), ("indian", "Indian"), ("japanese", "Japanese"), ("korean", "Korean"), ("thai", "Thai"), ("western", "Western"), ("french", "French"), ("mediterranean", "Mediterranean") ,("others", "Others")], render_kw={"class": "form-control m-2"})
-    # cuisine = BooleanField('Cuisine')
+    cuisine = StringField("Cuisine", validators=[Length(max=12)], render_kw={'class': 'form-control'})
     ingredients = StringField('Ingredients', render_kw={"class": "form-control m-2"})
-    # dietary_preference = BooleanField('Dietary Preference', choices=[("nil", "Nil"), ("vegetarian", "Vegetarian"), ("vegan", "Vegan"), ("gluten_free", "Gluten Free"), ("dairy_free", "Dairy Free"), ("nut_free", "Nut Free"), ("others", "Others")], render_kw={"class": "form-control m-2"})
-
-    # allergy = BooleanField('Allergy', choices=[("nil", "Nil"), ("peanut", "Peanut"), ("tree_nut", "Tree Nut"), ("shellfish", "Shellfish"), ("fish", "Fish"), ("soy", "Soy"), ("wheat", "Wheat"), ("dairy", "Dairy"), ("egg", "Egg"), ("others", "Others")], render_kw={"class": "form-control m-2"})
-
-    # meal_type = BooleanField('Meal Type', choices=[("nil", "Nil"), ("breakfast", "Breakfast"), ("lunch", "Lunch"), ("dinner", "Dinner"), ("snack", "Snack"), ("dessert", "Dessert"), ("others", "Others")], render_kw={"class": "form-control m-2"})
-
-    cooking_time = IntegerRangeField('Cooking Time (minutes)', [validators.NumberRange(min=1, max=180)], render_kw={"class": "form-control m-2"})
-    difficulty = SelectField('Difficulty', choices=[("easy", "Easy"), ("medium", "Medium"), ("hard", "Hard")], render_kw={"class": "form-control m-2"})
+    dietary_preference = StringField('Dietary Preference', validators=[Length(max=15)], render_kw={'class:': 'form-control'})
+    allergy = StringField('Allergy', validators=[Length(max=10)], render_kw={'class:': 'form-control'})
+    meal_type = StringField('Meal type', validators=[Length(max=10)], render_kw={'class:': 'form-control'})
+    difficulty = SelectField('Difficulty', choices=[("easy", "Easy"), ("medium", "Medium"), ("hard", "Hard"), ('any', 'Any')], render_kw={"class": "form-control m-2"})
     remarks = TextAreaField('Remarks', render_kw={"class": "form-control m-2"})
+
+    """
+    cuisine = request.json.get('cuisine')
+    ingredients = request.json.get('ingredients')
+    dietary_preference = request.json.get('dietary_preference')
+    allergy = request.json.get('allergy')
+    meal_type = request.json.get('meal_type') (Dropdown field
+    difficulty = request.json.get('difficulty')
+    remarks = request.json.get('remarks')
+    
+    
+    
+    
+    """
 
 class CreateFeedback(FlaskForm):
     name = StringField('Your Name', [validators.Length(min=1, max=150), validators.DataRequired()])

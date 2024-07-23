@@ -15,24 +15,32 @@ function remove_ingredient(num) {
 
 // Display ingredient
 function display_ingredient() {
-    var ingredient_itemHTML = ""
-    for (i = 0; i < ingredient_list.length; i++) {
-        ingredient_itemHTML += '<div class="ingredient_item" id="' + ingredient_list[i] +  `" style="width:fit-content">
-        <i class="bi bi-x remove_ingredient" id="remove_` + ingredient_list[i] + `"></i>
-        <span class="item">` + ingredient_list[i] + "</span></div>";
+    var ingredient_itemHTML = "";
+    for (let i = 0; i < ingredient_list.length; i++) {
+        ingredient_itemHTML +=
+            '<div class="ingredient_item" id="' +
+            ingredient_list[i] +
+            `" style="width:fit-content">
+                <i class="bi bi-x remove_ingredient" data-index="${i}" aria-label="Remove Ingredient"></i>
+                <span class="item">` +
+            ingredient_list[i] +
+            "</span></div>";
     }
-    document.getElementById('ingredient_items_list').innerHTML = ingredient_itemHTML;
-    for (i = 0; i < ingredient_list.length; i++) {
-        remove_button = document.getElementById('remove_' + ingredient_list[i]);
-        remove_button.addEventListener('click', function() {
-            remove_ingredient(i);
-       })
-    }
-    remove_all.classList.remove('disabled');
-    if (ingredient_itemHTML == "") {
-        const remove_all = document.getElementById('remove_all');
-        const search = document.getElementById('search');
-        remove_all.classList.add('disabled')
+    document.getElementById("ingredient_items_list").innerHTML = ingredient_itemHTML;
+
+    // Event delegation
+    document.getElementById("ingredient_items_list").addEventListener("click", function (event) {
+        if (event.target && event.target.matches("i.remove_ingredient")) {
+            const index = event.target.getAttribute("data-index");
+            remove_ingredient(index);
+        }
+    });
+
+    const remove_all = document.getElementById("remove_all");
+    if (ingredient_itemHTML !== "") {
+        remove_all.classList.remove("disabled");
+    } else {
+        remove_all.classList.add("disabled");
     }
 }
 
@@ -43,7 +51,7 @@ document.addEventListener("DOMContentLoaded", function() {
     autocompletion();
     display_ingredient();
     add_item.addEventListener('click', function() { // Add event listener to adding ingredient button
-        var ingredient = document.getElementById('ingredient').value;
+        var ingredient = document.getElementById('ingredients').value;
         ingredient = ingredient.toLowerCase();
         if (ingredient.trim() == '') {
             display_popup('The input is empty.', 'error')
@@ -67,7 +75,6 @@ document.addEventListener("DOMContentLoaded", function() {
                             else {
                                 ingredient_list.push(arr[i]);
                                 display_ingredient();
-                                document.getElementById('ingredients').value = ingredient_list;
                                 localStorageStore();
                             }
                         }
@@ -91,7 +98,7 @@ document.addEventListener("DOMContentLoaded", function() {
 })
 
 // Ingredient input autocomplete
-var ingredient_input = document.getElementById('ingredient');
+var ingredient_input = document.getElementById('ingredients');
 
 function autocompletion() {
     var ingredient = ingredient_input.value;
@@ -105,45 +112,45 @@ function autocompletion() {
     var arr = ingredient.split(',');
     ingredient = arr[arr.length - 1];
     ingredient = ingredient.trim();
+
     // generate wordList of ingredients
     var wordList = [
         'apple', 'banana', 'chicken', 'carrot', 'tomato', 'potato', 'beef', 'pork', 'onion', 'garlic', 'pepper', 'cucumber', 'lettuce', 'spinach', 'mushroom', 'broccoli', 'peas', 'corn', 'rice', 'pasta', 'noodles', 'bread', 'flour', 'sugar', 'salt', 'pepper', 'cinnamon', 'paprika', 'cumin', 'curry', 'thyme', 'basil', 'oregano', 'parsley', 'sage', 'rosemary', 'cilantro', 'coriander', 'ginger', 'turmeric', 'saffron', 'cinnamon', 'nutmeg', 'vanilla', 'chocolate', 'cocoa', 'honey', 'maple', 'syrup', 'milk', 'cream', 'butter', 'cheese', 'yogurt', 'egg', 'mayo', 'ketchup', 'mustard', 'soy', 'sauce', 'vinegar', 'oil', 'water', 'juice', 'soda', 'beer', 'wine', 'whiskey', 'vodka', 'rum', 'tequila', 'gin', 'brandy', 'cognac', 'liqueur', 'vermouth', 'champagne', 'sparkling', 'wine', 'prosecco', 'sake', 'soju', 'baijiu', 'baiju', 'baijiu', 'baiju'];
 
     var matchingWords = [];
     for (var i = 0; i < wordList.length; i++) {
-
         var list_word = wordList[i];
-        // Check if the first letter matches the first letter of the given word
+        // Check if the word starts with the entered ingredient
         if (list_word.startsWith(ingredient)) {
-            // If there is a match, add the word to the matchingWords array
-            if (matchingWords.length < 5) {
-                if (list_word != ingredient) {
-                    matchingWords.push(wordList[i]);
-                }
+            if (matchingWords.length < 5 && list_word !== ingredient) {
+                matchingWords.push(list_word);
             }
         }
     }
 
-    var autoCompleteHTML = "<ul>"
-    for (i=0;i<matchingWords.length;i++) {
-        autoCompleteHTML += "<li id='" + matchingWords[i] + "'>" + matchingWords[i] + '</li>'
-        // <li onclick="select_autocomplete('chicken')">chicken</li>
-        console.log(matchingWords[i]); // TO BE DELETED
+    var autoCompleteHTML = "<ul>";
+    for (let i = 0; i < matchingWords.length; i++) {
+        autoCompleteHTML += "<li data-word='" + matchingWords[i] + "'>" + matchingWords[i] + '</li>';
     }
-    autoCompleteHTML += "</ul>"
-    console.log(autoCompleteHTML);
+    autoCompleteHTML += "</ul>";
+
     // Filling up the list
-    document.getElementById('autocomplete').innerHTML = autoCompleteHTML;
-    for (i=0;i<matchingWords.length;i++) {
-        document.getElementById(matchingWords[i]).addEventListener('click', function() {
-            console.log('clicked'); // TO BE DELETED
-            select_autocomplete(matchingWords[i]);
-        })
-    }
+    const autocompleteElement = document.getElementById('autocomplete');
+    autocompleteElement.innerHTML = autoCompleteHTML;
+
+    // Event delegation for clicks
+    autocompleteElement.addEventListener('click', function(event) {
+        if (event.target && event.target.matches("li[data-word]")) {
+            const selectedWord = event.target.getAttribute('data-word');
+            select_autocomplete(selectedWord);
+        }
+    });
+
     if (ingredient == "") {
         close_list();
     }
 }
+
 
 // Allowing user to select the autocomplete function
 function select_autocomplete(word) {
@@ -151,7 +158,7 @@ function select_autocomplete(word) {
     var arr = current_input.split(',');
     var allexceptLast = arr.slice(0, arr.length - 1);
     allexceptLast.push(word);
-    document.getElementById('ingredient').value = allexceptLast.join(',');
+    document.getElementById('ingredients').value = allexceptLast.join(',');
     console.log('clicked selected');
     autocompletion();
 }

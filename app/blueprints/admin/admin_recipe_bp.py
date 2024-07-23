@@ -1,11 +1,9 @@
 from flask import (
-    Flask,
     current_app,
     Blueprint,
     render_template,
     request,
     redirect,
-    session,
     flash,
     url_for,
 jsonify
@@ -18,20 +16,22 @@ from werkzeug.utils import secure_filename
 from app.models import Recipe, RecipeDeleted, RecipeConfig
 import os
 from sqlalchemy import or_, and_, case
+from app.populate_recipes import populate_recipes
+from hashlib import sha256
 
 from datetime import datetime, timedelta
 import html
 from app.forms.forms import CreateRecipeForm, RecipeSearch, AICreateRecipeForm
 from app import db
 from bs4 import BeautifulSoup
-import openai
 from flask_limiter import Limiter
-from flask_jwt_extended import JWTManager
+from flask_jwt_extended import JWTManager, jwt_required
 from flask_limiter.util import get_remote_address
 import google.generativeai as genai
+from flask_login import login_required
 
-import json
-from PIL import Image
+# import json
+# from PIL import Image
 # import flask_sqlalchemy
 # from app.models import Recipe
 # from werkzeug.utils import secure_filename
@@ -41,7 +41,7 @@ from PIL import Image
 admin_recipe_bp = Blueprint("admin_recipe_bp", __name__)
 
 # Google Gemini API Setup
-genai.configure(api_key='AIzaSyAwIK-pEqrxbJKkJm32qPpqzN_snsZL7m8')
+genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
 model = genai.GenerativeModel('gemini-1.5-flash')
 
 limiter = Limiter(
@@ -51,10 +51,6 @@ limiter = Limiter(
     storage_uri="memory://"
 )
 
-def clean_input(html):
-    cleaned = html.unescape(html)
-    return cleaned
-
 def is_image(filename):
     # Check if the file is an image
     image_type = imghdr.what(filename)
@@ -63,14 +59,23 @@ def is_image(filename):
     else:
         return False, None
 
-def is_square_image(filename):
-    image_type = imghdr.what(filename)
-    with imageio.imread(filename) as img:
-        height, width, _ = img.shape
-        if width == height:
-            return True, image_type
-        else:
-            return False, None
+
+def scan_image_for_malware(api_key, filename):
+    url = 'https://www.virustotal.com/vtapi/v2/file/scan'
+    params = {'apikey': api_key}
+    with open(filename, 'rb') as file:
+        files = {'file': file}
+        response = requests.post(url, files=files, params=params)
+        result = response.json()
+    return result
+
+
+def is_image_safe(result):
+    if 'response_code' in result and result['response_code'] == 1:
+        if 'positives' in result and result['positives'] == 0:
+            return True
+    return False
+
 
 # Recipe Pages
 @admin_recipe_bp.route("/admin/recipe_database", methods=["GET", "POST"])
@@ -318,37 +323,25 @@ def create_recipe():
             #     flash('Image size must be 1:1', 'error')
             #     return redirect(url_for('admin_recipe_bp.create_recipe'))
 
-            def scan_image_for_malware(api_key, filename):
-                url = 'https://www.virustotal.com/vtapi/v2/file/scan'
-                params = {'apikey': api_key}
-                with open(filename, 'rb') as file:
-                    files = {'file': file}
-                    response = requests.post(url, files=files, params=params)
-                    result = response.json()
-                return result
-
-            def is_image_safe(result):
-                if 'response_code' in result and result['response_code'] == 1:
-                    if 'positives' in result and result['positives'] == 0:
-                        return True
-                return False
-
-            api_key = 'your_virustotal_api_key'
-            filename = picture.filename
-
-            # result = scan_image_for_malware(api_key, filename)
-
-            # if not is_image_safe(result):
-            #     print("The image is not safe. Proceed with using it.")
-            #     flash('Please reupload the image', 'error')
-            #     return redirect(url_for('admin_recipe_bp.create_recipe'))
-
             # Save the image file
             picture_filename = picture.filename
             picture_filename = picture_filename.split('.')
-            picture_filename = name + '.' + picture_filename[1]
+            picture_name = sha256(picture_filename[0].encode()).hexdigest()
+            picture_filename = picture_name + '.' + picture_filename[1]
 
             picture.save(os.path.join('app/static/images_recipe', picture_filename))
+
+            # api_key = 'dbdb212116c4942f7006289754600a68a9561dcebfff754f0981ef595aa49fed'
+            # filename = os.path.join('app/static/images_recipe', picture_filename)
+            #
+            # result = scan_image_for_malware(api_key, filename)
+            #
+            # if not is_image_safe(result):
+            #     print(result)
+            #     print("The image is not safe. Proceed with using it.")
+            #     flash('Please reupload the image', 'error')
+            #     os.remove(os.path.join('app/static/images_recipe', picture_filename))
+            #     return redirect(url_for('admin_recipe_bp.create_recipe'))
 
             # Store in database
             new_recipe = Recipe(name=name, ingredients=ingredient_cleaned, instructions=instructions, picture=picture_filename, type=recipe_type, calories=calories, prep_time=prep_time, user_created='JohnDoeTesting')
@@ -533,7 +526,8 @@ def update_recipe(recipe_id):
                 # Save the image file
             picture_filename = picture.filename
             picture_filename = picture_filename.split('.')
-            picture_filename = name + '.' + picture_filename[1]
+            picture_name = sha256(picture_filename[0].encode()).hexdigest()
+            picture_filename = picture_name + '.' + picture_filename[1]
             picture.save(os.path.join('app/static/images_recipe', picture_filename))
 
         if name != '':
@@ -563,7 +557,6 @@ def update_recipe(recipe_id):
         return redirect(url_for('admin_recipe_bp.recipe_database'))
 
     form.name.data = recipe.name
-
     form.instructions.data = recipe.instructions
     form.calories.data = recipe.calories
     form.prep_time.data = recipe.prep_time
@@ -651,8 +644,7 @@ def unlock_recipes():
     return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
 
 @admin_recipe_bp.route('/admin/populate_recipes')
-def populate_recipes():
-    from app.populate_recipes import populate_recipes
+def populate_recipes_database():
     populate_recipes()
     flash('Populated recipe', 'info')
     return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
@@ -782,6 +774,7 @@ def view_deleted_recipe(recipe_id):
 @admin_recipe_bp.route('/admin/delete_recipe_forever/<recipe_id>', methods=['GET', 'POST'])
 def delete_recipe_forever(recipe_id):
     recipe = RecipeDeleted.query.filter_by(id=recipe_id).first()
+    os.remove(os.path.join('app/static/images_recipe', recipe.picture))
     flash(f'{recipe.name} was deleted forever', 'info')
     db.session.delete(recipe)
     db.session.commit()
@@ -803,24 +796,72 @@ def ai_recipe_creator():
 
     return render_template('admin/recipe/recipe_ai_creator.html', form=form)
 
-# @jwt_required()
+@jwt_required()
 @limiter.limit("1 per day")
 @admin_recipe_bp.route('/api/recipe-creator-ai', methods=['POST'])
 def recipe_creator_ai():
     # Get user inputs from json data
-
+    print('AI Recipe Creator Activating')
     cuisine = request.json.get('cuisine')
     ingredients = request.json.get('ingredients')
     dietary_preference = request.json.get('dietary_preference')
     allergy = request.json.get('allergy')
     meal_type = request.json.get('meal_type')
-    cooking_time = request.json.get('cooking_time')
     difficulty = request.json.get('difficulty')
+    print(difficulty)
     remarks = request.json.get('remarks')
 
-    if len(cuisine) > 10:
-        return jsonify({'content': 'Too long'})
-    # Clean inputs
+    # Clean Inputs
+    regex = r'^[a-zA-Z ]+$'  # Regex pattern allowing only letters and spaces
+    regex2 = r'^[a-zA-Z, ]+$'
+
+    cuisine = cuisine.strip()
+    if cuisine != '':
+        if len(cuisine) > 12:
+            return jsonify({'content': 'Cuisine is too long. Please keep within 12 characters'})
+        if not re.fullmatch(regex, cuisine):
+            return jsonify({'content':'Only letters and spaces allowed in cuisine'})
+
+    ingredients = ingredients.strip()
+    if ingredients != '':
+        if len(ingredients) > 30:
+            return jsonify({'content': 'Ingredients are too long. Please keep within 30 characters'})
+        if not re.fullmatch(regex2, ingredients):
+            return jsonify({'content':'Only letters, spaces and commas allowed in ingredients'})
+
+    dietary_preference = dietary_preference.strip()
+    if dietary_preference != '':
+        if len(dietary_preference) > 15:
+            return jsonify({'content': 'Dietary preference is too long. Please keep within 15 characters'})
+        if not re.fullmatch(regex, dietary_preference):
+            return jsonify({'content':'Only letters and spaces allowed in dietary preference'})
+
+    allergy = allergy.strip()
+    if allergy != '':
+        if len(allergy) > 15:
+            return jsonify({'content': 'Allergy is too long. Please keep within 15 characters'})
+        if not re.fullmatch(regex, allergy):
+            return jsonify({'content':'Only letters and spaces allowed in allergy'})
+
+    meal_type = meal_type.strip()
+    if meal_type != '':
+        if len(meal_type) > 15:
+            return jsonify({'content': 'Meal type is too long. Please keep within 15 characters'})
+        if not re.fullmatch(regex, meal_type):
+            return jsonify({'content':'Only letters and spaces allowed in meal type'})
+
+    difficulty = difficulty.strip()
+    if difficulty not in ['easy', 'medium', 'hard', 'any']:
+        return jsonify({'content':'Please try again.'})
+
+    remarks = remarks.strip()
+    if remarks != '':
+        if len(remarks) > 30:
+            return jsonify({'content': 'Remarks is too long. Please keep within 30 characters'})
+        if not re.fullmatch(regex2, remarks):
+            return jsonify({'content':'Only letters, spaces and commas allowed in remarks'})
+
+
 
     messages = ''
     messages += """You are a recipe creator.
@@ -832,11 +873,10 @@ def recipe_creator_ai():
     messages += f'''You are creating a recipe for {cuisine} cuisine. 
                     Ensure {ingredients} are in the recipe. The dietary preference is
                     {dietary_preference}. The allergies are {allergy}. The meal type is {meal_type}.
-                    The cooking time is {cooking_time}. The difficulty is {difficulty}.
+                    The difficulty is {difficulty}.
                     Remarks are (Ignore this part if irrelevant) {remarks}'''
 
     print(messages)
-    print('AI Recipe Creator Activating')
     response = model.generate_content(messages)
     cleaned = response.text
     cleaned = cleaned.replace("## ", "")

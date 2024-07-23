@@ -27,7 +27,7 @@
     text-align: left;
 }
 
-#ingredient {
+#ingredients {
     display:inline-block;
     max-width: fit-content;
 }
@@ -97,9 +97,6 @@
 }
 .ingredient_item span{
     margin-right:0.3rem;
-}
-#ingredients {
-    display:none;
 }
 
 /* Recipe Items */

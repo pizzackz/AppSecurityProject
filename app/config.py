@@ -44,8 +44,8 @@ class Config:
     # Base CSP settings
     CSP_DIRECTIVES = {
         'default-src': ["'self'", 'https://cdn.jsdelivr.net', 'https://cdn.tiny.cloud'],
-        'style-src': ["'self'", 'https://cdn.jsdelivr.net', 'https://cdn.tiny.cloud'],
-        'script-src': ["'self'", 'https://cdn.jsdelivr.net', 'https://cdn.ckeditor.com', 'https://js.stripe.com/v3/', 'https://cdn.tiny.cloud'],
+        'style-src': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://cdn.tiny.cloud'],
+        'script-src': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://cdn.ckeditor.com', 'https://js.stripe.com/v3/', 'https://cdn.tiny.cloud'],
         'font-src': ["'self'", 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com'],
         'img-src': ["'self'", 'data:', 'https://sp.tinymce.com'],
         'connect-src': ["'self'", 'https://cdn.tiny.cloud'],
@@ -78,4 +78,7 @@ class Config:
 
     # OpenAI API key
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+
+    # Google Gemini API Key
+    GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
