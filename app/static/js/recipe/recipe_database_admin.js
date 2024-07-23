@@ -48,6 +48,7 @@ function display_ingredient() {
 document.addEventListener("DOMContentLoaded", function() {
     const form1 = document.getElementById('form1');
     const add_item = document.getElementById("add_ingredient");
+    document.getElementById('ingredients').value = '';
     autocompletion();
     display_ingredient();
     add_item.addEventListener('click', function() { // Add event listener to adding ingredient button
@@ -95,6 +96,14 @@ document.addEventListener("DOMContentLoaded", function() {
     })
     const search = document.getElementById('search');
     search.addEventListener('click', search_ingredients);
+    document.getElementById('recipe_items').addEventListener('click', function(event) {
+    if (event.target.classList.contains('delete-button')) {
+      var card = event.target.closest('.card');
+      var recipeName = card.getAttribute('data-recipe-name');
+      var recipeId = card.getAttribute('data-recipe-id');
+      confirmdelete(recipeName, recipeId);
+    }
+  });
 })
 
 // Ingredient input autocomplete

@@ -26,7 +26,7 @@ h1 {
     font-size: 5.2vh;
 }
 
-#ingredient {
+#ingredients {
     display:inline-block;
     max-width: fit-content;
 }
@@ -46,9 +46,10 @@ label {
 .autocomplete {
     position: absolute;
     margin: 0.1rem;
+    margin-top:-0.51rem;
     z-index: 1000;
     list-style-type: none;
-    width: 20.7rem;
+    width: 16.7rem;
 }
 .autocomplete ul {
     border-radius: 5px;
@@ -94,15 +95,9 @@ label {
 .remove_ingredient:hover {
     color:#7d7d7d;
 }
-#ingredients {
-    display:none;
-}
-
-
 .ingredient_item span{
     margin-right:0.3rem;
 }
-
 #add_recipe_title{
     text-align:center;
     margin-top:1.5rem;

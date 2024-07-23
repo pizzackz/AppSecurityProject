@@ -1,3 +1,4 @@
+import flask
 from flask import (
     current_app,
     Blueprint,
@@ -18,6 +19,7 @@ import os
 from sqlalchemy import or_, and_, case
 from app.populate_recipes import populate_recipes
 from hashlib import sha256
+from app import limiter
 
 from datetime import datetime, timedelta
 import html
@@ -43,13 +45,6 @@ admin_recipe_bp = Blueprint("admin_recipe_bp", __name__)
 # Google Gemini API Setup
 genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
 model = genai.GenerativeModel('gemini-1.5-flash')
-
-limiter = Limiter(
-    get_remote_address,
-    app=current_app,
-    default_limits=["10 per hour", "40 per day"],
-    storage_uri="memory://"
-)
 
 def is_image(filename):
     # Check if the file is an image
@@ -374,7 +369,6 @@ def view_recipe(recipe_id):
     }
     return render_template('admin/recipe/recipe_view2.html', recipe=recipe_data)
 
-
 @admin_recipe_bp.route('/admin/delete_recipe/<recipe_id>', methods=['GET', 'POST'])
 def delete_recipe(recipe_id):
     global locked_recipes
@@ -420,6 +414,7 @@ def update_recipe(recipe_id):
         if locked_recipes.status == 'True':
             flash('Action cannot be done at the moment.', 'danger')
             return redirect(url_for('admin_recipe_bp.update_recipe'))
+
         name = form.name.data
         ingredients = form.ingredients.data
         instructions = form.instructions.data
@@ -562,7 +557,6 @@ def update_recipe(recipe_id):
     form.prep_time.data = recipe.prep_time
     form.recipe_type.data = recipe.type
     ingredients = (recipe.ingredients).split(',')
-
 
     return render_template('admin/recipe/recipe_update.html', form=form, ingredients=ingredients)
 
@@ -770,7 +764,6 @@ def view_deleted_recipe(recipe_id):
     }
     return render_template('admin/recipe/recipe_view_deleted.html', recipe=recipe_data)
 
-
 @admin_recipe_bp.route('/admin/delete_recipe_forever/<recipe_id>', methods=['GET', 'POST'])
 def delete_recipe_forever(recipe_id):
     recipe = RecipeDeleted.query.filter_by(id=recipe_id).first()
@@ -793,11 +786,10 @@ def restore_recipe(recipe_id):
 @admin_recipe_bp.route('/admin/ai_recipe_creator', methods=['GET', 'POST'])
 def ai_recipe_creator():
     form = AICreateRecipeForm()
-
     return render_template('admin/recipe/recipe_ai_creator.html', form=form)
 
-@jwt_required()
-@limiter.limit("1 per day")
+# @jwt_required()
+@limiter.limit('2 per day')
 @admin_recipe_bp.route('/api/recipe-creator-ai', methods=['POST'])
 def recipe_creator_ai():
     # Get user inputs from json data
@@ -861,8 +853,6 @@ def recipe_creator_ai():
         if not re.fullmatch(regex2, remarks):
             return jsonify({'content':'Only letters, spaces and commas allowed in remarks'})
 
-
-
     messages = ''
     messages += """You are a recipe creator.
                        Ignore all unrelated inputs, and only output recipe in 
@@ -886,6 +876,10 @@ def recipe_creator_ai():
     print(cleaned)
     return jsonify({'content': cleaned})
 
+@admin_recipe_bp.route('/api_testing')
+@limiter.limit('2 per day')
+def api_testing():
+    return 'This is a valid response :)'
 
 # # @jwt_required()
 # @limiter.limit("10 per hour")
