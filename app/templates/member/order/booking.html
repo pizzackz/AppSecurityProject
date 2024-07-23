@@ -31,12 +31,12 @@
 </div>
 <br>
 
-<div class="bigger-container center1">
-    <h3 class="center1 top">Schedule Delivery</h3>
-    <div id='calendar'></div>
-</div>
-<br>
-<br>
+    <div class="bigger-container center1">
+        <h3 class="center1 top">Schedule Delivery</h3>
+        <div id='calendar'></div>
+    </div>
+    <br>
+    <br>
 
 
 
@@ -51,11 +51,12 @@
       <option value="17:00">17:00</option>
       <option value="18:00">18:00</option>
     </select>
+    <br>
+    <br>
     <input type="hidden" name="delivery_date" id="delivery_date">
-    <button type="submit" class="btn btn-primary">Confirm Booking</button>
+    <button type="submit" class="btn btn-primary">Confirm Booking</button> &nbsp;
     <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded" name="return" value="True">Return</button>
 </form>
-
 <br>
 <div id="flash-messages">
     {% with messages = get_flashed_messages(with_categories=true) %}

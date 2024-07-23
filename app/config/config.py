@@ -80,6 +80,7 @@ class Config:
     # OpenAI API key
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
+
     # Google Gemini API Key
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
@@ -92,4 +93,8 @@ class Config:
     GOOGLE_AUTH_URI = GOOGLE_CLIENT_SECRETS['web']['auth_uri']
     GOOGLE_TOKEN_URI = GOOGLE_CLIENT_SECRETS['web']['token_uri']
     GOOGLE_REDIRECT_URIS = GOOGLE_CLIENT_SECRETS['web']['redirect_uris']
+
+    # Recaptcha keys
+    RECAPTCHA_PUBLIC_KEY = os.environ.get('RECAPTCHA_PUBLIC_KEY')
+    RECAPTCHA_PRIVATE_KEY = os.environ.get('RECAPTCHA_PRIVATE_KEY')
 

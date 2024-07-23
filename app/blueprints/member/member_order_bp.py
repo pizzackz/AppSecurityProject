@@ -100,13 +100,18 @@ def booking():
         delivery_time = request.form.get('delivery_time')
 
         # Perform server-side validation
-        delivery_date_obj = datetime.strptime(delivery_date, '%Y-%m-%d')
-        if delivery_date_obj < datetime.now():
-            flash('The delivery date cannot be in the past.', 'error')
-            return redirect(url_for('member_order_bp.booking'))
-        elif delivery_date_obj > (datetime.now() + timedelta(days=(30 - datetime.now().day + 30))):
-            flash('The delivery date cannot be beyond the end of next month.', 'error')
-            return redirect(url_for('member_order_bp.booking'))
+        try:
+            delivery_date_obj = datetime.strptime(delivery_date, '%Y-%m-%d')
+            if delivery_date_obj < datetime.now():
+                flash('The delivery date cannot be in the past.', 'error')
+                return redirect(url_for('member_order_bp.booking'))
+            elif delivery_date_obj > (datetime.now() + timedelta(days=(30 - datetime.now().day + 30))):
+                flash('The delivery date cannot be beyond the end of next month.', 'error')
+                return redirect(url_for('member_order_bp.booking'))
+        except ValueError:
+            flash('Delivery date not specified.', 'error')
+
+
 
         # Save data to session
         set_session_data({
@@ -192,7 +197,7 @@ def order():
             for error in errors:
                 flash(f"Error in the {getattr(form, field).label.text} field - {error}", 'error')
         logger.warning(f"Order form validation failed: {form.errors}")
-        flash('Please fill in all the required fields.', 'error')
+        flash('Please fill in all the required fields and captcha.', 'error')
 
     return render_template('member/order/orders.html', form=form, menu_items=items)
 

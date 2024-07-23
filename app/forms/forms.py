@@ -1,6 +1,6 @@
 from wtforms import Form, StringField, FileField, TextAreaField, IntegerField, SelectField, DecimalField, SubmitField, validators, HiddenField, DateField, TimeField, SelectMultipleField, IntegerRangeField, BooleanField
 from wtforms.validators import DataRequired, Length, NumberRange
-from flask_wtf import FlaskForm
+from flask_wtf import FlaskForm, RecaptchaField
 
 from app.forms.validators import six_digit_postal_code_validator, phone_number_validator
 
@@ -66,4 +66,5 @@ class OrderForm(FlaskForm):
     selected_date = DateField('Delivery Date', [validators.DataRequired()], format='%Y-%m-%d')
     selected_time = TimeField('Delivery Time', [validators.DataRequired()], format='%H:%M')
     selected_items = StringField('Selected Items', [validators.DataRequired()])
+    recaptcha = RecaptchaField()
     submit = SubmitField('Schedule Delivery')
