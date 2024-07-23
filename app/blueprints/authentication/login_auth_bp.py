@@ -1,19 +1,22 @@
 import logging
 import hashlib
 import os
+import googleapiclient.discovery
 
-from dotenv import load_dotenv
 from datetime import datetime, timedelta, timezone
 from logging import Logger
-from flask import Blueprint, request, session, redirect, render_template, flash, url_for
+from typing import Union, Dict, Optional
+
+from flask import Blueprint, request, session, redirect, render_template, flash, url_for, make_response
 from flask_jwt_extended import create_access_token, set_access_cookies, unset_jwt_cookies, get_jwt, get_jwt_identity, jwt_required
 from flask_login import login_user
 from werkzeug.security import check_password_hash
-from typing import Union
+from google_auth_oauthlib.flow import Flow
 
 from app import db, login_manager
+from app.config.config import Config
 from app.models import User, Member, Admin
-from app.forms.auth_forms import LoginForm, OtpForm
+from app.forms.auth_forms import LoginForm, OtpForm, ConfirmNewMemberForm, ConfirmGoogleLinkForm
 from app.utils import clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_auth_stage, check_jwt_values
 
 
@@ -21,13 +24,34 @@ login_auth_bp: Blueprint = Blueprint("login_auth_bp", __name__, url_prefix="/log
 logger: Logger = logging.getLogger('tastefully')
 
 # Initialise variables
-load_dotenv()
 TEMPLATE_FOLDER = "authentication/login"
-MAX_FAILED_ATTEMPTS = 5
-LOCKOUT_DURATION = timedelta(minutes=30)
-LOCKED_REASON = "Too many failed login attempts"
-CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
-CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
+# Disable the security check for local development
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+
+
+# Convert credentials from Credential object to dictionary
+def credentials_to_dict(credentials) -> Dict:
+    """Helper function to convert OAuth credentials to a dictionary."""
+    return {
+        'token': credentials.token,
+        'refresh_token': credentials.refresh_token,
+        'token_uri': credentials.token_uri,
+        'client_id': credentials.client_id,
+        'client_secret': credentials.client_secret,
+        'scopes': credentials.scopes
+    }
+
+
+# Retrieve Google user info using OAtuh credentials
+def get_google_user_info(credentials):
+    """Helper function to get Google user info using the OAuth credentials."""
+    user_info_service = googleapiclient.discovery.build(
+        serviceName='oauth2', version='v2',
+        credentials=credentials
+    )
+    # Fetch the user info from Google's API
+    user_info = user_info_service.userinfo().get().execute()
+    return user_info
 
 
 # User loader function to retrieve user object from database
@@ -42,6 +66,115 @@ def load_user(user_id: int) -> Union[User, Member, Admin]:
         elif user.type == "admin":
             return Admin.query.get(user_id)
     return user
+
+
+# Successful Google Sign-in aftermath case handlers
+# Display case based messages
+def display_case_messages(flash_message: str, log_message: str):
+    flash(flash_message, "error")
+    logger.error(log_message)
+    return redirect(url_for('login_auth_bp.login'))
+
+
+# Handle ideal case 1: No account exists with the same email, username, and Google ID
+def handle_ideal_case1(email: str, username: str, google_id: str, profile_picture: str):
+    # Store important info from google into jwt
+    identity = {'email': email, 'username': username, 'google_id': google_id}
+    claims = {'profile_picture': profile_picture}
+    token = create_access_token(identity=identity, additional_claims=claims)
+    response = make_response(redirect(url_for('login_auth_bp.confirm_new_member_account')))
+    set_access_cookies(response, token)
+    
+    # Display messages
+    flash("Please confirm if you want to create a new member account.", "info")
+    logger.info("Redirecting to confirm new member account creation.")
+
+    return response
+
+
+# Handle ideal case 2: Existing account with matching google id for user_by_email & user_by_username
+def handle_ideal_case2(user_by_email: User, username: str, email: str):
+    # Get correct endpoint based on user type
+    endpoint = "login_auth_bp.login"  # For testing, use 'login_auth_bp.login', for actual just create an empty string
+    # TODO: Uncomment below after creation of homepages
+    # if user_by_email.type == "member": endpoint = "member_auth_bp.home"
+    # elif user_by_email.type == "admin": endpoint = "admin_auth_bp.home"
+
+    # Clear any jwt & session data, Log user in
+    session.clear()
+    response = make_response(redirect(url_for(endpoint)))
+    unset_jwt_cookies(response)
+    login_user(user_by_email)
+
+    # Display messages
+    flash(f"Welcome {username}. You are now logged in!", "success")
+    logger.info(f"User '{username}' with email '{email}' logged in successfully through Google Sign-in.")
+
+    return response
+
+
+# Main function to handle all ideal cases
+def handle_ideal_cases(user_by_email: Optional[User], user_by_username: Optional[User], user_by_google_id: Optional[User], email: str, username: str, google_id: str, profile_picture: str):
+    # Ideal Case 1: No account exists with the same email, username, and Google ID
+    if not user_by_email and not user_by_username and not user_by_google_id:
+        return handle_ideal_case1(email, username, google_id, profile_picture)
+
+    # Ideal Case 2: Existing account matches both email and Google ID
+    if user_by_email and user_by_google_id and user_by_email.google_id == google_id:
+        return handle_ideal_case2(user_by_email, username, email)
+
+    return None
+
+
+# Defective case 1: Email & username exists on same account but no google id associated
+def handle_defective_case1(email, username, google_id, profile_picture, type: str):
+    if type == "1":
+        log_message = f"Email {email} exists but no Google ID is associated. User prompted to link Google account."
+    elif type == "2":
+        log_message = f"Username {username} exists but no Google ID is associated. User prompted to link Google account."
+    
+    # Store google data in jwt for fther logic
+    identity = {'email': email, 'username': username, 'google_id': google_id}
+    claims = {'profile_picture': profile_picture}
+    token = create_access_token(identity=identity, additional_claims=claims)
+    response = make_response(redirect(url_for('login_auth_bp.link_google')))
+    set_access_cookies(response, token)
+
+    # Display messages
+    flash("Account exists but is not linked to your Google account. Would you like to link to your Google account?", "info")
+    logger.info(log_message)
+
+    return response
+
+
+# Main function to handle all defective cases
+def handle_defective_cases(user_by_email: Optional[User], user_by_username: Optional[User], user_by_google_id: Optional[User], email: str, username: str, google_id: str, profile_picture: str):
+    # Defective case 1: Email & username exists on same account but no google id associated
+    if (user_by_email and not user_by_email.google_id) or (user_by_username and not user_by_username.google_id):
+        if user_by_email and not user_by_email.google_id:
+            return handle_defective_case1(email, username, google_id, profile_picture, "1")
+        elif user_by_username and not user_by_username.google_id:
+            return handle_defective_case1(email, username, google_id, profile_picture, "2")
+
+    # Defective case 2: Google id exists but neither email or username matches
+    if user_by_google_id and (user_by_google_id.email != email or user_by_google_id.username != username):
+        flash_message = "This Google account is associated with different credentials. Please use the correct credentials."
+        log_message = f"Google ID {google_id} is associated with email {user_by_google_id.email} and username {user_by_google_id.username}, but attempted email was {email} and username was {username}."
+        display_case_messages(flash_message, log_message)        
+    
+    # Defective case 3: Partial information mismatch (email/ username/ google id)
+    if (user_by_email and user_by_email.google_id != google_id) or (user_by_username and user_by_username.google_id != google_id):
+        flash_message = "Partial information mismatch. Please check your credentials."
+        log_message = f"Partial information mismatch: Google ID {google_id} with email {email} and username {username}."
+        return display_case_messages(flash_message, log_message)
+
+    # Defective case 4: No match for email, username or google id but partial overlap in account information
+    if (user_by_email and not user_by_google_id) or (user_by_username and not user_by_google_id):
+        flash_message = "Partial overlap in account information. Please check your credentials."
+        log_message = f"Partial overlap in account information for email {email} and username {username}."
+        return display_case_messages(flash_message, log_message)
+    
+    return None
 
 
 # Initial login route
@@ -85,13 +218,13 @@ def login():
 
         # Redirect to send_otp
         return response
-    
+
     # Render the base login template
     return render_template(f"{TEMPLATE_FOLDER}/login.html", form=form)
 
 
 # Send otp route
-@login_auth_bp.route('/send_otp', methods=['GET'])
+@login_auth_bp.route("/send_otp", methods=['GET'])
 @jwt_required()
 def send_otp():
     # Check if the session is expired
@@ -245,3 +378,247 @@ def verify_email():
     # Render the verify email template
     return render_template(f'{TEMPLATE_FOLDER}/verify_email.html', form=form)
 
+
+# Google login route
+@login_auth_bp.route("/google_login", methods=['GET'])
+def google_login():
+    # Create OAuth 2.0 flow object
+    flow = Flow.from_client_config(
+        {
+            "web": {
+                "client_id": Config.GOOGLE_CLIENT_ID,
+                "client_secret": Config.GOOGLE_CLIENT_SECRET,
+                "auth_uri": Config.GOOGLE_AUTH_URI,
+                "token_uri": Config.GOOGLE_TOKEN_URI,
+                "redirect_uris": Config.GOOGLE_REDIRECT_URIS
+            }
+        },
+        scopes=['openid', 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'],
+        redirect_uri=url_for('login_auth_bp.google_callback', _external=True)
+    )
+
+    # Generate authorisation url & state token
+    authorisation_url, state = flow.authorization_url(access_type='offline', include_granted_scopes='true', prompt='select_account')
+
+    # Store google oauth state token in session
+    session['google_outh_state'] = state
+
+    # Redirect to Google's OAuth 2.0 server
+    return redirect(authorisation_url)
+
+
+# Route to handle Google callback
+@login_auth_bp.route("/google_callback", methods=['GET'])
+def google_callback():
+    # Handle Google Sign-in cancel request
+    if 'error' in request.args:
+        error = request.args['error']
+        if error == 'access_denied':
+            flash("Google login was canceled.", "info")
+            logger.info("Google login was canceled by the user.")
+            return redirect(url_for('login_auth_bp.login'))
+
+    # Retrieve state token from session
+    state = session.get('google_oauth_state')
+
+    # Create new OAuth 2.0 flow object using state token
+    flow = Flow.from_client_config(
+        {
+            "web": {
+                "client_id": Config.GOOGLE_CLIENT_ID,
+                "client_secret": Config.GOOGLE_CLIENT_SECRET,
+                "auth_uri": Config.GOOGLE_AUTH_URI,
+                "token_uri": Config.GOOGLE_TOKEN_URI,
+                "redirect_uris": Config.GOOGLE_REDIRECT_URIS
+            }
+        },
+        scopes=['openid', 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'],
+        state=state,
+        redirect_uri=url_for('login_auth_bp.google_callback', _external=True)  # Set the redirect URI for the OAuth flow
+    )
+
+    # Exchange authorisation code for access token
+    authorisation_response = request.url
+    flow.fetch_token(authorization_response=authorisation_response)
+
+    # Get credentials object & data in object
+    credentials = flow.credentials
+    google_user_info = get_google_user_info(credentials)
+    email = google_user_info['email']
+    username = google_user_info['name']
+    google_id = google_user_info['id']
+    profile_picture = google_user_info.get('picture', None)
+
+    # Check if the user exists using email, username and Google ID
+    user_by_email = User.query.filter_by(email=email).first()
+    user_by_username = User.query.filter_by(username=username).first()
+    user_by_google_id = User.query.filter_by(google_id=google_id).first()
+
+    # Handle 4 possible defective cases
+    defective_case_response = handle_defective_cases(user_by_email, user_by_username, user_by_google_id, email, username, google_id, profile_picture)
+    if defective_case_response:
+        return defective_case_response
+
+    # Handle 2 ideal cases
+    ideal_case_response = handle_ideal_cases(user_by_email, user_by_username, user_by_google_id, email, username, google_id, profile_picture)
+    if ideal_case_response:
+        return ideal_case_response
+
+    flash("An unexpected error occurred. Please try again.", "error")
+    logger.error("Unidentified error after successful Google Sign-in")
+
+    return redirect(url_for("login_auth_bp.login"))
+    
+
+# Create new account route - Using google credentials
+@login_auth_bp.route("/confirm_new_member_account", methods=['GET', 'POST'])
+@jwt_required()
+def confirm_new_member_account():
+    # Check for correct JWT identity keys and claims
+    check = check_jwt_values(
+        required_identity_keys=['email', 'username', 'google_id'],
+        required_claims=['profile_picture'],
+        fallback_endpoint='login_auth_bp.login',
+        flash_message="Invalid session. Please try again.",
+        log_message="Invalid JWT identity or claims during new member account confirmation."
+    )
+    if check:
+        return check
+    
+    identity = get_jwt_identity()
+    claims = get_jwt()
+    form = ConfirmNewMemberForm()
+
+    if request.method == 'POST' and form.validate_on_submit():
+        # User chose not to create an account
+        if form.confirm.data == 'no':
+            session.clear()
+            response = redirect(url_for('login_auth_bp.login'))
+            unset_jwt_cookies(response)
+
+            # Display messages
+            flash("Member account creation canceled.", "info")
+            logger.info(f"User '{identity['username']}' opted not to create a new member account after successful Google Sign-in.")
+
+        # User chose to create new member account
+        elif form.confirm.data == "yes":
+            email = identity['email']
+            username = identity['username']
+            google_id = identity['google_id']
+            profile_picture = claims.get('profile_picture', None)
+
+            # Create new user with given email, username, google_id, and profile picture
+            new_user = Member.create_by_google(username=username, email=email, google_id=google_id, profile_picture=profile_picture)
+            if not new_user:
+                session.clear()
+                response = redirect(url_for('login_auth_bp.login'))
+                unset_jwt_cookies(response)
+                flash("An error occurred while creating the account. Please try again.", "error")
+                logger.error(f"Failed to create new member account for {email}.")
+                return redirect(url_for('login_auth_bp.login'))
+
+            # TODO: Change to member homepage, testing just use login_auth_bp.login first
+            endpoint = "login_auth_bp.login"  # "member_auth_bp.home"
+
+            # Clear any jwt & session data, Log user in
+            session.clear()
+            response = redirect(url_for(endpoint))
+            unset_jwt_cookies(response)
+            login_user(new_user)
+
+            # Display messages
+            flash("Member account created successfully. You are now logged in.", "success")
+            logger.info(f"Created new member account for user '{username}' with email '{email}' after successful Google Sign-in.")
+        
+        # Case when confirm data is not 'yes' or 'no'
+        else:
+            session.clear()
+            response = redirect(url_for(endpoint))
+            unset_jwt_cookies(response)
+            login_user(new_user)
+
+            # Display messages
+            flash("An unexpected error occurred. Please try again.", "error")
+            logger.info(f"User '{username}' with email '{email}' tried an unknown action after successful Google Sign-in.")
+
+        return response
+
+    # Render the confirm new member account creation template
+    return render_template(f"{TEMPLATE_FOLDER}/new_member_acc.html", form=form)
+
+
+# Linking Google account route
+@login_auth_bp.route("/link_google", methods=['GET', 'POST'])
+@jwt_required()
+def link_google():
+    # Check for correct JWT identity keys
+    check = check_jwt_values(
+        required_identity_keys=['email', 'username', 'google_id'],
+        required_claims=['profile_picture'],
+        fallback_endpoint='login_auth_bp.login',
+        flash_message="Invalid session. Please try again.",
+        log_message="Invalid JWT identity or claims during Google account linking."
+    )
+    if check:
+        return check
+    
+    identity = get_jwt_identity()
+    claims = get_jwt()
+    form = ConfirmGoogleLinkForm()
+
+    if request.method == 'POST' and form.validate_on_submit():
+        # User chose not to link the Google account
+        if form.confirm.data == 'no':
+            session.clear()
+            response = redirect(url_for('login_auth_bp.login'))
+            unset_jwt_cookies(response)
+            flash("Google account linking canceled.", "info")
+            logger.info(f"User '{identity['username']}' opted not to link the Google account.")
+            return response
+
+        # User chose to link Google account
+        if form.confirm.data == "yes":
+            email = identity['email']
+            username = identity['username']
+            google_id = identity['google_id']
+            profile_picture = claims.get('profile_picture', None)
+
+            user = User.query.filter_by(email=email).first() or User.query.filter_by(username=username).first()
+            if user:
+                # Update user in database
+                if not user.username or user.username != username:
+                    user.username = username
+                if not user.email or user.email != email:
+                    user.email = email
+                user.google_id = google_id
+                user.profile_picture = profile_picture
+                db.session.commit()
+
+                # Get correct endpoint based on user type
+                endpoint = "login_auth_bp.login"  # For testing, use 'login_auth_bp.login', for actual just create an empty string
+                if user.type == "member": endpoint = "member_auth_bp.home"
+                elif user.type == "admin": endpoint = "admin_auth_bp.home"
+
+                # Clear any jwt & session data, Log user in
+                session.clear()
+                response = redirect(url_for(endpoint))
+                unset_jwt_cookies(response)
+                login_user(user)
+
+                # Display messages
+                flash("Google account linked successfully. You are now logged in.", "success")
+                logger.info(f"User '{username}' with email '{email}' logged in after linking to Google Account.")
+
+                return response
+
+            # User not found
+            session.clear()
+            response = redirect(url_for('login_auth_bp.login'))
+            unset_jwt_cookies(response)
+            
+            flash("An error occurred while linking the Google account. Please try again.", "error")
+            logger.error(f"Failed to link Google account for {email}.")
+            return response
+
+    # Render the confirm Google account linking template
+    return render_template(f"{TEMPLATE_FOLDER}/confirm_google_link.html", form=form)

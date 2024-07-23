@@ -5,10 +5,11 @@ from datetime import datetime, timedelta, timezone
 from logging import Logger
 from flask import Blueprint, render_template, session, url_for, flash, redirect, request
 from flask_jwt_extended import create_access_token, set_access_cookies, unset_jwt_cookies, get_jwt, get_jwt_identity, jwt_required
+from flask_login import login_user
 from werkzeug.security import generate_password_hash
 
 from app import db
-from app.models import Member
+from app.models import User, Member
 from app.forms.auth_forms import SignupForm, OtpForm, PasswordForm, ExtraInfoForm
 from app.utils import clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_auth_stage, check_jwt_values
 
@@ -226,7 +227,7 @@ def set_password():
     )
     if check_jwt and not identity['email_verified']:
         return check_jwt
-    
+
     form = PasswordForm()
 
     if request.method == "POST" and form.validate_on_submit():

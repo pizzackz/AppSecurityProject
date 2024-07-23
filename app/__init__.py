@@ -14,7 +14,7 @@ from flask_session import Session
 from flask_mail import Mail
 from flask_jwt_extended import JWTManager
 
-from app.config import Config
+from app.config.config import Config
 
 
 # Load environment variables from .env file

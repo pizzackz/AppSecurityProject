@@ -50,3 +50,14 @@ class ResetPasswordForm(FlaskForm):
     curr_password = PasswordField("Current Password", validators=[DataRequired(), Length(min=8)])
     new_password = PasswordField("New Password", validators=[DataRequired(), Length(min=8), validate_password_complexity])
     confirm_password = PasswordField("Confirm Password", validators=[DataRequired(), Length(min=8), EqualTo("new_password", "Passwords must match")])
+
+
+# Confirmation form for new member account creation after Google Signin
+class ConfirmNewMemberForm(FlaskForm):
+    confirm = RadioField("Do you want to create a new member account?", choices=[("yes", "Yes"), ("no", "No")], validators=[DataRequired()])
+
+
+# Confirmation form for linking google account
+class ConfirmGoogleLinkForm(FlaskForm):
+    confirm = RadioField("Do you want to link your current tastefully account with google?", choices=[("yes", "Yes"), ("no", "No")], validators=[DataRequired()])
+

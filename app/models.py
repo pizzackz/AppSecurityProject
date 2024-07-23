@@ -25,9 +25,9 @@ class User(UserMixin, db.Model):
     id = Column(Integer, primary_key=True)
     username = Column(String(255), unique=True, index=True, nullable=False)
     email = Column(String(255), unique=True, index=True, nullable=False)
-    password_hash = Column(String(255), default="", nullable=False)
-    google_id = Column(String(255), nullable=True)  # 'NULL' when user does manual sign up
-    profile_picture = Column(String(255), default=os.path.join("static", "uploads", "profile_pictures", "ZGVmYXVsdA.png"), nullable=True)
+    password_hash = Column(String(255), nullable=True)
+    google_id = Column(String(255), unique=True, nullable=True)  # 'NULL' when user does manual sign up
+    profile_picture = Column(Text, default=os.path.join("static", "uploads", "profile_pictures", "ZGVmYXVsdA.png"), nullable=True)
     phone_number = Column(String(20), nullable=True)
     address = Column(String(255), nullable=True)
     postal_code = Column(String(20), nullable=True)
@@ -69,6 +69,30 @@ class Member(User):
         try:
             # Create new member object
             new_member = Member(username=username, email=email, password_hash=password_hash, subscription_plan=subscription_plan, type="member")
+            db.session.add(new_member)
+            db.session.flush()
+            
+            acc_status = AccountStatus.create(id=new_member.id)
+            if not acc_status:
+                raise Exception("Failed to create account status record for member")
+
+            login_details = LoginDetails.create(id=new_member.id)
+            if not login_details:
+                raise Exception("Failed to create login details record for member")
+
+            db.session.commit()
+
+            return new_member
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"An error occurred while creating member: {e}")
+            return None
+    
+    # Create new member through google signin
+    def create_by_google(username: str, email: str, google_id: str, subscription_plan: str = "standard", profile_picture: Optional[str] = None):
+        try:
+            # Create new member object
+            new_member = Member(username=username, email=email, google_id=google_id, subscription_plan=subscription_plan, profile_picture=profile_picture, type="member")
             db.session.add(new_member)
             db.session.flush()
             

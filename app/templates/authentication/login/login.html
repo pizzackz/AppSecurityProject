@@ -11,7 +11,7 @@
 <p>Just browsing? Our recipes are <a href="">here</a></p>
 
 <!-- Google Signin button to use Google Signin API -->
-<button type="button" class="btn btn-light">Sign in with Google</button>
+<a href="{{ url_for('login_auth_bp.google_login') }}" class="btn btn-light">Sign in with Google</a>
 
 <form action="" method="post" id="initial-login-form">
     {{ form.hidden_tag() }}

@@ -1,4 +1,5 @@
 import os
+import json
 from datetime import timedelta
 from dotenv import load_dotenv
 
@@ -81,4 +82,14 @@ class Config:
 
     # Google Gemini API Key
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+
+    # Google configuration
+    GOOGLE_CLIENT_SECRETS_FILE = os.path.join(os.path.dirname(__file__), "google_client_secret.json")
+    with open(GOOGLE_CLIENT_SECRETS_FILE) as f:
+        GOOGLE_CLIENT_SECRETS = json.load(f)
+    GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID') or GOOGLE_CLIENT_SECRETS['web']['client_id']
+    GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET') or GOOGLE_CLIENT_SECRETS['web']['client_secret']
+    GOOGLE_AUTH_URI = GOOGLE_CLIENT_SECRETS['web']['auth_uri']
+    GOOGLE_TOKEN_URI = GOOGLE_CLIENT_SECRETS['web']['token_uri']
+    GOOGLE_REDIRECT_URIS = GOOGLE_CLIENT_SECRETS['web']['redirect_uris']
 

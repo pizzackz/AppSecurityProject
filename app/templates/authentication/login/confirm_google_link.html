@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+{% extends 'base.html' %}
+
+{% block title %}Link Google Account{% endblock %}
+
+{% block content %}
+{% from "includes/_form_helper.html" import render_field %}
+<h1>Link Google Account</h1>
+<p>Do you want to link your existing account with your Google account?<br>
+    Your username and profile picture will change to those in your Google account.</p>
+
+<form action="" method="post" id="google-account-linking-form">
+    {{ form.hidden_tag() }}
+    <div>
+        {{ form.confirm }}
+    </div>
+    <!-- Submit button -->
+    <button type="submit" class="btn btn-primary rounded-pill submit-disabler">Confirm</button>
+</form>
+{% endblock %}
