@@ -141,6 +141,8 @@ def create_app() -> Flask:
     app.register_blueprint(admin_log_bp)
     app.register_blueprint(admin_feedback_bp)
 
+    limiter.limit('50 per minute')(admin_recipe_bp)
+
     # Create all database tables
     with app.app_context():
         db.create_all()

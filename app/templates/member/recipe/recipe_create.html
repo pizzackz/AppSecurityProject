@@ -23,6 +23,7 @@
         <h1 id="general_information_title">General Information</h1><br>
         <form class="justify-content-center" method="post" enctype="multipart/form-data" id="create_recipe_form">
             {{ form.csrf_token }}
+            {{ form.hidden_tag() }}
             <div class="form-group mb-3 recipe-form-input">
                 {{ render_field(form.name, class="form-control", id="name", placeholder="Teriyaki Chicken") }}
             </div>
@@ -45,8 +46,7 @@
             <div id="control_panel" class="text-center form-group">
                 <h1 id="ingredients_title">Ingredients</h1><br>
                 <div class="input_ingredient">
-                    <input type="text" class="form-control form-control-lg col-auto" id="ingredient"
-                           placeholder="chicken, tomato">
+                              {{ form.ingredients(class="form-control form-control-lg mb-2", id="ingredients", placeholder="chicken, salad")}}
                     <div id="autocomplete" class="autocomplete">
                     </div>
                     <input type="button" value="+" id="add_ingredient" class="btn btn-success btn-lg col">
@@ -56,8 +56,6 @@
                 <div class="input_ingredient">
                     <input type="button" value="Remove All" class="btn btn-danger btn-lg" id="remove_all">
                 </div>
-
-                {{ form.ingredients(class="form-control", id="ingredients", placeholder="chicken, salad") }}
             </div>
 
             <h1 id="picture-title">Picture</h1><br>

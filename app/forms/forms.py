@@ -16,6 +16,16 @@ class CreateRecipeForm(FlaskForm):
     recipe_type = SelectField("Type", choices=[("Standard", "Standard"), ("Premium", "Premium"), ("Private", "Private")], validators=[DataRequired()], render_kw={"class": "form-control"})
     submit = SubmitField("Create Recipe", render_kw={"class": "btn btn-primary"})
 
+class CreateRecipeFormMember(FlaskForm):
+    name = StringField("Name", validators=[DataRequired(), Length(max=20)], render_kw={"class": "form-control"})
+    ingredients = StringField("Ingredients", validators=[DataRequired()], render_kw={"class": "form-control"})
+    instructions = TextAreaField("Instructions", validators=[DataRequired()])
+    picture = FileField("Picture", render_kw={"class": "form-control", "accept": "image/*"})
+    calories = IntegerField("Calories", validators=[DataRequired(), NumberRange(min=0)], render_kw={"class": "form-control"})
+    prep_time = IntegerField("Preparation Time (minutes)", validators=[DataRequired(), NumberRange(min=0)], render_kw={"class": "form-control"})
+    recipe_type = SelectField("Type", choices=[("Standard", "Standard"), ("Private", "Private")], validators=[DataRequired()], render_kw={"class": "form-control"})
+    submit = SubmitField("Create Recipe", render_kw={"class": "btn btn-primary"})
+
 
 class RecipeSearch(FlaskForm):
     ingredients = StringField("Ingredients", validators=[DataRequired()], render_kw={"class": "form-control"})
@@ -38,10 +48,6 @@ class AICreateRecipeForm(FlaskForm):
     meal_type = request.json.get('meal_type') (Dropdown field
     difficulty = request.json.get('difficulty')
     remarks = request.json.get('remarks')
-    
-    
-    
-    
     """
 
 class CreateFeedback(FlaskForm):

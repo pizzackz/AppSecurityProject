@@ -46,8 +46,6 @@
       <form class="form-inline" id="form1" method="post" action="{{ url_for('admin_recipe_bp.deleted_recipe_database')}}">
         {{ form.csrf_token }}
         <div class="input_ingredient">
-          <input type="text" class="form-control form-control-lg mb-2" name="ingredient" id="ingredient" placeholder="chicken, salad">
-
           {{ form.ingredients(class="form-control", id="ingredients", placeholder="chicken, salad")}}
           <div id="autocomplete" class="autocomplete"></div>
           <input type="button" value="+" id="add_ingredient" class="btn btn-success btn-lg mb-2">
@@ -65,7 +63,7 @@
     <div id="recipe_items" class="row card-deck justify-content-center">
       {% for recipe in recipes %}
         {% if recipe.type == 'Standard' %}
-        <div class="card m-2 recipe_card">
+        <div class="card m-2 recipe_card" data-recipe-id="{{ recipe.id }}" data-recipe-name="{{ recipe.name }}">
           <img src="{{ url_for('static', filename='images_recipe/' + recipe.picture) }}" class="card-img-top" alt="{{ recipe.name }}">
           <div class="card-body">
             <h5 class="card-title">{{ recipe.name }}</h5>
@@ -74,14 +72,8 @@
             </p>
             <a href="{{ url_for('admin_recipe_bp.view_deleted_recipe', recipe_id=recipe.id) }}" class="btn btn-success m-2">View Recipe</a>
             <a href="{{ url_for('admin_recipe_bp.restore_recipe', recipe_id=recipe.id) }}" class="btn btn-primary m-2">Restore Recipe</a>
-            <a nonce="{{ nonce }}" id="delete_{{ recipe.id }}" class="btn btn-danger m-2" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
+            <a nonce="{{ nonce }}" id="delete_{{ recipe.id }}" class="btn btn-danger m-2 delete_button" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
             <p class="card-text user">By {{ recipe.user_created }}</p>
-            <script nonce="{{ nonce }}">
-              var selected = document.getElementById('delete_{{ recipe.id }}');
-              selected.onclick = function () {
-                confirmdelete('{{ recipe.name }}', '{{ recipe.id }}')
-              }
-            </script>
           </div>
         </div>
         {% endif %}
@@ -96,14 +88,8 @@
               </p>
               <a href="{{ url_for('admin_recipe_bp.view_deleted_recipe', recipe_id=recipe.id) }}" class="btn btn-success m-2">View Recipe</a>
               <a href="{{ url_for('admin_recipe_bp.restore_recipe', recipe_id=recipe.id) }}" class="btn btn-primary m-2">Restore Recipe</a>
-              <a nonce="{{ nonce }}" id="delete_{{ recipe.id }}" class="btn btn-danger m-2" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
+              <a nonce="{{ nonce }}" id="delete_{{ recipe.id }}" class="btn btn-danger m-2 delete_button" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
               <p class="card-text user">By {{ recipe.user_created }}</p>
-              <script nonce="{{ nonce }}">
-                var selected = document.getElementById('delete_{{ recipe.id }}');
-                selected.onclick = function () {
-                  confirmdelete('{{ recipe.name }}', '{{ recipe.id }}')
-                }
-              </script>
             </div>
           </div>
         {% endif %}

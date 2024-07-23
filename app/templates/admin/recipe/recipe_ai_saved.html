@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}tastefully | AI Recipe Creator{% endblock %}
+
+{% block css %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/recipe/recipe_ai_creator.css') }}">
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}
+
+{% block navbar %} {% include "includes/_admin_navbar.html" %} {% endblock %}
+
+{% block content %}
+{% from "includes/_form_helper.html" import render_field, render_field_picture %}
+
+<div class="container">
+      <h1 class="mb-4" id="page_title">Mr T.</h1>
+
+
+</div>
+
+{% endblock %}

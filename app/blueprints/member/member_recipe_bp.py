@@ -17,13 +17,6 @@ from werkzeug.utils import secure_filename
 from app.models import Recipe
 import os
 from sqlalchemy import or_
-import json
-
-from PIL import Image
-# import flask_sqlalchemy
-# from app.models import Recipe
-# from werkzeug.utils import secure_filename
-# from werkzeug.security import generate_password_hash, check_password_hash
 
 from datetime import datetime
 
@@ -31,7 +24,7 @@ from datetime import datetime
 # import sys
 import html
 
-from app.forms.forms import CreateRecipeForm, RecipeSearch
+from app.forms.forms import CreateRecipeFormMember, RecipeSearch
 from app import db
 from bs4 import BeautifulSoup
 
@@ -153,11 +146,9 @@ def recipe_database():
     return render_template("member/recipe/recipe_database.html", form=form, recipes=items_on_page,
                            total_pages=total_pages, page=page)
 
-
 @member_recipe_bp.route('/member/create_recipe', methods=['GET', 'POST'])
 def create_recipe():
-    form = CreateRecipeForm()
-
+    form = CreateRecipeFormMember()
     if request.method == "POST":
         # Handles invalidated form
         if not form.validate_on_submit():
@@ -230,7 +221,7 @@ def create_recipe():
                 return redirect(url_for('member_recipe_bp.create_recipe'))
 
             # PROCESS RECIPE TYPE
-            if recipe_type != 'Standard' and recipe_type != 'Premium':
+            if recipe_type != 'Standard' and recipe_type != 'Private':
                 flash('Invalid recipe type', 'error')
                 return redirect(url_for('member_recipe_bp.create_recipe'))
 
@@ -363,7 +354,7 @@ def delete_recipe(recipe_id):
 @member_recipe_bp.route('/member/update_recipe/<recipe_id>', methods=['GET', 'POST'])
 def update_recipe(recipe_id):
     recipe = Recipe.query.filter_by(id=recipe_id).first()
-    form = CreateRecipeForm()
+    form = CreateRecipeFormMember()
     if request.method == 'POST':
         name = form.name.data
         ingredients = form.ingredients.data
