@@ -3,3 +3,4 @@
 .mypy_cache/
 **/__pycache__/
 .env
+config/google_client_secret.json

@@ -23,12 +23,13 @@
         {{ render_field(form.password, class="form-control", placeholder="Enter your password") }}
     </div>
 
-    <div>
-        {{ render_field(form.recaptcha) }}
-    </div>
     <br>
     <!-- Account recovery (get username or set new password) -->
     <a href="{{ url_for('recovery_auth_bp.recovery') }}">Forgot Username or Password?</a>
+
+    <div>
+        {{ render_field(form.recaptcha) }}
+    </div>
 
     <!-- Submit buttons (Create Account, Signin) -->
     <div>

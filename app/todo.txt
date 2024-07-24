@@ -6,6 +6,9 @@ General:
     Default store image directly in model, don't use file path if possible (mainly for account profile pics)
     Write sql scripts for seeding of database
 
+Models:
+    Write a function to generate new user id
+
 Signup:
     Implement rate limiting for OTP requests
     Track otp attempts
