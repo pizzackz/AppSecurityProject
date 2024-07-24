@@ -36,7 +36,6 @@ def setup_custom_logger(name: str) -> Logger:
 
     # Remove all handlers associated with logger
     if logger.hasHandlers():
-        print("ran")
         logger.handlers.clear()
 
     handler: StreamHandler = logging.StreamHandler()

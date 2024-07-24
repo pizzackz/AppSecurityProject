@@ -468,7 +468,7 @@ def google_callback():
     logger.error("Unidentified error after successful Google Sign-in")
 
     return redirect(url_for("login_auth_bp.login"))
-    
+
 
 # Create new account route - Using google credentials
 @login_auth_bp.route("/confirm_new_member_account", methods=['GET', 'POST'])

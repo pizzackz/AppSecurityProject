@@ -89,6 +89,7 @@ class Member(User):
             return None
     
     # Create new member through google signin
+    @staticmethod
     def create_by_google(username: str, email: str, google_id: str, subscription_plan: str = "standard", profile_picture: Optional[str] = None):
         try:
             # Create new member object
