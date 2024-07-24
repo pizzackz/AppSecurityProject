@@ -8,6 +8,7 @@
 {% endblock %}
 
 {% block content %}
+<br>
 <!-- Step Indicator -->
 <div class="step-container">
     <div class="step step-active">
@@ -23,29 +24,29 @@
         <span>Confirmation</span>
     </div>
 </div>
-<div class="container"> 
-    <form action="{{ url_for('member_subscription_bp.create_checkout_session') }}" method="post" id="plan-select-form">
+<div class="container center1">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <div class="max-w-sm mx-auto bg-yellow-100 p-6 rounded-lg shadow-md text-center">
-        <h2 class="text-xl font-bold mb-4">Premium Plan</h2>
-        <p class="text-lg mb-4">$30 SGD/month</p>
-        <button class="bg-white border border-black text-black font-bold py-2 px-4 rounded mb-4"  >Join</button>
-        <ul class="text-left list-disc list-inside">
-            <li>Get access to Premium Recipes</li>
-            <li>Get 4 inclusive Food Bundles every month (During 30 day subscription period)</li>
-            <li>Get early access to new recipes</li>
-            <li>Highlighted recipe posts and comments</li>
-        </ul>
-    </div>
-    </form>
+        <div class="max-w-sm mx-auto bg-yellow-100 p-6 rounded-lg shadow-md text-center">
+            <h2 class="text-xl font-bold mb-4">Premium Plan</h2>
+            <p class="text-lg mb-4">$30 SGD/month</p>
+               <a href={{url_for('member_subscription_bp.create_checkout_session')}}>
+                   <button class="bg-white border border-black text-black font-bold py-2 px-4 rounded mb-4" >Join</button>
+               </a>
+            <ul class="text-left list-disc list-inside">
+                <li>Get access to Premium Recipes</li>
+                <li>Get 4 inclusive Food Bundles every month (During 30 day subscription period)</li>
+                <li>Get early access to new recipes</li>
+                <li>Highlighted recipe posts and comments</li>
+            </ul>
+        </div>
+
 </div>
     <!-- Return Button -->
-    <form action="" method="post">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}>
-        <div class="text-center mt-4">
-            <button id="checkout-button" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded" name="return" value="True">Return</button>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="text-center mt-4 center1">
+           <a href={{url_for('member_subscription_bp.home')}}> <button id="checkout-button" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded" name="return" value="True">Return</button></a>
         </div>
-    </form>
+
     {% endblock %}
 
 

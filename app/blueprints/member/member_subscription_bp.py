@@ -32,19 +32,10 @@ def home():
 
 @member_subscription_bp.route('/plan_select', methods=['POST', 'GET'])
 def plan_select():
-    if request.method == "POST":
-        if request.form.get('return') == 'True':
-            return redirect(url_for('member_subscription_bp.home'))
-        return redirect(url_for('member_subscription_bp.create_checkout_session'))
     return render_template('member/transaction-processing/plan_select.html')
 
-# Tempoarily removed the checkout route
-# @member_subscription_bp.route('/checkout', methods=['POST', 'GET'])
-# def checkout():
-#     return render_template('member/transaction-processing/checkout.html', publishable_key=publishable_key)
 
-
-@member_subscription_bp.route('/create-checkout-session', methods=['POST'])
+@member_subscription_bp.route('/create-checkout-session', methods=['GET', 'POST'])
 def create_checkout_session():
     try:
         price_id = "price_1PKI5Y06BsEMbNMkj9KPsZTX"
@@ -67,7 +58,6 @@ def create_checkout_session():
         return jsonify(error=str(e)), 403
 
 
-@csrf.exempt  # Exempt the route from CSRF protection
 @member_subscription_bp.route('/webhook', methods=['POST'])
 def stripe_webhook():
     payload = request.get_data(as_text=True)
@@ -121,4 +111,3 @@ def cancel():
 @member_subscription_bp.route('/plan_confirm')
 def plan_confirm():
     return render_template('member/transaction-processing/plan_confirm.html')
-

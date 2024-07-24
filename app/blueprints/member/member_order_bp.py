@@ -40,10 +40,12 @@ member_order_bp = Blueprint('member_order_bp', __name__)
 
 from app.models import MenuItem, db
 
-#Define a custom filter to escape JavaScript strings
+
+# Define a custom filter to escape JavaScript strings
 @member_order_bp.app_template_filter('escapejs')
 def escapejs_filter(value):
     return json.dumps(value)  # Use json.dumps to escape the string for JavaScript
+
 
 # Ensure all handlers are flushed and closed properly at the end of the application
 @atexit.register
@@ -62,6 +64,7 @@ def add_no_cache_headers(response):
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '0'
     return response
+
 
 @member_order_bp.route('/home', methods=['POST', 'GET'])
 def home():
@@ -111,8 +114,6 @@ def booking():
         except ValueError:
             flash('Delivery date not specified.', 'error')
 
-
-
         # Save data to session
         set_session_data({
             'selected_items': [item for item in request.args.getlist('selected_items') if item],
@@ -123,7 +124,6 @@ def booking():
         return redirect(url_for('member_order_bp.order'))
 
     return render_template('member/order/booking.html', form=form)
-
 
 
 @member_order_bp.route('/order', methods=['GET', 'POST'])
@@ -145,7 +145,6 @@ def order():
     form.selected_date.data = delivery_date
     form.selected_time.data = delivery_time
     form.selected_items.data = selected_items
-
 
     if not selected_items or not delivery_date or not delivery_time:
         flash('Please select items from the menu and choose a delivery date and time.', 'error')
@@ -209,4 +208,3 @@ def success():
         if request.form.get('return') == 'True':
             return redirect(url_for('member_subscription_bp.home'))
     return render_template('member/order/success.html')
-
