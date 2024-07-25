@@ -1,0 +1,19 @@
+{% extends "base.html" %} <!-- Used to be customer_base.html -->
+{% block title %}Forum{% endblock %}
+
+{% block css %}
+  {{ super() }}
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+{% endblock %}
+
+{% block content %}
+    <h1>Hot Posts from /r/learnpython</h1>
+    <ul>
+        {% for post in posts %}
+            <li>{{ post }}</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

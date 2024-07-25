@@ -422,3 +422,8 @@ class OrderItem(db.Model):
 
     def __repr__(self):
         return f"<OrderItem {self.id}>"
+
+
+class Token(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    refresh_token = db.Column(db.String(255), nullable=False)
