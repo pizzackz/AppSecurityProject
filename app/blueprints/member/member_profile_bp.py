@@ -340,7 +340,7 @@ def reset_password():
 
     # Check if user doesn't exist
     if not user:
-        flash("An unexpected error occurred. Please log in again.", "error")
+        flash("An unexpected error occurred. Please login again.", "error")
         logger.warning(f"Anonymous user tried changing password for member '{current_user.username}' without an existing user id")
         return redirect(url_for('login_auth_bp.login'))
 
@@ -355,22 +355,22 @@ def reset_password():
         if not check_password_hash(user.password_hash, curr_password):
             flash("The current password you entered is incorrect. Please try again.", "error")
             logger.warning(f"User {user.email} entered an incorrect current password")
-            return redirect(url_for('member_profile_bp.profile'))
+            return redirect(url_for('member_profile_bp.reset_password'))
 
         # Check if the new password is the same as the current password
         if check_password_hash(user.password_hash, new_password):
             flash("Your new password cannot be the same as your current password.", "error")
             logger.warning(f"User {user.username} attempted to set the same password as the current one")
-            return redirect(url_for('member_profile.profile'))
+            return redirect(url_for('member_profile_bp.reset_password'))
 
         # Update user's password
         user.password_hash = generate_password_hash(new_password)
         user.updated_at = datetime.now(timezone.utc).isoformat()
         db.session.commit()
 
-        flash("Your password has been resetted successfully!", "success")
-        logger.info(f"Password resetted successfully for user: {user.username}")
-        return redirect(url_for('recovery_auth_bp.reset_success'))
+        flash("Your password has been reset successfully!", "success")
+        logger.info(f"Password reset successfully for user: {user.username}")
+        return redirect(url_for('member_profile_bp.profile'))
 
     return render_template(f"{TEMPLATE_FOLDER}/reset_password.html", form=form, user=user)
 
