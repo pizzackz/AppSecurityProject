@@ -1,10 +1,11 @@
 General:
-    !!! Look into using Flask-Security for authentication (urgent)
-    Write handlers for any failed checks for jwt_required & csrf
+    Write handlers for possible status codes (401, 404, 421, 500)
     Review & enhance session handling mechanisms
-    Write sql scripts for seeding of database
+    Allow messages to be displayed when accessing pages that user is not allowed to
 
 Models:
+    Add new column for ending date for premium members
+    Write sql scripts for seeding of database
     Write a function to generate new user id
 
 Signup:
@@ -18,3 +19,16 @@ Login:
     Implement rate limiting for login requests
     Track login attempts, check for locked accounts
     Update login details wherever necessary
+
+Member Profile:
+    Implement log out for active account using same username after successful reset of password
+    Implement display and update of profile picture
+    Subscription plan to include remaining days in templates
+    Implement handling of subscription plans
+    Fix password reset save button not able to be disabled
+    Displayable fields:
+        username, email, phone_number, address, postal_code, password, subscription_plan, profile_picture
+    Updatable fields:
+        username, phone_number, address, postal_code, subscription_plan (upgrade option), password
+    When resetting password, go through email verification again (need to make send_otp more dynamic)
+

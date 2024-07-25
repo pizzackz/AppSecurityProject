@@ -9,7 +9,7 @@ from typing import Union, Dict, Optional
 
 from flask import Blueprint, request, session, redirect, render_template, flash, url_for, make_response
 from flask_jwt_extended import create_access_token, set_access_cookies, unset_jwt_cookies, get_jwt, get_jwt_identity, jwt_required
-from flask_login import login_user
+from flask_login import login_user, current_user
 from werkzeug.security import check_password_hash
 from google_auth_oauthlib.flow import Flow
 
@@ -96,9 +96,8 @@ def handle_ideal_case1(email: str, username: str, google_id: str, profile_pictur
 def handle_ideal_case2(user_by_email: User, username: str, email: str):
     # Get correct endpoint based on user type
     endpoint = "login_auth_bp.login"  # For testing, use 'login_auth_bp.login', for actual just create an empty string
-    # TODO: Uncomment below after creation of homepages
-    # if user_by_email.type == "member": endpoint = "member_auth_bp.home"
-    # elif user_by_email.type == "admin": endpoint = "admin_auth_bp.home"
+    if user_by_email.type == "member": endpoint = "member_profile_bp.profile"  #"member_auth_bp.home"
+    elif user_by_email.type == "admin": endpoint = "admin_auth_bp.home"
 
     # Clear any jwt & session data, Log user in
     session.clear()
@@ -359,9 +358,9 @@ def verify_email():
 
         # Get correct endpoint based on user type
         user = User.query.filter_by(username=identity['username'], email=identity['email']).first()
-        endpoint = "login_auth_bp.login"  # For testing, use 'login_auth_bp.login', for actual just create an empty string
-        if user.type == "member": endpoint = "home_bp.home"
-        elif user.type == "admin": endpoint = "home_bp.home"
+        endpoint = "member_profile_bp.profile"  # For testing, use 'login_auth_bp.login', for actual just create an empty string
+        if user.type == "member": endpoint = "member_auth_bp.home"
+        elif user.type == "admin": endpoint = "admin_auth_bp.home"
 
         # Clear any jwt & session data, Log user in
         session.clear()

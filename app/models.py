@@ -53,8 +53,8 @@ class Member(User):
     __tablename__ = "member"
 
     # ForeignKey reference to 'user.id' and primary key for 'member'
-    id = Column(Integer, ForeignKey("user.id"), primary_key=True)
-    subscription_plan = Column(String(50), default="standard", nullable=False)
+    id = db.Column(Integer, ForeignKey("user.id"), primary_key=True)
+    subscription_plan = db.Column(String(50), default="standard", nullable=False)
 
     # Joined Table Inheritance polymorphic properties
     __mapper_args__ = {"polymorphic_identity": "member"}
@@ -71,7 +71,7 @@ class Member(User):
             new_member = Member(username=username, email=email, password_hash=password_hash, subscription_plan=subscription_plan, type="member")
             db.session.add(new_member)
             db.session.flush()
-            
+
             acc_status = AccountStatus.create(id=new_member.id)
             if not acc_status:
                 raise Exception("Failed to create account status record for member")
@@ -96,7 +96,7 @@ class Member(User):
             new_member = Member(username=username, email=email, google_id=google_id, subscription_plan=subscription_plan, profile_picture=profile_picture, type="member")
             db.session.add(new_member)
             db.session.flush()
-            
+
             acc_status = AccountStatus.create(id=new_member.id)
             if not acc_status:
                 raise Exception("Failed to create account status record for member")

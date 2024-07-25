@@ -108,6 +108,8 @@ def create_app() -> Flask:
     limiter.init_app(app)
     jwt.init_app(app)
     mail.init_app(app)
+
+    login_manager.login_view = "login_auth_bp.login"
     
     # Custom logger for app logic
     setup_custom_logger("tastefully")
@@ -127,11 +129,13 @@ def create_app() -> Flask:
     app.register_blueprint(signup_auth_bp)
     app.register_blueprint(recovery_auth_bp)
 
+    from app.blueprints.member.member_profile_bp import member_profile_bp
     from app.blueprints.member.member_subscription_bp import member_subscription_bp
     from app.blueprints.member.member_order_bp import member_order_bp
     from app.blueprints.member.member_feedback_bp import member_feedback_bp
     from app.blueprints.member.member_recipe_bp import member_recipe_bp
     from app.blueprints.member.member_forum_bp import member_forum_bp
+    app.register_blueprint(member_profile_bp)
     app.register_blueprint(member_subscription_bp)
     app.register_blueprint(member_order_bp)
     app.register_blueprint(member_feedback_bp)

@@ -9,13 +9,13 @@ from app.forms.validators import unique_email, unique_username, validate_email_f
 class SignupForm(FlaskForm):
     username = StringField("Username", validators=[DataRequired(), Length(min=2, max=20), unique_username])
     email = StringField("Email", validators=[DataRequired(), validate_email_format, unique_email])
-    recaptcha = RecaptchaField()  #Captcha verification
+    recaptcha = RecaptchaField()  # Captcha verification
 
 # Manual Login phase 1 form, requires username & password
 class LoginForm(FlaskForm):
     username = StringField("Username", validators=[DataRequired(), Length(min=2, max=20)])
     password = PasswordField("Password", validators=[DataRequired(), Length(min=8)])
-    recaptcha = RecaptchaField() #Captcha verification
+    recaptcha = RecaptchaField() # Captcha verification
 
 
 # Account Recovery Phase 1 - Retrieve account from email

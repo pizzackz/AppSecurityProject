@@ -7,8 +7,9 @@ import imghdr
 from logging import Logger
 from flask import Response, session, redirect, url_for, flash, make_response
 from flask_mail import Message
+from flask_login import current_user, logout_user
 from flask_jwt_extended import get_jwt, get_jwt_identity, unset_jwt_cookies
-from typing import Optional, List, Set
+from typing import Optional, List, Set, Dict
 
 
 # Use logger configured in '__init__.py'
@@ -79,7 +80,7 @@ def send_email(to_email: str, subject: str, body: str) -> bool:
 
 
 # Clear unwanted session data (for clean session states, usually base routes)
-def clear_unwanted_session_keys(keys_to_keep: Set[str] = {"_permanent", "_csrf_token", "_flashes"}):
+def clear_unwanted_session_keys(extra_keys_to_keep: Optional[Set[str]] = None):
     """
     Utility function to clear specific session keys that are not needed.
     
@@ -89,9 +90,74 @@ def clear_unwanted_session_keys(keys_to_keep: Set[str] = {"_permanent", "_csrf_t
     Returns:
     - None
     """
+    keys_to_keep = {"_permanent", "_csrf_token", "_flashes"}
+    if extra_keys_to_keep:
+        keys_to_keep = keys_to_keep.union(extra_keys_to_keep)
+
     keys_to_remove = [key for key in session.keys() if key not in keys_to_keep]
-    for key in keys_to_remove:
-        value = session.pop(key, None)
+    clear_session_data(keys_to_remove)
+
+
+# Check user is member function
+def check_member(keys_to_keep: Optional[Set[str]] = None, fallback_endpoint: str = "login_auth_bp.login", log_message: str = "User is not a member"):
+    """
+    Utility function to check if the user is a member. If not, clears session and JWT data, then redirects to login.
+
+    Parameters:
+    - keys_to_keep (set, optional): Additional session keys to retain.
+    - fallback_endpoint (str, optional): The endpoint to redirect to if the user is not a member. Defaults to login.
+    - log_message (str, optional): The message to log if the user is not a member.
+
+    Returns:
+    - None if the user is a member.
+    - Redirect response if the user is not a member.
+    """
+    if not current_user.is_authenticated or not current_user.type == "member":
+        # Clear session and JWT data
+        clear_unwanted_session_keys(extra_keys_to_keep=keys_to_keep)
+        logout_user()
+
+        # Unset JWT cookies
+        response = make_response(redirect(url_for(fallback_endpoint)))
+        unset_jwt_cookies(response)
+
+        # Flash message and log
+        flash("You no access to this page.", "warning")
+        logger.warning(log_message)
+        return response
+
+    return None
+
+
+# Check user is admin function
+def check_admin(keys_to_keep: Optional[Set[str]] = None, fallback_endpoint: str = "login_auth_bp.login", log_message: str = "User is not an Admin"):
+    """
+    Utility function to check if the user is an admin. If not, clears session and JWT data, then redirects to login.
+
+    Parameters:
+    - keys_to_keep (set, optional): Additional session keys to retain.
+    - fallback_endpoint (str, optional): The endpoint to redirect to if the user is not a member. Defaults to login.
+    - log_message (str, optional): The message to log if the user is not a member.
+
+    Returns:
+    - None if the user is a member.
+    - Redirect response if the user is not a member.
+    """
+    if not current_user.is_authenticated or not current_user.type == "admin":
+        # Clear session and JWT data
+        clear_unwanted_session_keys(extra_keys_to_keep=keys_to_keep)
+        logout_user()
+
+        # Unset JWT cookies
+        response = make_response(redirect(url_for(fallback_endpoint)))
+        unset_jwt_cookies(response)
+
+        # Flash message and log
+        flash("You have no access to this page.", "warning")
+        logger.warning(log_message)
+        return response
+
+    return None
 
 
 # Check session keys function
@@ -99,7 +165,8 @@ def check_session_keys(
     required_keys: List[str], 
     fallback_endpoint: str, 
     flash_message: str = "Your session has expired. Please restart the process.", 
-    log_message: str = "Session validation failed"
+    log_message: str = "Session validation failed",
+    keys_to_keep: Optional[Set[str]] = None
 ) -> Optional[Response]:
     """
     Utility function to check if the session contains the necessary keys.
@@ -116,7 +183,7 @@ def check_session_keys(
     """
     missing_keys = [key for key in required_keys if key not in session]
     if missing_keys:
-        session.clear()
+        clear_unwanted_session_keys(keys_to_keep)
         response = make_response(redirect(url_for(fallback_endpoint)))
         unset_jwt_cookies(response)
         flash(flash_message, 'error')
@@ -131,7 +198,8 @@ def check_auth_stage(
     allowed_stages: List[str], 
     fallback_endpoint: str, 
     flash_message: str = "Your session has expired. Please restart the signup process.", 
-    log_message: str = "Invalid signup stage"
+    log_message: str = "Invalid signup stage",
+    keys_to_keep: Optional[Set[str]] = None
 ) -> Optional[Response]:
     """
     Utility function to check if the current stage is allowed.
@@ -150,7 +218,7 @@ def check_auth_stage(
     auth_stage = session.get(auth_process)
 
     if not auth_stage or auth_stage not in allowed_stages:
-        session.clear()
+        clear_unwanted_session_keys(keys_to_keep)
         response = make_response(redirect(url_for(fallback_endpoint)))
         unset_jwt_cookies(response)
         flash(flash_message, 'error')
@@ -161,7 +229,7 @@ def check_auth_stage(
 
 
 # Check jwt identity for data type & existence
-def check_jwt_identity(fallback_endpoint: str, flash_message: str, log_message: str) -> Optional[Response]:
+def check_jwt_identity(fallback_endpoint: str, flash_message: str, log_message: str, keys_to_keep: Optional[Set[str]] = None) -> Optional[Response]:
     """
     Utility function to check if the JWT identity is valid.
 
@@ -176,7 +244,7 @@ def check_jwt_identity(fallback_endpoint: str, flash_message: str, log_message: 
     """
     identity = get_jwt_identity()
     if not identity or not isinstance(identity, dict):
-        session.clear()
+        clear_unwanted_session_keys(keys_to_keep)
         response = make_response(redirect(url_for(fallback_endpoint)))
         unset_jwt_cookies(response)
         flash(flash_message, 'error')
@@ -186,7 +254,7 @@ def check_jwt_identity(fallback_endpoint: str, flash_message: str, log_message: 
 
 
 # Check jwt identity keys
-def check_jwt_identity_keys(required_identity_keys: List[str], fallback_endpoint: str, flash_message: str, log_message: str) -> Optional[Response]:
+def check_jwt_identity_keys(required_identity_keys: List[str], fallback_endpoint: str, flash_message: str, log_message: str, keys_to_keep: Optional[Set[str]] = None) -> Optional[Response]:
     """
     Utility function to check if the JWT identity contains the required keys.
 
@@ -203,7 +271,7 @@ def check_jwt_identity_keys(required_identity_keys: List[str], fallback_endpoint
     identity = get_jwt_identity()
     missing_keys = [key for key in required_identity_keys if key not in identity]
     if missing_keys:
-        session.clear()
+        clear_unwanted_session_keys(keys_to_keep)
         response = make_response(redirect(url_for(fallback_endpoint)))
         unset_jwt_cookies(response)
         flash(flash_message, 'error')
@@ -213,7 +281,7 @@ def check_jwt_identity_keys(required_identity_keys: List[str], fallback_endpoint
 
 
 # Check jwt additional claims
-def check_jwt_claims(required_claims: List[str], fallback_endpoint: str, flash_message: str, log_message: str) -> Optional[Response]:
+def check_jwt_claims(required_claims: List[str], fallback_endpoint: str, flash_message: str, log_message: str, keys_to_keep: Optional[Set[str]] = None) -> Optional[Response]:
     """
     Utility function to check if the JWT contains the required claims.
 
@@ -230,7 +298,7 @@ def check_jwt_claims(required_claims: List[str], fallback_endpoint: str, flash_m
     jwt_claims = get_jwt()
     missing_claims = [claim for claim in required_claims if claim not in jwt_claims]
     if missing_claims:
-        session.clear()
+        clear_unwanted_session_keys(keys_to_keep)
         response = make_response(redirect(url_for(fallback_endpoint)))
         unset_jwt_cookies(response)
         flash(flash_message, 'error')
@@ -245,7 +313,8 @@ def check_jwt_values(
     required_claims: Optional[List[str]], 
     fallback_endpoint: str, 
     flash_message: str = "An error occurred. Please restart the signup process.",
-    log_message: str = "JWT validation failed"
+    log_message: str = "JWT validation failed",
+    keys_to_keep: Optional[Set[str]] = None
 ) -> Optional[Response]:
     """
     Utility function to check if the JWT contains the necessary values in the identity and claims.
@@ -263,16 +332,16 @@ def check_jwt_values(
     """
     response = redirect(url_for(fallback_endpoint))
 
-    check = check_jwt_identity(fallback_endpoint, flash_message, log_message)
+    check = check_jwt_identity(fallback_endpoint, flash_message, log_message, keys_to_keep)
     if check:
         return check
 
-    check = check_jwt_identity_keys(required_identity_keys, fallback_endpoint, flash_message, log_message)
+    check = check_jwt_identity_keys(required_identity_keys, fallback_endpoint, flash_message, log_message, keys_to_keep)
     if check:
         return check
 
     if required_claims:
-        check = check_jwt_claims(required_claims, fallback_endpoint, flash_message, log_message)
+        check = check_jwt_claims(required_claims, fallback_endpoint, flash_message, log_message, keys_to_keep)
         if check:
             return check
 
@@ -280,14 +349,14 @@ def check_jwt_values(
 
 
 # Store data in session
-def set_session_data(data):
+def set_session_data(data: Dict):
     for key, value in data.items():
         session[key] = value
     print(f"Session data set: {session}")
 
 
 # Retrieve data from session
-def get_session_data(keys):
+def get_session_data(keys: List[str]):
     data = {key: session.get(key) for key in keys}
     print(f"Session data retrieved: {data}")
     return data
