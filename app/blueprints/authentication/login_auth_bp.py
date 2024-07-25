@@ -360,8 +360,8 @@ def verify_email():
         # Get correct endpoint based on user type
         user = User.query.filter_by(username=identity['username'], email=identity['email']).first()
         endpoint = "login_auth_bp.login"  # For testing, use 'login_auth_bp.login', for actual just create an empty string
-        if user.type == "member": endpoint = "member_auth_bp.home"
-        elif user.type == "admin": endpoint = "admin_auth_bp.home"
+        if user.type == "member": endpoint = "home_bp.home"
+        elif user.type == "admin": endpoint = "home_bp.home"
 
         # Clear any jwt & session data, Log user in
         session.clear()

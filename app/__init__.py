@@ -117,6 +117,9 @@ def create_app() -> Flask:
     Session(app)
 
     # Register blueprints
+    from app.blueprints.home_bp import home_bp
+    app.register_blueprint(home_bp)
+
     from app.blueprints.authentication.login_auth_bp import login_auth_bp
     from app.blueprints.authentication.signup_auth_bp import signup_auth_bp
     from app.blueprints.authentication.recovery_auth_bp import recovery_auth_bp

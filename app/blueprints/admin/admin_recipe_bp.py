@@ -7,7 +7,7 @@ from flask import (
     redirect,
     flash,
     url_for,
-jsonify
+    jsonify
 )
 import re
 import imghdr
@@ -233,13 +233,25 @@ def create_recipe():
             soup = BeautifulSoup(instructions, 'html.parser')
 
             # Remove all script tags
-            for script in soup(["script", "style"]):
-                script.decompose()
-            # Remove all iFrame and input tags
-            for iframe in soup(["iframe", "input", "link", "submit", "link", "meta"]):
-                iframe.decompose()
-            instructions = soup.prettify()
-            instructions = html.unescape(instructions)
+            # for script in soup(["script", "style"]):
+            #     script.decompose()
+            # # Remove all iFrame and input tags
+            # for iframe in soup(["iframe", "input", "link", "submit", "link", "meta", "a"]):
+            #     iframe.decompose()
+
+            # Only allow whitelisted tags
+            whitelist = ['b', 'i', 'ul', 'ol', 'li', 'hr', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'em']
+            for tag in soup.find_all(True):
+                if tag.name not in whitelist:
+                    tag.decompose()
+
+            # Remove Attributes from Tag
+            for tag in soup.find_all(True):
+                tag.attrs = {}
+
+            instructions = soup.prettify(formatter='minimal')
+            print(instructions)
+            print('instructions printed')
 
             # PROCESS CALORIES
             if type(calories) != int:
@@ -321,6 +333,9 @@ def create_recipe():
             # Save the image file
             picture_filename = picture.filename
             picture_filename = picture_filename.split('.')
+            if len(picture_filename) != 2:
+                flash('Invalid image format', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
             picture_name = sha256(picture_filename[0].encode()).hexdigest()
             picture_filename = picture_name + '.' + picture_filename[1]
 
@@ -521,6 +536,9 @@ def update_recipe(recipe_id):
                 # Save the image file
             picture_filename = picture.filename
             picture_filename = picture_filename.split('.')
+            if len(picture_filename) != 2:
+                flash('Invalid image format', 'error')
+                return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
             picture_name = sha256(picture_filename[0].encode()).hexdigest()
             picture_filename = picture_name + '.' + picture_filename[1]
             picture.save(os.path.join('app/static/images_recipe', picture_filename))
@@ -784,13 +802,15 @@ def restore_recipe(recipe_id):
     return redirect(url_for('admin_recipe_bp.recipe_database'))
 
 @admin_recipe_bp.route('/admin/ai_recipe_creator', methods=['GET', 'POST'])
+@login_required
 def ai_recipe_creator():
     form = AICreateRecipeForm()
     return render_template('admin/recipe/recipe_ai_creator.html', form=form)
 
-# @jwt_required()
-@limiter.limit('2 per day')
 @admin_recipe_bp.route('/api/recipe-creator-ai', methods=['POST'])
+# @jwt_required()
+@limiter.limit('10 per minute')
+@limiter.limit('100 per hour')
 def recipe_creator_ai():
     # Get user inputs from json data
     print('AI Recipe Creator Activating')

@@ -18,6 +18,7 @@ function search_ingredients() {
 
 // Display ingredient
 function display_ingredient() {
+//    localStorageStore();
     var ingredient_itemHTML = "";
     for (let i = 0; i < ingredient_list.length; i++) {
         ingredient_itemHTML +=
@@ -49,10 +50,16 @@ function display_ingredient() {
 
 // Add event listeners to buttons
 document.addEventListener("DOMContentLoaded", function() {
+//    localStorageGet();
     const form1 = document.getElementById('form1');
     const add_item = document.getElementById("add_ingredient");
     display_ingredient();
     autocompletion();
+    tinymce.init({
+        selector: '#instructions',
+        toolbar: 'undo redo | bold italic underline',
+        menubar: 'file edit view'
+    })
     add_item.addEventListener('click', function() { // Add event listener to adding ingredient button
         var ingredient = document.getElementById('ingredients').value;
         ingredient = ingredient.toLowerCase();
@@ -185,7 +192,7 @@ document.addEventListener("click", function(e){
 // Checking inputs before submitting recipe
 function submit_recipe1() { 
   recipe_name_input = document.getElementById('name').value;
-  recipe_instruction_input = document.getElementById('instructions').value;
+  recipe_instruction_input = tinymce.get('instructions').getContent();
   file_input = document.getElementById('picture');
   file = file_input.files;
 
@@ -222,6 +229,56 @@ var submit_button = document.getElementById('submit_button');
 submit_button.addEventListener('click', function() {
   submit_recipe1();
 })
+
+// Local Storage
+//function localStorageStore() {
+//    if (ingredient_list == null) {
+//        ingredient_list = [];
+//    }
+//    const jsonString = JSON.stringify(ingredient_list);
+//    const key = "ingredients";
+//    localStorage.setItem(key,jsonString);
+//
+//    const name = document.getElementById('name').value;
+//    const instructions = document.getElementById('instructions').value;
+//    const calories = document.getElementById('calories').value;
+//    const prep_time = document.getElementById('prep_time').value;
+//    const recipe_type = document.getElementById('type').value;
+//
+//    const recipe_info = {
+//        name: name,
+//        instructions: instructions,
+//        calories: calories,
+//        prep_time: prep_time,
+//        recipe_type: recipe_type
+//    }
+//    const recipe_info_string = JSON.stringify(recipe_info);
+//    const recipe_key = "recipe_info";
+//    localStorage.setItem(recipe_key, recipe_info_string);
+//}
+//function localStorageGet() {
+//    const key = "ingredients";
+//    const jsonString = localStorage.getItem(key);
+//    ingredient_list = JSON.parse(jsonString);
+//
+//    const recipe_key = "recipe_info";
+//    const recipe_info_string = localStorage.getItem(recipe_key);
+//    const recipe_info = JSON.parse(recipe_info_string);
+//
+//    if (recipe_info != null) {
+//        document.getElementById('name').value = recipe_info.name;
+//        tinymce.get('instructions').setContent(recipe_info.instructions);
+//        document.getElementById('calories').value = recipe_info.calories;
+//        document.getElementById('prep_time').value = recipe_info.prep_time;
+//        document.getElementById('recipe_type').value = recipe_info.recipe_type;
+//    }
+//}
+//
+//document.getElementById('name').addEventListener('input', localStorageStore);
+//document.getElementById('calories').addEventListener('input', localStorageStore);
+//document.getElementById('prep_time').addEventListener('input', localStorageStore);
+//document.getElementById('type').addEventListener('input', localStorageStore);
+//document.getElementById('instructions').addEventListener('input', localStorageStore);
 
 
 

@@ -2,6 +2,7 @@ import secrets
 import string
 import bleach
 import logging
+import imghdr
 
 from logging import Logger
 from flask import Response, session, redirect, url_for, flash, make_response
@@ -297,3 +298,17 @@ def clear_session_data(keys: List[str]):
     for key in keys:
         session.pop(key, None)
     print(f"Session data cleared: {keys}")
+
+
+# Verify photo (Put filename into file parameter)
+def verify_photo(file):
+    image_type = imghdr.what(file)
+    if image_type is None:
+        return False
+    if file == '':
+        return False
+    picture_filename = file.split('.')
+    if len(picture_filename) != 2:
+        return False
+    return True
+
