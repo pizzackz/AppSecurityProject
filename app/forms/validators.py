@@ -1,6 +1,9 @@
 import re
+import io
 import bleach
+import imghdr
 from wtforms import ValidationError
+from werkzeug.utils import secure_filename
 from app.models import User
 from email_validator import validate_email, EmailNotValidError
 
@@ -177,41 +180,37 @@ def validate_password_symbol(password: str) -> bool:
 
 # Validate phone number
 def validate_phone_number(form, field):
-    """Validate the phone number.
+    """
+    Validate the phone number format.
 
     Args:
         form: The form instance.
-        field: The field instance containing the data to validate.
+        field: The field instance containing the phone number.
 
     Raises:
-        ValidationError: If the phone number is invalid.
+        ValidationError: If the phone number is not valid.
     """
-    pattern = r"^(8|9)\d{3} \d{4}$"
-    field_data_str = sanitise_data(str(field.data))
-    if not re.match(pattern, field_data_str):
-        raise ValidationError("Please enter a valid phone number in the format 8/9XXX XXXX.")
+    phone_number = field.data.strip()
+    pattern = r"^\+?\d[\d -]{7,14}\d$"
+    if not re.match(pattern, phone_number):
+        raise ValidationError("Invalid phone number format. Include country code if applicable, and use digits, spaces, or dashes only.")
 
 
 # Validate postal code
 def validate_postal_code(form, field):
-    """Validate the postal code.
+    """
+    Validate the postal code format.
 
     Args:
         form: The form instance.
-        field: The field instance containing the data to validate.
+        field: The field instance containing the postal code.
 
     Raises:
-        ValidationError: If the postal code is invalid.
+        ValidationError: If the postal code is not valid.
     """
-    postal_code = sanitise_data(field.data)
-    if len(postal_code) != 6:
-        raise ValidationError("Please enter a valid 6-digit postal code.")
-    if postal_code == "000000":
-        raise ValidationError("Please enter a valid 6-digit postal code.")
-    try:
-        int(postal_code)
-    except ValueError:
-        raise ValidationError("Please enter a valid 6-digit postal code.")
+    postal_code = field.data.strip()
+    if not postal_code.isdigit() or len(postal_code) not in {5, 6}:
+        raise ValidationError("Invalid postal code format. Enter a 5 or 6-digit number.")
 
 
 # Validators for postal code
@@ -232,3 +231,5 @@ def phone_number_validator(form, field):
     field_data_str = str(field.data)  # Ensure data is a string
     if not re.match(pattern, field_data_str):
         raise ValidationError("Please enter a valid phone number in the format 8/9XXX XXXX.")
+
+

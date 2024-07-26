@@ -21,16 +21,15 @@ Login:
     Update login details wherever necessary
 
 Member Profile:
-    Implement changing of passwords for accounts that have password stored
-    Implement setting of passwords for accounts linked to Google without password stored
-    Implement log out for active account using same username after successful reset of password
     Implement display and update of profile picture
     Subscription plan to include remaining days in templates
-    Implement handling of subscription plans
+    Implement log out for active account using same username after successful reset of password
     Fix password reset save button not able to be disabled
     Displayable fields:
         username, email, phone_number, address, postal_code, password, subscription_plan, profile_picture
     Updatable fields:
         username, phone_number, address, postal_code, subscription_plan (upgrade option), password
-    When resetting password, go through email verification again (need to make send_otp more dynamic)
 
+Admin Profile:
+    Same as Member Profile just without subscription plan
+    Allow button to send master key to email

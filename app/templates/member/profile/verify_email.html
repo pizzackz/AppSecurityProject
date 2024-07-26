@@ -42,16 +42,29 @@
                 {% if user.subscription_plan == 'premium' %}
                     <div>
                         <p>Current Plan: <b><u>Premium</u></b></p>
-                        <button type="submit" class="btn btn-warning rounded-pill" disabled><b><u>Renew!</u></b></button>
+                        <button type="submit" class="btn btn-warning rounded-pill" disabled>Renew!</button>
                     </div>
                 {% elif user.subscription_plan == 'standard' %}
                     <div>
                         <p>Current Plan: <b><u>Standard</u></b></p>
-                        <button type="submit" class="btn btn-warning rounded-pill" disabled><b><u>Upgrade!</u></b></button>
+                        <button type="submit" class="btn btn-warning rounded-pill" disabled>Upgrade!</button>
                     </div>
                 {% endif %}
 
                 <br>
+
+                <!-- Profile Picture Section -->
+                <div class="mb-3 text-center">
+                    {% if "uploads/profile_pictures/" in user.profile_picture %}
+                        <img src="{{ url_for('static', filename=user.profile_picture) }}" alt="Profile Picture" class="img-thumbnail rounded-circle" />
+                    {% else %}
+                        <img src="{{ user.profile_picture }}" alt="Profile Picture" class="img-thumbnail rounded-circle" />
+                    {% endif %}
+
+                    <div id="edit-image-button">
+                        <button type="submit" name="button" value="edit_profile_pic" class="btn btn-primary">Edit Profile Picture</button>
+                    </div>
+                </div>
 
                 <!-- Link/ unlink google account message -->
                 <div class="mb-3">
@@ -107,8 +120,7 @@
                     {% if user.password_hash %}
                         <p>Click <a href="">here</a> to change your password.</p>
                     {% elif user.google_id %}
-                        <p>We highly recommend setting a password so you can also login through normal means without using your Google account.</p>
-                        <p>Click <a href="">here</a></p>
+                        <p>We highly recommend setting a password <a href="">here</a> so you can also login through normal means without using your Google account.</p>
                     {% endif %}
                 </div>
 
@@ -122,7 +134,7 @@
                     <button type="button" class="btn btn-primary rounded-pill" name="action" value="next">Next</button>
                 </div>
 
-                <!-- TODO: Subscription cancel link -->
+                <!-- Subscription cancel link -->
                 {% if user.subscription_plan == 'premium' %}
                     <a href="">I want to cancel the subscription plan.</a>
                 {% endif %}

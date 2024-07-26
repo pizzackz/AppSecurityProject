@@ -27,7 +27,7 @@ class User(UserMixin, db.Model):
     email = Column(String(255), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=True)
     google_id = Column(String(255), unique=True, nullable=True)  # 'NULL' when user does manual sign up
-    profile_picture = Column(Text, default=os.path.join("static", "uploads", "profile_pictures", "ZGVmYXVsdA.png"), nullable=True)
+    profile_picture = Column(Text, default="default_profile.png", nullable=True)
     phone_number = Column(String(20), nullable=True)
     address = Column(String(255), nullable=True)
     postal_code = Column(String(20), nullable=True)

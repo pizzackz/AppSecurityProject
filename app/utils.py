@@ -1,3 +1,4 @@
+import os
 import secrets
 import string
 import bleach
@@ -12,8 +13,10 @@ from flask_jwt_extended import get_jwt, get_jwt_identity, unset_jwt_cookies
 from typing import Optional, List, Set, Dict
 
 
-# Use logger configured in '__init__.py'
+# Initialise variables
 logger: Logger = logging.getLogger('tastefully')
+ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png']
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
 
 # Simple clean input function using bleach
@@ -222,7 +225,7 @@ def check_auth_stage(
         response = make_response(redirect(url_for(fallback_endpoint)))
         unset_jwt_cookies(response)
         flash(flash_message, 'error')
-        logger.error(f"{log_message}: {auth_stage} not in {allowed_stages}")
+        logger.error(f"{log_message}: '{auth_stage}' not in {allowed_stages}")
         return make_response(response)
     
     return None
@@ -369,15 +372,27 @@ def clear_session_data(keys: List[str]):
     print(f"Session data cleared: {keys}")
 
 
-# Verify photo (Put filename into file parameter)
-def verify_photo(file):
+# Verify photo (Put filename into file parameter) - only after saving in file system
+def verify_photo(file: str, allowed_image_extensions: List[str] = ALLOWED_IMAGE_EXTENSIONS, max_file_size: int = MAX_FILE_SIZE) -> bool:
+    # Check if file exists and is accessible
+    if not os.path.isfile(file):
+        return False
+
+    # Check the file extension
+    filename = os.path.basename(file)
+    file_ext = filename.rsplit('.', 1)[-1].lower()
+    if file_ext not in allowed_image_extensions:
+        return False
+
+    # Check the file content type
     image_type = imghdr.what(file)
-    if image_type is None:
+    if image_type not in allowed_image_extensions:
         return False
-    if file == '':
+
+    # Optional: Check the file size
+    file_size = os.path.getsize(file)
+    if file_size > max_file_size:
         return False
-    picture_filename = file.split('.')
-    if len(picture_filename) != 2:
-        return False
+
     return True
 
