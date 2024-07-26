@@ -4,6 +4,15 @@ General:
     Allow messages to be displayed when accessing pages that user is not allowed to
 
 Models:
+    Create new model to deal with profile pictures
+        Must have columns:
+            id (referencing to user's id),
+            source (file_system, google, gravatar),
+            filename (for file_system only),
+            google_url (for google profile image only),
+            gravatar_email (for gravatar image only)
+            file_hash (only for source == 'file_system'),
+            updated_at (to define when image last updated)
     Add new column for ending date for premium members
     Write sql scripts for seeding of database
     Write a function to generate new user id
@@ -22,6 +31,7 @@ Login:
 
 Member Profile:
     Implement display and update of profile picture
+        Utilise flask extensions (e.g. flask-uploads) and external API (VirusTotal)
     Subscription plan to include remaining days in templates
     Implement log out for active account using same username after successful reset of password
     Fix password reset save button not able to be disabled
