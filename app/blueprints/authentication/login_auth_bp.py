@@ -95,9 +95,7 @@ def handle_ideal_case1(email: str, username: str, google_id: str, profile_pictur
 # Handle ideal case 2: Existing account with matching google id for user_by_email & user_by_username
 def handle_ideal_case2(user_by_email: User, username: str, email: str):
     # Get correct endpoint based on user type
-    endpoint = "login_auth_bp.login"  # For testing, use 'login_auth_bp.login', for actual just create an empty string
-    if user_by_email.type == "member": endpoint = "member_profile_bp.profile"  #"member_auth_bp.home"
-    elif user_by_email.type == "admin": endpoint = "admin_auth_bp.home"
+    endpoint = "home_bp.home"
 
     # Clear any jwt & session data, Log user in
     session.clear()
@@ -247,7 +245,8 @@ def send_otp():
     check_jwt = check_jwt_values(
         required_identity_keys=['username', 'email'],
         required_claims=None,
-        fallback_endpoint='login_auth_bp.login'
+        fallback_endpoint='login_auth_bp.login',
+        flash_message="Your session has expired. Please restart the login process."
     )
     if check_jwt:
         return check_jwt
@@ -323,7 +322,8 @@ def verify_email():
     check_jwt = check_jwt_values(
         required_identity_keys=['username', 'email'],
         required_claims=['otp_data'],
-        fallback_endpoint='login_auth_bp.login'
+        fallback_endpoint='login_auth_bp.login',
+        flash_message="Your session has expired. Please restart the login process."
     )
     if check_jwt:
         return check_jwt
@@ -358,9 +358,7 @@ def verify_email():
 
         # Get correct endpoint based on user type
         user = User.query.filter_by(username=identity['username'], email=identity['email']).first()
-        endpoint = "member_profile_bp.profile"  # For testing, use 'login_auth_bp.login', for actual just create an empty string
-        if user.type == "member": endpoint = "member_auth_bp.home"
-        elif user.type == "admin": endpoint = "admin_auth_bp.home"
+        endpoint = "home_bp.home"
 
         # Clear any jwt & session data, Log user in
         session.clear()
@@ -517,7 +515,7 @@ def confirm_new_member_account():
                 return redirect(url_for('login_auth_bp.login'))
 
             # TODO: Change to member homepage, testing just use login_auth_bp.login first
-            endpoint = "login_auth_bp.login"  # "member_auth_bp.home"
+            endpoint = "home_bp.home"
 
             # Clear any jwt & session data, Log user in
             session.clear()
@@ -594,9 +592,7 @@ def link_google():
                 db.session.commit()
 
                 # Get correct endpoint based on user type
-                endpoint = "login_auth_bp.login"  # For testing, use 'login_auth_bp.login', for actual just create an empty string
-                if user.type == "member": endpoint = "member_auth_bp.home"
-                elif user.type == "admin": endpoint = "admin_auth_bp.home"
+                endpoint = "home_bp.home"
 
                 # Clear any jwt & session data, Log user in
                 session.clear()

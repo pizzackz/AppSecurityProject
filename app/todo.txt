@@ -21,6 +21,8 @@ Login:
     Update login details wherever necessary
 
 Member Profile:
+    Implement changing of passwords for accounts that have password stored
+    Implement setting of passwords for accounts linked to Google without password stored
     Implement log out for active account using same username after successful reset of password
     Implement display and update of profile picture
     Subscription plan to include remaining days in templates

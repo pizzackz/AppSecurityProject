@@ -28,16 +28,23 @@
 
                 <br>
 
+                <!-- Link/ unlink google account message -->
                 <div class="mb-3">
                     <p>Do note that you are not allowed to change your username here if your account has been linked to your google account.</p>
-                    <p>If you want to unlink your google account, click <a href="{{ url_for('member_profile_bp.profile', action='unlink_account') }}">here</a></p>
                     
+                    {% if user.google_id %}
+                        <p>If you want to unlink your google account, click <a href="{{ url_for('member_profile_bp.profile', action='unlink_account') }}">here</a>.</p>
+                    {% else %}
+                        <p>If you wish to link to your Google account, choose to Sign-in with Google in the future.</p>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
                     {% if user.google_id %}
                         {{ render_field(form.username, class='form-control', value=user.username, disabled=True) }}
                     {% else %}
                         {{ render_field(form.username, class='form-control', placeholder=user.username) }}
                     {% endif %}
-
                 </div>
 
                 <div class="mb-3">
@@ -46,7 +53,7 @@
 
                 <div class="mb-3">
                     {% if user.phone_number %}
-                        {{ render_field(form.phone_number, class='form-control', value=user.phone_number) }}
+                        {{ render_field(form.phone_number, class='form-control', placeholder=user.phone_number) }}
                     {% else %}
                         {{ render_field(form.phone_number, class='form-control', placeholder="Enter your phone number") }}
                     {% endif %}
@@ -54,7 +61,7 @@
                 
                 <div class="mb-3">
                     {% if user.address %}
-                        {{ render_field(form.address, class='form-control', value=user.address) }}
+                        {{ render_field(form.address, class='form-control', placeholder=user.address) }}
                     {% else %}
                         {{ render_field(form.address, class='form-control', placeholder="Enter your address") }}
                     {% endif %}
@@ -62,19 +69,23 @@
                 
                 <div class="mb-3">
                     {% if user.postal_code %}
-                        {{ render_field(form.postal_code, class='form-control', value=user.postal_code) }}
+                        {{ render_field(form.postal_code, class='form-control', placeholder=user.postal_code) }}
                     {% else %}
                         {{ render_field(form.postal_code, class='form-control', placeholder="Enter your postal code") }}
                     {% endif %}
                 </div>
 
-                <!-- Change password link only if user is not linked to google -->
-                {% if not user.google_id %}
-                    <div class="md-3">
-                        <p>Click <a href="{{ url_for('member_profile_bp.profile', action='reset_password') }}">here</a> to change your password</p>
-                    </div>
-                {% endif %}
-                
+                <!-- Change password link only if user already has a password set -->
+                <!-- Allow setting of password if user has no password & is google linked -->
+                <div class="mb-3">
+                    {% if user.password_hash %}
+                        <p>Click <a href="{{ url_for('member_profile_bp.profile', action='reset_password') }}">here</a> to change your password.</p>
+                    {% elif user.google_id %}
+                        <p>We highly recommend setting a password so you can also login through normal means without using your Google account.</p>
+                        <p>Click <a href="{{ url_for('member_profile_bp.profile', action='set_password') }}">here</a></p>
+                    {% endif %}
+                </div>
+
                 <!-- Message to display -->
                 <p>To help keep your account safe, we want to make sure it's really you trying to update your profile.</p>
                 <p>So we will send you a verification email after you click 'Next'.</p>

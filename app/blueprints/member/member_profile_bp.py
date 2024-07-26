@@ -17,7 +17,7 @@ from app.config.config import Config
 from app.models import User, Member, Admin
 from app.forms.profile_forms import MemberProfileForm
 from app.forms.auth_forms import OtpForm, ResetPasswordForm
-from app.utils import clean_input, generate_otp, send_email, check_auth_stage, check_jwt_values, check_member
+from app.utils import clean_input, generate_otp, send_email, check_auth_stage, check_jwt_values, check_member, set_session_data, clear_unwanted_session_keys
 
 
 member_profile_bp: Blueprint = Blueprint("member_profile_bp", __name__, url_prefix="/profile")
@@ -40,11 +40,6 @@ def profile():
     action = request.form.get("action", None) or request.args.get("action", None)
     print(f"action = {action}")
 
-    # Redirect to reset password if user clicked on reset password
-    # TODO: Change to send otp first
-    if action == "reset_password":
-        return redirect(url_for('member_profile_bp.reset_password'))
-    
     # Fetch complete user data from the database
     user = Member.query.filter_by(id=current_user.id).first()
 
@@ -53,7 +48,41 @@ def profile():
         flash("An unexpected error occurred. Please log in again.", "error")
         logger.warning(f"Anonymous user tried entering member profile page without an existing user id")
         return redirect(url_for('login_auth_bp.login'))
-    
+
+    # Redirect to allow reset of password or setting of password (for google sign-in users) or changing of profile picture
+    if action in ("reset_password", "set_password", "change_profile_picture"):
+        session['profile_update_stage'] = 'send_otp'
+        update_option = ""
+
+        if action == "reset_password":
+            update_option = 'reset_password'
+        if action == "set_password":
+            update_option = 'set_password'
+        if action == "change_profile_picture":
+            update_option = 'change_profile_picture'
+        
+        # Store jwt data
+        response = redirect(url_for('member_profile_bp.send_otp'))
+        identity = {'email': user.email}
+        token = create_access_token(identity=identity, additional_claims={"update_option": update_option})
+        set_access_cookies(response, token)
+
+        return response
+
+    # Remove google_id when user clicked on unlink account
+    if action == "unlink_account" and user.google_id:
+        try:
+            user.google_id = None
+            db.session.commit()
+            flash("Successfully unlinked your Google account!", "success")
+            logger.info(f"User '{user.username}' successfully unlinked their Google account.")
+        except Exception as e:
+            db.session.clear()
+            flash("An error occurred while trying to unlink your Google account. Please try again later.", "error")
+            logger.error(f"Unsuccessful unlinking user '{user.username}' from their Google account: {e}")
+
+        return redirect(url_for("member_profile_bp.profile"))
+
     # TODO: Handle changing of subscription plan (upgrade to premium, renew premium, cancel premium)
 
     form = MemberProfileForm()
@@ -87,28 +116,39 @@ def profile():
             logger.warning(log_message)
             return redirect(url_for("member_profile_bp.profile"))
 
+        # Retrieve inputs
+        username = form.username.data
+        phone_number = form.phone_number.data
+        address = form.address.data
+        postal_code = form.postal_code.data
+
         # Check whether there's actually data to update
-        if (user.google_id and not form.username.data) and not form.phone_number.data and not form.address.data and not form.postal_code.data:
+        changed_username = not user.google_id and username != user.username
+        changed_phone_number = phone_number != user.phone_number
+        changed_address = address != user.address
+        changed_postal_code = postal_code != user.postal_code
+
+        # Clean & store any updated data
+        updated_data = {}
+        if changed_username:
+            updated_data['username'] = clean_input(username)
+        if changed_phone_number:
+            updated_data['phone_number'] = clean_input(phone_number)
+        if changed_address:
+            updated_data['address'] = clean_input(address)
+        if changed_postal_code:
+            updated_data['postal_code'] = clean_input(postal_code)
+
+        if not updated_data:
             flash("Please update at least one of the fields to proceed.", "info")
             logger.info(f"User '{current_user.username}' tried to submit empty form when updating profile")
             return redirect(url_for("member_profile_bp.profile"))
 
-        # Retrieve & clean inputs
-        # If have username change, check for unique username
-        updated_data = {}
-        if form.username.data:
-            updated_data['username'] = clean_input(form.username.data)
-        if form.phone_number.data:
-            updated_data['phone_number'] = clean_input(form.phone_number.data)
-        if form.address.data:
-            updated_data['address'] = clean_input(form.address.data)
-        if form.postal_code.data:
-            updated_data['postal_code'] = clean_input(form.postal_code.data)
-
         # Store data in jwt
         response = redirect(url_for('member_profile_bp.send_otp'))
         identity = {'email': user.email}
-        token = create_access_token(identity=identity, additional_claims={"updated_data": updated_data})
+        claims = {"updated_data": updated_data, "update_option": "basic"}
+        token = create_access_token(identity=identity, additional_claims=claims)
         set_access_cookies(response, token)
 
         # Set profile update stage in session
@@ -151,28 +191,29 @@ def send_otp():
     # Check jwt identity has email
     check_jwt = check_jwt_values(
         required_identity_keys=['email'],
-        required_claims=None,
+        required_claims=["update_option"],
         fallback_endpoint='member_profile_bp.profile',
+        flash_message="An error occurred. Please try again later.",
         keys_to_keep=ESSENTIAL_KEYS
     )
     if check_jwt:
         return check_jwt
 
-    # Generate otp
     identity = get_jwt_identity()
     jwt = get_jwt()
+
+    # Handle changing of basic details (everything excluding profile picture & password)
+    # Generate otp
     otp = generate_otp()
     hashed_otp = hashlib.sha256(otp.encode("utf-8")).hexdigest()
     otp_expiry = (datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat()  # OTP valid for 10 minutes
     otp_data = {'otp': hashed_otp, 'expiry': otp_expiry}
 
     # Update JWT token with OTP and expiry
-    claims = {"otp_data": otp_data, "updated_data": jwt.get("updated_data")}
+    claims = {"otp_data": otp_data, "updated_data": jwt.get("updated_data"), "update_option": jwt.get("update_option")}
     new_token = create_access_token(identity=identity, additional_claims=claims)
     response = redirect(url_for('member_profile_bp.verify_email'))
     set_access_cookies(response, new_token)
-
-    token = get_jwt()
 
     # Try sending email using utility send_email function
     email_body = f"Your OTP is {otp}. It will expire in 10 minutes."
@@ -220,8 +261,8 @@ def verify_email():
         session.pop("profile_update_stage", None)
         response = redirect(url_for('member_profile_bp.profile'))
         unset_jwt_cookies(response)
-        flash("Profile details update restarted.", "info")
-        logger.info("User opted to restart the profile details update process.")
+        flash("Profile details update canceled.", "info")
+        logger.info("User opted to cancel the profile details update process.")
         return response
 
     # Check session not expired & profile_update_stage == verify_email
@@ -236,18 +277,40 @@ def verify_email():
     if check:
         return check
 
-    # Check jwt identity has username, email & jwt claims has otp_data
+    # Check jwt identity has username, email & jwt claims has otp_data, updated_option
     check_jwt = check_jwt_values(
         required_identity_keys=['email'],
         required_claims=['otp_data'],
         fallback_endpoint='member_profile_bp.profile',
+        flash_message="An error occurred. Please try again later.",
         keys_to_keep=ESSENTIAL_KEYS
     )
     if check_jwt:
         return check_jwt
 
-    # Check whether otp_data expired
+    # Check jwt claims for allowed update_options
     jwt = get_jwt()
+    update_option = jwt.get("update_option")
+    allowed_options = ('basic', 'set_password', 'reset_password', 'change_profile_picture')
+    if update_option not in allowed_options:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        response = make_response(redirect(url_for("member_profile_bp.profile")))
+        unset_jwt_cookies(response)
+        flash("An error occurred. Please try again later.", 'error')
+        logger.error(f"Attempted to verify email without allowed update option. Update option = '{update_option}'")
+        return response
+    
+    # Check jwt updated_option is 'basic' if have updated_data
+    updated_data = jwt.get("updated_data")
+    if update_option == "basic" and not updated_data:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        response = make_response(redirect(url_for("member_profile_bp.profile")))
+        unset_jwt_cookies(response)
+        flash("An error occurred. Please try again later.", 'error')
+        logger.error(f"Attempted to verify email to update basic data without updated data.")
+        return response
+    
+    # Check whether otp_data expired
     identity = get_jwt_identity()
     otp_data = jwt.get('otp_data')
     otp_expiry = datetime.fromisoformat(otp_data['expiry'])
@@ -264,6 +327,8 @@ def verify_email():
 
     form = OtpForm()
     if request.method == "POST" and form.validate_on_submit():
+        
+
         # Retrieve user provided input, sanitize & hash it
         user_otp = clean_input(form.otp.data)
         hashed_user_otp = hashlib.sha256(user_otp.encode("utf-8")).hexdigest()
@@ -274,6 +339,21 @@ def verify_email():
             logger.warning(f"Invalid OTP attempt for user: {user.username}")
             return redirect(url_for("member_profile_bp.verify_email"))
         
+        # Check whether update option is not 'basic', redirect accordingly
+        update_option = jwt.get("update_option")
+
+        if update_option == "set_password":
+            session['profile_update_stage'] = 'set_password'
+            return redirect(url_for("member_profile_bp.set_password"))
+
+        if update_option == "reset_password":
+            session['profile_update_stage'] = 'reset_password'
+            return redirect(url_for("member_profile_bp.reset_password"))
+        
+        if update_option == "change_profile_picture":
+            session['profile_update_stage'] = 'change_profile_picture'
+            return redirect(url_for("member_profile_bp.change_profile_picture"))
+
         # Update user data according to data in jwt claims
         updated_data = jwt.get("updated_data", {})
 
@@ -316,7 +396,7 @@ def verify_email():
     return render_template(f'{TEMPLATE_FOLDER}/verify_email.html', form=form, user=user)
 
 
-# Change password route
+# Reset password route
 @member_profile_bp.route("/reset_password", methods=['GET', 'POST'])
 @login_required
 def reset_password():
