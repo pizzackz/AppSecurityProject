@@ -3,7 +3,6 @@ import io
 import bleach
 import imghdr
 from wtforms import ValidationError
-from werkzeug.utils import secure_filename
 from app.models import User
 from email_validator import validate_email, EmailNotValidError
 
@@ -233,3 +232,13 @@ def phone_number_validator(form, field):
         raise ValidationError("Please enter a valid phone number in the format 8/9XXX XXXX.")
 
 
+# Validator for file sizes
+def validate_file_size_limit(max_size: int):
+    """Validator to check the file size"""
+    def _file_size_limit(form, field):
+        if field.data:
+            file_size = len(field.data.read())
+            field.data.seek(0)  # Reset file pointer after reading
+            if file_size > max_size:
+                raise ValidationError(f'File must be less than {max_size // (1024 * 1024)} MB.')
+    return _file_size_limit

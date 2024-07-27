@@ -1,19 +1,21 @@
 import logging
 import hashlib
+import uuid
+import os
 
 from datetime import datetime, timedelta, timezone
 from logging import Logger
 
-from flask import Blueprint, request, session, redirect, render_template, flash, url_for, make_response
+from flask import Blueprint, request, session, redirect, render_template, flash, url_for, make_response, current_app
 from flask_jwt_extended import create_access_token, set_access_cookies, unset_jwt_cookies, get_jwt, get_jwt_identity, jwt_required
 from flask_login import login_required, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import db
-from app.models import User, Member
+from app.models import User, Member, ProfileImage
 from app.forms.profile_forms import MemberProfileForm
 from app.forms.auth_forms import OtpForm, ResetPasswordForm, PasswordForm
-from app.utils import clean_input, generate_otp, send_email, check_auth_stage, check_jwt_values, check_member, clear_unwanted_session_keys
+from app.utils import clean_input, generate_otp, send_email, check_auth_stage, check_jwt_values, check_member, clear_unwanted_session_keys, get_image_url, upload_pfp, reset_pfp
 
 
 member_profile_bp: Blueprint = Blueprint("member_profile_bp", __name__, url_prefix="/profile")
@@ -46,10 +48,6 @@ def profile():
         flash("An unexpected error occurred. Please log in again.", "error")
         logger.warning(f"Anonymous user tried entering member profile page without an existing user id")
         return redirect(url_for('login_auth_bp.login'))
-
-    # Redirect to allow changing of profile picture
-    if action == "change_profile_picture":
-        return redirect(url_for("member_profile_bp.change_profile_picture"))
 
     # Redirect to allow reset of password or setting of password (for google sign-in users)
     if action in ("reset_password", "set_password"):
@@ -105,6 +103,28 @@ def profile():
         logger.info(f"User '{user.username}' reverted profile details changes.")
         return redirect(url_for("member_profile_bp.profile"))
 
+    # Handle profile picture upload/ reset
+    if request.method == "POST" and action in ("upload_profile_picture", "reset_profile_picture") and form.validate_on_submit():
+        # Check if user has linked to Google
+        if user.google_id:
+            flash("Your profile picture cannot be removed since you are linked to Google.", "info")
+            logger.info(f"User '{user.username}' tried to update their profile picture despite being linked to google.")
+            return redirect(url_for("member_profile_bp.profile"))
+        
+        profile_image = ProfileImage.query.get(user.id)
+        # Check if profile image record exists
+        if not profile_image:
+            flash("An error occurred. Please try again later.", "error")
+            logger.error(f"Couldn't find profile image record for '{user.username}'.")
+            return redirect(url_for('member_profile_bp.profile'))
+
+        # Call appropriate functions
+        if action == "upload_profile_picture":
+            return upload_pfp(user, profile_image, form.profile_picture.data, "member_profile_bp.profile")
+        elif action == "reset_profile_picture":
+            return reset_pfp(user, profile_image, "member_profile_bp.profile")
+
+    # Basic form detail submission
     if request.method == "POST" and action == "next" and form.validate_on_submit():
         flash_message_parts = []
         log_message_parts = []
@@ -115,7 +135,7 @@ def profile():
             log_message_parts.append("email")
 
         # Check if a Google-linked user attempted to change their username
-        if user.google_id and form.username.data and clean_input(form.username.data) != user.username:
+        if user.google_id and form.username.data and (clean_input(form.username.data) != user.username):
             flash_message_parts.append("username")
             log_message_parts.append("username")
 
@@ -136,14 +156,21 @@ def profile():
 
         # Check whether there's actually data to update
         changed_username = not user.google_id and username != user.username
-        changed_phone_number = phone_number != user.phone_number
-        changed_address = address != user.address
-        changed_postal_code = postal_code != user.postal_code
+        changed_phone_number = phone_number and phone_number != user.phone_number
+        changed_address = address and address != user.address
+        changed_postal_code = postal_code and postal_code != user.postal_code
 
         # Clean & store any updated data
         updated_data = {}
         if changed_username:
-            updated_data['username'] = clean_input(username)
+            # Check for unique username
+            existing_user = User.query.filter_by(username=username).first()
+            if existing_user:
+                flash("Username is already in use. Please choose another one.", "error")
+                logger.warning(f"User '{user.username}' tried to update their username to an existing username '{username}'.")
+                return redirect(url_for("member_profile_bp.profile"))
+            else:
+                updated_data['username'] = clean_input(username)
         if changed_phone_number:
             updated_data['phone_number'] = clean_input(phone_number)
         if changed_address:
@@ -169,7 +196,10 @@ def profile():
         # Redirect to send OTP page
         return response
 
-    return render_template(f"{TEMPLATE_FOLDER}/profile.html", form=form, user=user)
+    image_url = get_image_url(user)
+
+    # Render the base member profile template
+    return render_template(f"{TEMPLATE_FOLDER}/profile.html", form=form, user=user, image=image_url)
 
 
 # Send otp route
@@ -394,8 +424,10 @@ def verify_email():
         set_access_cookies(response, new_token)
         return response
 
+    image_url = get_image_url(user)
+
     # Render the verify email template
-    return render_template(f'{TEMPLATE_FOLDER}/verify_email.html', form=form, user=user)
+    return render_template(f'{TEMPLATE_FOLDER}/verify_email.html', form=form, user=user, image=image_url)
 
 
 # Save (basic) changes route
@@ -588,8 +620,10 @@ def set_password():
         
         return response
 
+    image_url = get_image_url(user)
+
     # Render the set password template
-    return render_template(f"{TEMPLATE_FOLDER}/set_password.html", form=form, user=user)
+    return render_template(f"{TEMPLATE_FOLDER}/set_password.html", form=form, user=user, image=image_url)
 
 
 # Reset password route
@@ -645,7 +679,7 @@ def reset_password():
         flash("An error occurred. Please try again later.", 'error')
         logger.error(f"User {current_user.username}' attempted to reset their password with incorrect update option '{update_option}'.")
         return response
-        
+
     # Check if the user account exists
     identity = get_jwt_identity()
     user = User.query.filter_by(id=current_user.id, email=identity['email']).first()
@@ -698,29 +732,8 @@ def reset_password():
 
         return response
 
+    image_url = get_image_url(user)
+
     # Render the reset password template
-    return render_template(f"{TEMPLATE_FOLDER}/reset_password.html", form=form, user=user)
+    return render_template(f"{TEMPLATE_FOLDER}/reset_password.html", form=form, user=user, image=image_url)
 
-
-# Change profile picture route
-@member_profile_bp.route("/change_profile_picture", methods=['GET', 'POST'])
-@jwt_required()
-@login_required
-def change_profile_picture():
-    # Check if user is member
-    check = check_member(fallback_endpoint='login_auth_bp.login')
-    if check:
-        return check
-
-    # Fetch complete user data from the database
-    user = Member.query.filter_by(id=current_user.id).first()
-
-    # Check if user doesn't exist
-    if not user:
-        flash("An unexpected error occurred. Please log in again.", "error")
-        logger.warning(f"Anonymous user tried entering member profile page without an existing user id")
-        return redirect(url_for('login_auth_bp.login'))
-    
-
-    # Render the change profile picture template
-    return render_template(f"{TEMPLATE_FOLDER}/change_profile_picture.html", form=form, user=user)

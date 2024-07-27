@@ -13,6 +13,7 @@ from flask_login import LoginManager
 from flask_session import Session
 from flask_mail import Mail
 from flask_jwt_extended import JWTManager
+from flask_uploads import UploadSet, configure_uploads, IMAGES
 
 from app.config.config import Config
 
@@ -20,13 +21,14 @@ from app.config.config import Config
 # Load environment variables from .env file
 load_dotenv()
 
-# Initialise CSRF protection, SQLAlchemy, LoginManager, Rate Limiter, Mail
+# Initialise CSRF protection, SQLAlchemy, LoginManager, Rate Limiter, Mail, Uploads
 csrf: CSRFProtect = CSRFProtect()
 db: SQLAlchemy = SQLAlchemy()
 jwt: JWTManager = JWTManager()
 login_manager: LoginManager = LoginManager()
 limiter: Limiter = Limiter(key_func=get_remote_address, default_limits=Config.RATELIMIT_DEFAULT, storage_uri=Config.RATELIMIT_STORAGE_URL)
 mail: Mail = Mail()
+profile_pictures = UploadSet("profilepictures", IMAGES)
 
 
 # Setup logger for own logs function
@@ -108,6 +110,7 @@ def create_app() -> Flask:
     limiter.init_app(app)
     jwt.init_app(app)
     mail.init_app(app)
+    configure_uploads(app, profile_pictures)
 
     login_manager.login_view = "login_auth_bp.login"
     

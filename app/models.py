@@ -1,8 +1,8 @@
-import os
 import secrets
 import string
 import logging
 import hashlib
+import os
 
 from datetime import datetime, timedelta, timezone
 from flask_login import UserMixin
@@ -12,9 +12,11 @@ from sqlalchemy.sql import func
 from typing import Optional
 
 from app import db
+from app.config.config import Config
 
-
+# Initialise variables
 logger = logging.getLogger("tastefully")
+DEFAULT_PROFILE_IMAGE_PATH = "static/uploads/profile_pictures/default.png"
 
 
 # User model acting as superclass to 'Member' and 'Admin' models while also allowing extension for common models like 'Authentication' and 'AccountStatus'
@@ -26,8 +28,7 @@ class User(UserMixin, db.Model):
     username = Column(String(255), unique=True, index=True, nullable=False)
     email = Column(String(255), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=True)
-    google_id = Column(String(255), unique=True, nullable=True)  # 'NULL' when user does manual sign up
-    profile_picture = Column(Text, default="default_profile.png", nullable=True)
+    google_id = Column(String(255), nullable=True)  # 'NULL' when user does manual sign up
     phone_number = Column(String(20), nullable=True)
     address = Column(String(255), nullable=True)
     postal_code = Column(String(20), nullable=True)
@@ -40,6 +41,7 @@ class User(UserMixin, db.Model):
     account_status = db.relationship("AccountStatus", back_populates="user", uselist=False, cascade="all, delete-orphan")
     login_details = db.relationship("LoginDetails", back_populates="user", uselist=False, cascade="all, delete-orphan")
     locked_accounts = db.relationship("LockedAccount", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    profile_images = db.relationship("ProfileImage", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
     # Joined Table Inheritance polymorphic properties
     __mapper_args__ = {"polymorphic_identity": "user", "polymorphic_on": type}
@@ -76,9 +78,9 @@ class Member(User):
             if not acc_status:
                 raise Exception("Failed to create account status record for member")
 
-            login_details = LoginDetails.create(id=new_member.id)
-            if not login_details:
-                raise Exception("Failed to create login details record for member")
+            profile_image = ProfileImage.create(id=new_member.id)
+            if not profile_image:
+                raise Exception("Failed to create profile image record for member")
 
             db.session.commit()
 
@@ -90,10 +92,10 @@ class Member(User):
     
     # Create new member through google signin
     @staticmethod
-    def create_by_google(username: str, email: str, google_id: str, subscription_plan: str = "standard", profile_picture: Optional[str] = None):
+    def create_by_google(username: str, email: str, google_id: str, google_image_url: str, subscription_plan: str = "standard"):
         try:
             # Create new member object
-            new_member = Member(username=username, email=email, google_id=google_id, subscription_plan=subscription_plan, profile_picture=profile_picture, type="member")
+            new_member = Member(username=username, email=email, google_id=google_id, subscription_plan=subscription_plan, type="member")
             db.session.add(new_member)
             db.session.flush()
 
@@ -104,6 +106,10 @@ class Member(User):
             login_details = LoginDetails.create(id=new_member.id)
             if not login_details:
                 raise Exception("Failed to create login details record for member")
+
+            profile_image = ProfileImage.create_by_google(id=new_member.id, google_url=google_image_url)
+            if not profile_image:
+                raise Exception("Failed to create profile image record for member")
 
             db.session.commit()
 
@@ -193,7 +199,52 @@ class AccountStatus(db.Model):
             db.session.rollback()
             print(f"Error occurred when creating new account status: {e}")
             return None
-    
+
+
+# ProfileImage model to store profile images about user accounts
+class ProfileImage(db.Model):
+    __tablename__ = "profile_images"
+
+    # ForeignKey reference to 'user.id' and primary key for 'profile_images'
+    id = Column(Integer, ForeignKey("user.id"), primary_key=True)
+    source = Column(String(20), nullable=False, default="file_system")
+    filename = Column(Text, nullable=False, default="default.png")
+    google_url = Column(Text, nullable=True)
+    updated_at = Column(DateTime, nullable=False, default=func.current_timestamp(), onupdate=func.current_timestamp())
+
+    # Relationship back to 'User'
+    user = db.relationship("User", back_populates="profile_images")
+
+    def __repr__(self) -> str:
+        return f"<ProfileImage(id='{self.id}', source='{self.source}', filename='{self.filename}', google_url='{self.google_url}', file_hash='{self.file_hash}', updated_at='{self.updated_at}')"
+
+    # Static methods for CRUD functionalities
+    # Create
+    @staticmethod
+    def create(id: Column[int]):
+        try:
+            profile_image: ProfileImage = ProfileImage(id=id)
+            db.session.add(profile_image)
+            db.session.commit()
+            return profile_image
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error occurred when creating new profile image record: {e}")
+            return None
+
+    # Create by google
+    @staticmethod
+    def create_by_google(id: Column[int], google_url: Column[Text]):
+        try:
+            profile_image: ProfileImage = ProfileImage(id=id, source="google", google_url=google_url)
+            db.session.add(profile_image)
+            db.session.commit()
+            return profile_image
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error occurred when creating new profile image record: {e}")
+            return None
+
 
 # LoginDetails model to store info about last login and logout times
 class LoginDetails(db.Model):
@@ -219,21 +270,6 @@ class LoginDetails(db.Model):
             login_details: LoginDetails = LoginDetails(id=id)
             db.session.add(login_details)
             db.session.commit()
-            return login_details
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error occurred when creating new locked account record: {e}")
-            return None
-
-    # Update login
-    @staticmethod
-    def login(id: Column[int]):
-        try:
-            login_details: LoginDetails = LoginDetails.query(id)
-            if login_details:
-                login_details.last_login = datetime.now(timezone.utc)
-                login_details.is_active = True
-                db.session.commit()
             return login_details
         except Exception as e:
             db.session.rollback()
@@ -327,6 +363,7 @@ class Recipe(db.Model):
     def __repr__(self):
         return f"Recipe('{self.name}')"
 
+
 class RecipeDeleted(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -345,6 +382,7 @@ class RecipeDeleted(db.Model):
     def __repr__(self):
         return f"Recipe('{self.name}')"
 
+
 # To store the configuration status of recipes (Lock recipes)
 class RecipeConfig(db.Model):
     name = db.Column(db.String(100), primary_key=True, nullable=False)
@@ -352,6 +390,7 @@ class RecipeConfig(db.Model):
 
     def __repr__(self):
         return f"{self.name}: {self.status}"
+
 
 class Feedback(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -363,6 +402,7 @@ class Feedback(db.Model):
 
     def __repr__(self):
         return f'<Feedback {self.name}>'
+
 
 # Payment model to store payment related information
 class Payment(db.Model):

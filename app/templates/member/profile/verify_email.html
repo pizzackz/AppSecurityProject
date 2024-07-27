@@ -26,6 +26,11 @@
         max-width: 500px;
         width: 100%;
     }
+    .img-thumbnail {
+        max-width: 150px;
+        max-height: 150px;
+        object-fit: cover;
+    }
 </style>
 {% endblock %}
 
@@ -55,15 +60,18 @@
 
                 <!-- Profile Picture Section -->
                 <div class="mb-3 text-center">
-                    {% if "uploads/profile_pictures/" in user.profile_picture %}
-                        <img src="{{ url_for('static', filename=user.profile_picture) }}" alt="Profile Picture" class="img-thumbnail rounded-circle" />
-                    {% else %}
-                        <img src="{{ user.profile_picture }}" alt="Profile Picture" class="img-thumbnail rounded-circle" />
-                    {% endif %}
+                    <img src="{{ image }}" alt="Current profile picture" class="img-thumbnail rounded-circle" />
 
-                    <div id="edit-image-button">
-                        <button type="submit" name="button" value="edit_profile_pic" class="btn btn-primary">Edit Profile Picture</button>
-                    </div>
+                    <!-- Only allow changing if user is not linked to google -->
+                    {% if not user.google_id %}
+                        <div id="image">
+                            <input type="file" name="profile_picture" id="profile_picture" class="form-control" disabled />
+                            <button type="submit" name="button" value="reset_profile_picture" class="btn btn-danger">Reset</button>
+                            <button type="submit" name="button" value="upload_profile_picture" class="btn btn-primary">Edit</button>
+                        </div>
+                    {% else %}
+                        <p>Since you are linked to Google, we will use your Google profile picture here and you are not allowed to directly change it here.</p>
+                    {% endif %}
                 </div>
 
                 <!-- Link/ unlink google account message -->
@@ -79,7 +87,7 @@
 
                 <div class="mb-3">
                     <label for="username">Username</label>
-                    <input type="text" name="username" id="username" class="form-control" value="{{ user.username }}" disabled>
+                    <input type="text" name="username" id="username" class="form-control" value="{{ user.username }}" disabled />
                 </div>
 
                 <div class="mb-3">
