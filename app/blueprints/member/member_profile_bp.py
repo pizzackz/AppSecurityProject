@@ -6,7 +6,7 @@ import os
 from datetime import datetime, timedelta, timezone
 from logging import Logger
 
-from flask import Blueprint, request, session, redirect, render_template, flash, url_for, make_response, current_app
+from flask import Blueprint, request, session, redirect, render_template, flash, url_for, make_response
 from flask_jwt_extended import create_access_token, set_access_cookies, unset_jwt_cookies, get_jwt, get_jwt_identity, jwt_required
 from flask_login import login_required, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
