@@ -30,3 +30,5 @@ Admin Profile:
     Similar to Member Profile but without subscription plan
     Allow button to send master key to email
     Implement daily update of master key
+    Implement log out for active account using same username after successful reset of password
+    Fix password reset save button not able to be disabled
