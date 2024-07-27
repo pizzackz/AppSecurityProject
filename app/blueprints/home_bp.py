@@ -19,10 +19,11 @@ home_bp = Blueprint('home_bp', __name__)
 
 def home():
     user = current_user
-    account_type = user.type
-    if account_type == 'member':
-        return render_template('member/home.html')
-    elif account_type == 'admin':
-        return render_template('admin/home.html')
-    else:
+    try:
+        account_type = user.type
+        if account_type == 'member':
+            return render_template('member/home.html')
+        elif account_type == 'admin':
+            return render_template('admin/home.html')
+    except AttributeError:
         return redirect(url_for('login_auth_bp.login'))

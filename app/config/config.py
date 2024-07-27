@@ -2,13 +2,14 @@ import os
 import json
 from datetime import timedelta
 from dotenv import load_dotenv
+from flask_uploads import IMAGES
 
 
 # Load .env file variables
 load_dotenv()
 
 # Base directory path
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 
 # Define 'Config' class for all app configurations
@@ -48,7 +49,7 @@ class Config:
         'style-src': ["'self'", 'https://cdn.jsdelivr.net', 'https://cdn.tiny.cloud'],
         'script-src': ["'self'", 'https://cdn.jsdelivr.net', 'https://cdn.ckeditor.com', 'https://js.stripe.com/v3/', 'https://cdn.tiny.cloud', 'https://www.google.com'],
         'font-src': ["'self'", 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com'],
-        'img-src': ["'self'", 'data:', 'https://sp.tinymce.com'],
+        'img-src': ["'self'", 'data:', 'https://sp.tinymce.com', 'https://lh3.googleusercontent.com'],
         'connect-src': ["'self'", 'https://cdn.tiny.cloud'],
         'frame-src': ["'self'", 'https://js.stripe.com', 'https://www.google.com'],
         'object-src': ["'none'"],
@@ -80,7 +81,6 @@ class Config:
     # OpenAI API key
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
-
     # Google Gemini API Key
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
@@ -97,4 +97,7 @@ class Config:
     # Recaptcha keys
     RECAPTCHA_PUBLIC_KEY = os.environ.get('RECAPTCHA_PUBLIC_KEY')
     RECAPTCHA_PRIVATE_KEY = os.environ.get('RECAPTCHA_PRIVATE_KEY')
+
+    # File uploads configurations
+    UPLOADED_PROFILEPICTURES_DEST = os.path.join(BASE_DIR, "static", "uploads", "profile_pictures")
 

@@ -26,36 +26,66 @@
         max-width: 500px;
         width: 100%;
     }
+    .img-thumbnail {
+        max-width: 150px;
+        max-height: 150px;
+        object-fit: cover;
+    }
 </style>
 {% endblock %}
+
+{% block flash_messages %}{% endblock %}
 
 {% block content %}
 <div class="container my-5">
     <div class="row justify-content-center">
         <div class="col-lg-8">
-            <h2>Profile Update</h2>
-            <form action="">
+            <div>
                 <h2 class="mb-4">Update Profile</h2>
 
                 <!-- Display current plan inforamtion -->
                 {% if user.subscription_plan == 'premium' %}
-                <div>
-                    <p>Current Plan: <b><u>Premium</u></b></p>
-                    <button type="submit" class="btn btn-warning rounded-pill" disabled><b><u>Renew!</u></b></button>
-                </div>
+                    <div>
+                        <p>Current Plan: <b><u>Premium</u></b></p>
+                        <button type="submit" class="btn btn-warning rounded-pill" disabled>Renew!</button>
+                    </div>
                 {% elif user.subscription_plan == 'standard' %}
-                <div>
-                    <p>Current Plan: <b><u>Standard</u></b></p>
-                    <button type="submit" class="btn btn-warning rounded-pill" disabled><b><u>Upgrade!</u></b></button>
-                </div>
+                    <div>
+                        <p>Current Plan: <b><u>Standard</u></b></p>
+                        <button type="submit" class="btn btn-warning rounded-pill" disabled>Upgrade!</button>
+                    </div>
                 {% endif %}
 
                 <br>
 
+                <!-- Profile Picture Section -->
+                <div class="mb-3 text-center">
+                    <img src="{{ image }}" alt="Current profile picture" class="img-thumbnail rounded-circle" />
+
+                    <!-- Only allow changing if user is not linked to google -->
+                    {% if not user.google_id %}
+                        <div id="image">
+                            <input type="file" name="profile_picture" id="profile_picture" class="form-control" disabled />
+                            <button type="submit" name="button" value="reset_profile_picture" class="btn btn-danger">Reset</button>
+                            <button type="submit" name="button" value="upload_profile_picture" class="btn btn-primary">Edit</button>
+                        </div>
+                    {% else %}
+                        <p>Since you are linked to Google, we will use your Google profile picture here and you are not allowed to directly change it here.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Link/ unlink google account message -->
                 <div class="mb-3">
                     <p>Do note that you are not allowed to change your username here if your account has been linked to your google account.</p>
-                    <p>If you want to unlink your google account, click <a href="">here</a></p>
                     
+                    {% if user.google_id %}
+                        <p>If you want to unlink your google account, click <a href="">here</a>.</p>
+                    {% else %}
+                        <p>If you wish to link to your Google account, choose to Sign-in with Google in the future.</p>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
                     <label for="username">Username</label>
                     <input type="text" name="username" id="username" class="form-control" value="{{ user.username }}" disabled />
                 </div>
@@ -64,88 +94,127 @@
                     <label for="email">Email</label>
                     <input type="text" name="email" id="email" class="form-control" value="{{ user.email }}" disabled />
                 </div>
-
+                
                 <div class="mb-3">
                     <label for="phone_number">Phone Number</label>
-                    <input type="text" name="phone_number" id="phone_number" class="form-control" value="{{ user.phone_number or '' }}" disabled />
+                    {% if user.phone_number %}
+                        <input type="text" name="phone_number" id="phone_number" class="form-control" value="{{ user.phone_number }}" disabled />
+                    {% else %}
+                        <input type="text" name="phone_number" id="phone_number" class="form-control" value="" placeholder="Enter your phone number" disabled />
+                    {% endif %}
                 </div>
                 
                 <div class="mb-3">
                     <label for="address">Address</label>
-                    <input type="text" name="address" id="address" class="form-control" value="{{ user.address or '' }}" disabled />
+                    {% if user.address %}
+                        <input type="text" name="address" id="address" class="form-control" value="{{ user.address }}" disabled />
+                    {% else %}
+                        <input type="text" name="address" id="address" class="form-control" value="" placeholder="Enter your address" disabled />
+                    {% endif %}
                 </div>
                 
                 <div class="mb-3">
                     <label for="postal_code">Postal Code</label>
-                    <input type="text" name="postal_code" id="postal_code" class="form-control" value="{{ user.postal_code or '' }}" disabled />
+                    {% if user.postal_code %}
+                        <input type="text" name="postal_code" id="postal_code" class="form-control" value="{{ user.postal_code }}" disabled />
+                    {% else %}
+                        <input type="text" name="postal_code" id="postal_code" class="form-control" value="" placeholder="Enter your postal code" disabled />
+                    {% endif %}
                 </div>
 
-                <!-- Change password link only if user is not linked to google -->
-                {% if not user.google_id %}
-                    <div class="md-3">
-                        <p>Click <a href="">here</a> to change your password</p>
-                    </div>
-                {% endif %}
-                
+                <!-- Change password link only if user already has a password set -->
+                <!-- Allow setting of password if user has no password & is google linked -->
+                <div class="mb-3">
+                    {% if user.password_hash %}
+                        <p>Click <a href="">here</a> to change your password.</p>
+                    {% elif user.google_id %}
+                        <p>We highly recommend setting a password <a href="">here</a> so you can also login through normal means without using your Google account.</p>
+                    {% endif %}
+                </div>
+
                 <!-- Message to display -->
                 <p>To help keep your account safe, we want to make sure it's really you trying to update your profile.</p>
                 <p>So we will send you a verification email after you click 'Next'.</p>
 
                 <!-- Submit buttons -->
                 <div class="d-flex justify-content-end">
-                    <button type="submit" class="btn btn-outline-primary rounded-pill" disabled>Revert</button>
-                    <button type="submit" class="btn btn-primary rounded-pill" disabled>Next</button>
+                    <button type="button" class="btn btn-light btn-outline-primary rounded-pill" name="action" value="revert">Revert</button>
+                    <button type="button" class="btn btn-primary rounded-pill" name="action" value="next">Next</button>
                 </div>
 
-                {% if user.subscription_plan == "premium" %}
+                <!-- Subscription cancel link -->
+                {% if user.subscription_plan == 'premium' %}
                     <a href="">I want to cancel the subscription plan.</a>
                 {% endif %}
-            </form>
+            </div>
         </div>
     </div>
 </div>
 
+<div class="modal-backdrop fade show"></div>
+
 <!-- Modal Overlay, visible by default -->
- <!-- Verify email -->
-<div class="modal-overlay" id="verify-modal">
-    <div class="modal-content">
-        <h3>Verify Email</h3>
+<!-- Verify email popup-->
+{% block modal %}
+<form method="post" action="" id="verify-email-form">
+    <div class="modal fade show" id="myModal" data-bs-backdrop="false" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h3 class="modal-title">Verify Email</h3>
+                </div>
 
-        <p>We have sent you a verification email, please verify your email address.</p>
-        <p class="mt-2"><a href="{{ url_for('member_profile_bp.send_otp', resend=True) }}">Resend it</a></p>
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    {% block flash_messages_2 %}
+                    <!-- 'error' category flash message -->
+                    {% for message in get_flashed_messages(category_filter=["error"]) %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn btn-close bypass-disable" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                    <!-- 'info' category flash message -->
+                    {% for message in get_flashed_messages(category_filter=["info"]) %}
+                    <div class="alert alert-info alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn btn-close bypass-disable" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                    {% endblock %}
 
-        <form method="POST" action="" id="verify-email-form">
-            {{ form.hidden_tag() }}
-            <div class="form-group">
-                {{ render_field(form.otp, class="form-control", placeholder="Enter the code") }}
+                    <!-- Basic message & resend link -->
+                    <div>
+                        <p>We have sent you a verification email, please verify your email address.</p>
+                        <p class="mt-2"><a href="{{ url_for('member_profile_bp.send_otp', resend=True) }}">Resend it</a></p>
+                    </div>
+
+                    {{ form.hidden_tag() }}
+                    <div class="form-group">
+                        {{ render_field(form.otp, class="form-control", placeholder="Enter the code") }}
+                    </div>
+                </div>
+
+
+                <!-- Modal Footer -->
+                <div class="modal-footer">
+                    <!-- Submit buttons (back, next) -->
+                    <a href="{{ url_for('member_profile_bp.verify_email', action='back') }}" class="btn btn-light btn-outline-primary rounded-pill">Back</a>
+                    <button type="submit" name="action" value="save" class="btn btn-primary rounded-pill submit-disabler">Next</button>
+                </div>
             </div>
-
-            <br>
-
-            <!-- Submit buttons (Back, Next) -->
-            <div>
-                <a href="{{ url_for('member_profile_bp.verify_email', action='back') }}" class="btn btn-light btn-outline-primary rounded-pill">Back</a>
-                <button type="submit" name="action" value="save" class="btn btn-primary rounded-pill submit-disabler">Save</button>
-            </div>
-        </form>
+        </div>
     </div>
-</div>
+</form>
+{% endblock %}
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Ensure modal is visible by default
-        var verifyModal = document.getElementById('verify-modal');
-        verifyModal.style.display = 'flex';
-
-        // Prevent closing the modal when clicking outside of it
-        verifyModal.addEventListener('click', function(event) {
-            if (!event.target.closest('.modal-content')) {
-                event.stopPropagation();
-            }
-        });
-    });
+<script nonce="{{ nonce }}">
+    const myModalElement = document.getElementById("myModal");
+    const myModalInstance = new bootstrap.Modal(myModalElement, {});
+    myModalInstance.show();
 </script>
 {% endblock %}

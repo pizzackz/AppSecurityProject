@@ -85,7 +85,8 @@ def send_otp():
     check_jwt = check_jwt_values(
         required_identity_keys=['recovery_email'],
         required_claims=None,
-        fallback_endpoint='recovery_auth_bp.recovery'
+        fallback_endpoint='recovery_auth_bp.recovery',
+        flash_message="Your session has expired. Please restart the recovery process."
     )
     if check_jwt:
         return check_jwt
@@ -169,7 +170,8 @@ def verify_email():
     check_jwt = check_jwt_values(
         required_identity_keys=['recovery_email'],
         required_claims=['otp_data'],
-        fallback_endpoint='recovery_auth_bp.recovery'
+        fallback_endpoint='recovery_auth_bp.recovery',
+        flash_message="Your session has expired. Please restart the recovery process."
     )
     if check_jwt:
         return check_jwt
@@ -240,7 +242,8 @@ def recovery_options():
     check_jwt = check_jwt_values(
         required_identity_keys=['recovery_email', 'email_verified'],
         required_claims=None,
-        fallback_endpoint='recovery_auth_bp.recovery'
+        fallback_endpoint='recovery_auth_bp.recovery',
+        flash_message="Your session has expired. Please restart the recovery process."
     )
     if check_jwt and not identity['email_verified']:
         return check_jwt
@@ -279,7 +282,8 @@ def send_username():
     check_jwt = check_jwt_values(
         required_identity_keys=['recovery_email', 'email_verified'],
         required_claims=None,
-        fallback_endpoint='recovery_auth_bp.recovery'
+        fallback_endpoint='recovery_auth_bp.recovery',
+        flash_message="Your session has expired. Please restart the recovery process."
     )
     if check_jwt and not identity['email_verified']:
         return check_jwt
@@ -341,7 +345,8 @@ def recover_username():
     check_jwt = check_jwt_values(
         required_identity_keys=['recovery_email', 'email_verified'],
         required_claims=None,
-        fallback_endpoint='recovery_auth_bp.recovery'
+        fallback_endpoint='recovery_auth_bp.recovery',
+        flash_message="Your session has expired. Please restart the recovery process."
     )
     if check_jwt and not identity['email_verified']:
         return check_jwt
@@ -386,7 +391,8 @@ def send_password_link():
     check_jwt = check_jwt_values(
         required_identity_keys=['recovery_email', 'email_verified'],
         required_claims=None,
-        fallback_endpoint='recovery_auth_bp.recovery'
+        fallback_endpoint='recovery_auth_bp.recovery',
+        flash_message="Your session has expired. Please restart the recovery process."
     )
     if check_jwt and not identity['email_verified']:
         return check_jwt

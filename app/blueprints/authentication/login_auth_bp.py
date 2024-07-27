@@ -93,11 +93,20 @@ def handle_ideal_case1(email: str, username: str, google_id: str, profile_pictur
 
 
 # Handle ideal case 2: Existing account with matching google id for user_by_email & user_by_username
-def handle_ideal_case2(user_by_email: User, username: str, email: str):
+def handle_ideal_case2(user_by_email: User, username: str, email: str, profile_picture: str):
     # Get correct endpoint based on user type
-    endpoint = "login_auth_bp.login"  # For testing, use 'login_auth_bp.login', for actual just create an empty string
-    if user_by_email.type == "member": endpoint = "member_profile_bp.profile"  #"member_auth_bp.home"
-    elif user_by_email.type == "admin": endpoint = "admin_auth_bp.home"
+    endpoint = "home_bp.home"
+
+    # Update to use google provided profile picture
+    try:
+        user_by_email.profile_images.source = "google"
+        user_by_email.profile_images.google_url = profile_picture
+        user_by_email.profile_images.filename = "default.png"
+        db.session.commit()
+    except Exception as e:
+        flash(f"An error occurred while trying to log you in through Google. Please try again later.", "error")
+        logger.error(f"Error updating profile_images for user '{username}': {e}")
+        return redirect(url_for('login_auth_bp.login'))
 
     # Clear any jwt & session data, Log user in
     session.clear()
@@ -120,7 +129,7 @@ def handle_ideal_cases(user_by_email: Optional[User], user_by_username: Optional
 
     # Ideal Case 2: Existing account matches both email and Google ID
     if user_by_email and user_by_google_id and user_by_email.google_id == google_id:
-        return handle_ideal_case2(user_by_email, username, email)
+        return handle_ideal_case2(user_by_email, username, email, profile_picture)
 
     return None
 
@@ -247,7 +256,8 @@ def send_otp():
     check_jwt = check_jwt_values(
         required_identity_keys=['username', 'email'],
         required_claims=None,
-        fallback_endpoint='login_auth_bp.login'
+        fallback_endpoint='login_auth_bp.login',
+        flash_message="Your session has expired. Please restart the login process."
     )
     if check_jwt:
         return check_jwt
@@ -323,7 +333,8 @@ def verify_email():
     check_jwt = check_jwt_values(
         required_identity_keys=['username', 'email'],
         required_claims=['otp_data'],
-        fallback_endpoint='login_auth_bp.login'
+        fallback_endpoint='login_auth_bp.login',
+        flash_message="Your session has expired. Please restart the login process."
     )
     if check_jwt:
         return check_jwt
@@ -358,9 +369,7 @@ def verify_email():
 
         # Get correct endpoint based on user type
         user = User.query.filter_by(username=identity['username'], email=identity['email']).first()
-        endpoint = "member_profile_bp.profile"  # For testing, use 'login_auth_bp.login', for actual just create an empty string
-        if user.type == "member": endpoint = "member_auth_bp.home"
-        elif user.type == "admin": endpoint = "admin_auth_bp.home"
+        endpoint = "home_bp.home"
 
         # Clear any jwt & session data, Log user in
         session.clear()
@@ -507,7 +516,7 @@ def confirm_new_member_account():
             profile_picture = claims.get('profile_picture', None)
 
             # Create new user with given email, username, google_id, and profile picture
-            new_user = Member.create_by_google(username=username, email=email, google_id=google_id, profile_picture=profile_picture)
+            new_user = Member.create_by_google(username=username, email=email, google_id=google_id, google_image_url=profile_picture)
             if not new_user:
                 session.clear()
                 response = redirect(url_for('login_auth_bp.login'))
@@ -516,8 +525,7 @@ def confirm_new_member_account():
                 logger.error(f"Failed to create new member account for {email}.")
                 return redirect(url_for('login_auth_bp.login'))
 
-            # TODO: Change to member homepage, testing just use login_auth_bp.login first
-            endpoint = "login_auth_bp.login"  # "member_auth_bp.home"
+            endpoint = "home_bp.home"
 
             # Clear any jwt & session data, Log user in
             session.clear()
@@ -590,13 +598,13 @@ def link_google():
                 if not user.email or user.email != email:
                     user.email = email
                 user.google_id = google_id
-                user.profile_picture = profile_picture
+                if profile_picture:
+                    user.profile_images.source = "google"
+                    user.profile_images.google_url = profile_picture
                 db.session.commit()
 
                 # Get correct endpoint based on user type
-                endpoint = "login_auth_bp.login"  # For testing, use 'login_auth_bp.login', for actual just create an empty string
-                if user.type == "member": endpoint = "member_auth_bp.home"
-                elif user.type == "admin": endpoint = "admin_auth_bp.home"
+                endpoint = "home_bp.home"
 
                 # Clear any jwt & session data, Log user in
                 session.clear()

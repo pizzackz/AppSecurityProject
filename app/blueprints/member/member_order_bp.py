@@ -66,9 +66,9 @@ def add_no_cache_headers(response):
     return response
 
 
-@member_order_bp.route('/home', methods=['POST', 'GET'])
-def home():
-    return render_template('member/transaction-processing/index.html')
+# @member_order_bp.route('/home', methods=['POST', 'GET'])
+# def home():
+#     return render_template('member/transaction-processing/index.html')
 
 
 @member_order_bp.route('/menu', methods=['POST', 'GET'])

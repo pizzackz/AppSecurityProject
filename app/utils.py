@@ -1,19 +1,28 @@
+import os
 import secrets
 import string
 import bleach
 import logging
 import imghdr
+import hashlib
+import uuid
 
 from logging import Logger
-from flask import Response, session, redirect, url_for, flash, make_response
+from flask import Response, session, redirect, url_for, flash, make_response, current_app
 from flask_mail import Message
 from flask_login import current_user, logout_user
 from flask_jwt_extended import get_jwt, get_jwt_identity, unset_jwt_cookies
+from werkzeug.utils import secure_filename
 from typing import Optional, List, Set, Dict
 
+from app import db, profile_pictures
+from app.models import User, ProfileImage
 
-# Use logger configured in '__init__.py'
+
+# Initialise variables
 logger: Logger = logging.getLogger('tastefully')
+ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png']
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
 
 # Simple clean input function using bleach
@@ -222,7 +231,7 @@ def check_auth_stage(
         response = make_response(redirect(url_for(fallback_endpoint)))
         unset_jwt_cookies(response)
         flash(flash_message, 'error')
-        logger.error(f"{log_message}: {auth_stage} not in {allowed_stages}")
+        logger.error(f"{log_message}: '{auth_stage}' not in {allowed_stages}")
         return make_response(response)
     
     return None
@@ -369,15 +378,173 @@ def clear_session_data(keys: List[str]):
     print(f"Session data cleared: {keys}")
 
 
-# Verify photo (Put filename into file parameter)
-def verify_photo(file):
+# Verify photo (Put filename into file parameter) - only after saving in file system
+def verify_photo(file: str, allowed_image_extensions: List[str] = ALLOWED_IMAGE_EXTENSIONS, max_file_size: int = MAX_FILE_SIZE) -> bool:
+    # Check if file exists and is accessible
+    if not os.path.isfile(file):
+        return False
+
+    # Check the file extension
+    filename = os.path.basename(file)
+    file_ext = filename.rsplit('.', 1)[-1].lower()
+    if file_ext not in allowed_image_extensions:
+        return False
+
+    # Check the file content type
     image_type = imghdr.what(file)
-    if image_type is None:
+    if image_type not in allowed_image_extensions:
         return False
-    if file == '':
+
+    # Optional: Check the file size
+    file_size = os.path.getsize(file)
+    if file_size > max_file_size:
         return False
-    picture_filename = file.split('.')
-    if len(picture_filename) != 2:
-        return False
+
     return True
+
+
+# Delete old profile picture file from file system if it's not default image
+def delete_old_profile_picture(profile_image: ProfileImage):
+    """
+    Deletes the old profile picture file from the filesystem if it's not the default image.
+    Updates the ProfileImage object to set the filename to "default.png".
+
+    Args:
+        profile_image (ProfileImage): The ProfileImage object associated with the user.
+    """
+    if profile_image and profile_image.filename != "default.png":
+        file_path = os.path.join(current_app.config['UPLOADED_PROFILEPICTURES_DEST'], profile_image.filename)
+        try:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                current_app.logger.info(f"Deleted old profile picture: {file_path}")
+                
+                # Update the ProfileImage object to reflect the deletion
+                profile_image.filename = "default.png"
+                profile_image.source = "file_system"
+        except Exception as e:
+            current_app.logger.error(f"Error deleting old profile picture {file_path}: {e}")
+
+
+# Save new profile picture file into file system & securely updates ProfileImage object
+def save_new_profile_picture(user_id: int, file, profile_image: ProfileImage):
+    """
+    Saves a new profile picture file securely and updates the ProfileImage object.
+
+    Args:
+        user_id (int): The ID of the user uploading the picture.
+        file (FileStorage): The uploaded file object.
+        profile_image (ProfileImage): The ProfileImage object to update.
+
+    Returns:
+        str: The filename of the saved picture.
+    """
+    # Secure the filename & get its extension
+    original_filename = secure_filename(file.filename)
+    file_extension = os.path.splitext(original_filename)[1].lower()
+
+    # Generate a unique filename using UUID4 and user ID
+    combined = f"{user_id}-{uuid.uuid4()}"
+    unique_hash = hashlib.sha256(combined.encode('utf-8')).hexdigest()
+    unique_filename = f"{unique_hash}{file_extension}"
+
+    # Save the file
+    filename = profile_pictures.save(file, name=unique_filename)
+
+    # Update the ProfileImage object
+    profile_image.filename = filename
+    profile_image.source = "file_system"
+    return filename
+
+
+# Handle uploading of new profile picture, replacing the old one if needed
+def upload_pfp(user: User, profile_image: ProfileImage, new_profile_picture, fallback_endpoint: str):
+    """
+    Handles the uploading of a new profile picture, replacing the old one if necessary.
+    Uses `delete_old_profile_picture` and `save_new_profile_picture`.
+
+    Args:
+        user (User): The user uploading the profile picture.
+        profile_image (ProfileImage): The ProfileImage object associated with the user.
+        new_profile_picture (FileStorage): The new profile picture file.
+        fallback_endpoint (str): The endpoint to redirect to in case of errors.
+
+    Returns:
+        werkzeug.wrappers.Response: Redirect response to the fallback endpoint.
+    """
+    if not new_profile_picture:
+        flash("Please provide a new profile picture to update it.", "info")
+        logger.info(f"User '{user.username}' tried to upload an empty image file.")
+        return redirect(url_for(fallback_endpoint))
+
+    try:
+        # Remove the old profile picture if it exists
+        delete_old_profile_picture(profile_image)
+        # Save the new profile picture and update the profile image record
+        save_new_profile_picture(user.id, new_profile_picture, profile_image)
+
+        db.session.commit()
+
+        flash("Successfully updated your profile picture!", "success")
+        logger.info(f"Profile picture successfully updated for user '{user.username}'")
+    except Exception as e:
+        flash('An error occurred while uploading your profile picture. Please try again.', 'error')
+        logger.error(f"Error uploading profile picture for user '{user.username}': {e}")
+
+    return redirect(url_for(fallback_endpoint))
+
+
+# Reset user's profile picture to default image
+def reset_pfp(user: User, profile_image: ProfileImage, fallback_endpoint: str):
+    """
+    Resets the user's profile picture to the default image.
+    Uses `delete_old_profile_picture`.
+
+    Args:
+        user (User): The user resetting their profile picture.
+        profile_image (ProfileImage): The ProfileImage object associated with the user.
+        fallback_endpoint (str): The endpoint to redirect to in case of errors.
+
+    Returns:
+        werkzeug.wrappers.Response: Redirect response to the fallback endpoint.
+    """
+    if profile_image.filename == "default.png":
+        flash("Your profile image is already the default.", "info")
+        logger.info(f"User '{user.username}' tried to remove the default profile picture.")
+        return redirect(url_for(fallback_endpoint))
+
+    try:
+        # Remove the old profile picture and update the profile image record
+        delete_old_profile_picture(profile_image)
+        db.session.commit()
+
+        flash("Your profile picture has been reset to the default.", "success")
+        current_app.logger.info(f"Removed profile picture for user '{user.username}'")
+    except Exception as e:
+        flash("An error occurred while resetting your profile picture. Please try again later.", "error")
+        current_app.logger.error(f"Error removing profile picture for user '{user.username}': {e}")
+        return redirect(url_for(fallback_endpoint))
+
+    return redirect(url_for(fallback_endpoint))
+
+
+# To retrieve the correct url for the stored profile picture
+def get_image_url(user: User):
+    default_image = 'default.png'
+    image_url = url_for('static', filename=f"uploads/profile_pictures/{default_image}")
+
+    # Check if the user has a profile image and its source
+    if user.profile_images:
+        if user.profile_images.source == 'file_system':
+            # Build the full path to the image file
+            image_dir_path = current_app.config['UPLOADED_PROFILEPICTURES_DEST']
+            image_path = os.path.join(image_dir_path, user.profile_images.filename)
+            if os.path.exists(image_path):
+                image_url = url_for('static', filename=f'uploads/profile_pictures/{user.profile_images.filename}')
+            else:
+                current_app.logger.warning(f"Profile image for user {user.id} not found: {image_path}")
+        elif user.profile_images.source == 'google':
+            image_url = user.profile_images.google_url
+
+    return image_url
 
