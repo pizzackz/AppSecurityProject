@@ -24,21 +24,6 @@
 
                 <h2 class="mb-4">Update Profile</h2>
 
-                <!-- Display current plan inforamtion -->
-                {% if user.subscription_plan == 'premium' %}
-                <div>
-                    <p>Current Plan: <u>Premium</u> &lpar;<span id="subscription-days-left"></span>d left&rpar;</p>
-                    <button type="submit" name="action" value="renew_plan" class="btn btn-warning rounded-pill">Renew!</button>
-                </div>
-                {% elif user.subscription_plan == 'standard' %}
-                <div>
-                    <p>Current Plan: <u>Standard</u></p>
-                    <button type="submit" name="action" value="upgrade_plan" class="btn btn-warning rounded-pill">Upgrade!</button>
-                </div>
-                {% endif %}
-
-                <br>
-
                 <!-- Profile Picture Section -->
                 <div class="mb-3">
                     <img src="{{ image }}" alt="Current profile picture" class="img-thumbnail rounded-circle" />
@@ -47,6 +32,7 @@
                     {% if not user.google_id %}
                         <div id="image">
                             {{ render_field(form.profile_picture, class="form-control") }}
+                            <br>
                             <button type="submit" name="action" value="reset_profile_picture" class="btn btn-danger">Reset</button>
                             <button type="submit" name="action" value="upload_profile_picture" class="btn btn-primary">Edit</button>
                         </div>
@@ -55,12 +41,19 @@
                     {% endif %}
                 </div>
 
+                <!-- Button to send admin key to admin's email -->
+                <div class="send-admin-key-button">
+                    <button type="submit" name="action" value="send_admin_key" class="btn btn-warning rounded-pill">Send admin key</button>
+                </div>
+
+                <br>
+
                 <!-- Link/ unlink google account message -->
                 <div class="mb-3">
                     <p>Do note that you are not allowed to change your username here if your account has been linked to your google account.</p>
                     
                     {% if user.google_id %}
-                        <p>If you want to unlink your google account, click <a href="{{ url_for('member_profile_bp.profile', action='unlink_account') }}">here</a>.</p>
+                        <p>If you want to unlink your google account, click <a href="{{ url_for('admin_profile_bp.profile', action='unlink_account') }}">here</a>.</p>
                     {% else %}
                         <p>If you wish to link to your Google account, choose to Sign-in with Google in the future.</p>
                     {% endif %}
@@ -106,9 +99,9 @@
                 <!-- Allow setting of password if user has no password & is google linked -->
                 <div class="mb-3">
                     {% if user.password_hash %}
-                        <p>Click <a href="{{ url_for('member_profile_bp.profile', action='reset_password') }}">here</a> to change your password.</p>
+                        <p>Click <a href="{{ url_for('admin_profile_bp.profile', action='reset_password') }}">here</a> to change your password.</p>
                     {% elif user.google_id %}
-                        <p>We highly recommend setting a password <a href="{{ url_for('member_profile_bp.profile', action='set_password') }}">here</a> so you can also login through normal means without using your Google account.</p>
+                        <p>We highly recommend setting a password <a href="{{ url_for('admin_profile_bp.profile', action='set_password') }}">here</a> so you can also login through normal means without using your Google account.</p>
                     {% endif %}
                 </div>
 
@@ -122,33 +115,8 @@
                     <button type="submit" class="btn btn-primary rounded-pill" name="action" value="next">Next</button>
                 </div>
 
-                <!-- TODO: Subscription cancel link -->
-                {% if user.subscription_plan == 'premium' %}
-                    <a href="{{ url_for('member_profile_bp.profile', action='cancel_plan') }}">I want to cancel the subscription plan.</a>
-                {% endif %}
-
             </form>
         </div>
     </div>
 </div>
-{% endblock %}
-
-
-{% block scripts %}
-    {{ super() }}
-    <script nonce="{{ nonce }}">
-        document.addEventListener('DOMContentLoaded', function() {
-            // Function to calculate the difference in days between two dates
-            function calculateDateDifference(dateString, elementId) {
-                var currentDate = new Date();  // Get the current date
-                var providedDate = new Date(dateString.replace(' ', 'T'));  // Ensure ISO format
-                var diffInTime = providedDate - currentDate;
-                var diffInDays = Math.ceil(diffInTime / (1000 * 3600 * 24));
-                document.getElementById(elementId).innerText = diffInDays;
-            }
-
-            // Use the user.subscription_end_date passed from the backend
-            calculateDateDifference('{{ user.subscription_end_date }}', 'subscription-days-left');
-        });
-    </script>
 {% endblock %}

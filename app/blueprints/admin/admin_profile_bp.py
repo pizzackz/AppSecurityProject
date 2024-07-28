@@ -12,28 +12,28 @@ from flask_login import login_required, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import db
-from app.models import User, Member, ProfileImage
+from app.models import User, Admin, ProfileImage
 from app.forms.profile_forms import MemberProfileForm
 from app.forms.auth_forms import OtpForm, ResetPasswordForm, PasswordForm
-from app.utils import clean_input, generate_otp, send_email, check_auth_stage, check_jwt_values, check_member, clear_unwanted_session_keys, get_image_url, upload_pfp, reset_pfp
+from app.utils import clean_input, generate_otp, send_email, check_auth_stage, check_jwt_values, check_admin, clear_unwanted_session_keys, get_image_url, upload_pfp, reset_pfp
 
 
-member_profile_bp: Blueprint = Blueprint("member_profile_bp", __name__, url_prefix="/profile")
+admin_profile_bp: Blueprint = Blueprint("admin_profile_bp", __name__, url_prefix="/admin/profile")
 logger: Logger = logging.getLogger('tastefully')
 
 # Initialise variables
-TEMPLATE_FOLDER = "member/profile"
+TEMPLATE_FOLDER = "admin/profile"
 ESSENTIAL_KEYS = {'_user_id', '_fresh', '_id'}
 
 
 # Base profile route
-@member_profile_bp.route("/", methods=['GET', 'POST'])
+@admin_profile_bp.route("/", methods=['GET', 'POST'])
 @login_required
 def profile():
     clear_unwanted_session_keys(ESSENTIAL_KEYS)
 
-    # Check if user is member
-    check = check_member(fallback_endpoint='login_auth_bp.login')
+    # Check if user is admin
+    check = check_admin(fallback_endpoint='login_auth_bp.login')
     if check:
         return check
     
@@ -41,12 +41,12 @@ def profile():
     print(f"action = {action}")
 
     # Fetch complete user data from the database
-    user = Member.query.filter_by(id=current_user.id).first()
+    user = Admin.query.filter_by(id=current_user.id).first()
 
     # Check if user doesn't exist
     if not user:
         flash("An unexpected error occurred. Please log in again.", "error")
-        logger.warning(f"Anonymous user tried entering member profile page without an existing user id")
+        logger.warning(f"Anonymous user tried entering admin profile page without an existing user id")
         return redirect(url_for('login_auth_bp.login'))
 
     # Redirect to allow reset of password or setting of password (for google sign-in users)
@@ -60,7 +60,7 @@ def profile():
             update_option = 'set_password'
 
         # Store jwt data
-        response = redirect(url_for('member_profile_bp.send_otp'))
+        response = redirect(url_for('admin_profile_bp.send_otp'))
         identity = {'email': user.email}
         token = create_access_token(identity=identity, additional_claims={"update_option": update_option})
         set_access_cookies(response, token)
@@ -81,43 +81,19 @@ def profile():
             flash("An error occurred while trying to unlink your Google account. Please try again later.", "error")
             logger.error(f"Unsuccessful unlinking user '{user.username}' from their Google account: {e}")
 
-        return redirect(url_for("member_profile_bp.profile"))
+        return redirect(url_for("admin_profile_bp.profile"))
 
-    # Redirect to handle subscrition plan actions (upgrade to premium, renew premium)
-    if action in ("renew_plan", "upgrade_plan"):
-        clear_unwanted_session_keys(ESSENTIAL_KEYS)
-        endpoint = "member_subscription_bp.plan_select"
-
-        if action == "renew_plan":
-            response = redirect(url_for(endpoint, action="renew_plan"))
-        elif action == "upgrade_plan":
-            response = redirect(url_for(endpoint, action="upgrade_plan"))
-        else:
-            response = redirect(url_for(endpoint, action="cancel_plan"))
-
-        return response
-    
-    # Handle proper cancellation of premium subscription plan
-    if action == "cancel_plan":
-        try:
-            user.subscription_plan = "standard"
-            user.subscription_end_date = None
-            db.session.commit()
-
-            flash("Your subscription has successfully been cancelled!", "success")
-            logger.info(f"User '{user.username}' has successfully cancelled their subscription.")
-        except Exception as e:
-            flash("An erorr occurred while trying to cancel your subscription. Please try again later.", "error")
-            logger.error(f"Error tring to cancel subscription for user '{user.username}': {e}")
-        return redirect(url_for("member_profile_bp"))
+    # Redirect to handle sending & possibly refreshing of admin key
+    if action == "send_admin_key":
+        return redirect(url_for("admin_profile_bp.send_admin_key"))
 
     form = MemberProfileForm()
-    
+
     # Force refresh if clicked on 'revert'
     if request.method == "POST" and action == "revert":
         flash("All changes made were reverted!", "success")
         logger.info(f"User '{user.username}' reverted profile details changes.")
-        return redirect(url_for("member_profile_bp.profile"))
+        return redirect(url_for("admin_profile_bp.profile"))
 
     # Handle profile picture upload/ reset
     if request.method == "POST" and action in ("upload_profile_picture", "reset_profile_picture") and form.validate_on_submit():
@@ -125,20 +101,20 @@ def profile():
         if user.google_id:
             flash("Your profile picture cannot be removed since you are linked to Google.", "info")
             logger.info(f"User '{user.username}' tried to update their profile picture despite being linked to google.")
-            return redirect(url_for("member_profile_bp.profile"))
-        
+            return redirect(url_for("admin_profile_bp.profile"))
+
         profile_image = ProfileImage.query.get(user.id)
         # Check if profile image record exists
         if not profile_image:
             flash("An error occurred. Please try again later.", "error")
             logger.error(f"Couldn't find profile image record for '{user.username}'.")
-            return redirect(url_for('member_profile_bp.profile'))
+            return redirect(url_for('admin_profile_bp.profile'))
 
         # Call appropriate functions
         if action == "upload_profile_picture":
-            return upload_pfp(user, profile_image, form.profile_picture.data, "member_profile_bp.profile")
+            return upload_pfp(user, profile_image, form.profile_picture.data, "admin_profile_bp.profile")
         elif action == "reset_profile_picture":
-            return reset_pfp(user, profile_image, "member_profile_bp.profile")
+            return reset_pfp(user, profile_image, "admin_profile_bp.profile")
 
     # Basic form detail submission
     if request.method == "POST" and action == "next" and form.validate_on_submit():
@@ -162,7 +138,7 @@ def profile():
 
             flash(flash_message, "error")
             logger.warning(log_message)
-            return redirect(url_for("member_profile_bp.profile"))
+            return redirect(url_for("admin_profile_bp.profile"))
 
         # Retrieve inputs
         username = form.username.data
@@ -184,7 +160,7 @@ def profile():
             if existing_user:
                 flash("Username is already in use. Please choose another one.", "error")
                 logger.warning(f"User '{user.username}' tried to update their username to an existing username '{username}'.")
-                return redirect(url_for("member_profile_bp.profile"))
+                return redirect(url_for("admin_profile_bp.profile"))
             else:
                 updated_data['username'] = clean_input(username)
         if changed_phone_number:
@@ -197,10 +173,10 @@ def profile():
         if not updated_data:
             flash("Please update at least one of the fields to proceed.", "info")
             logger.info(f"User '{current_user.username}' tried to submit empty form when updating profile")
-            return redirect(url_for("member_profile_bp.profile"))
+            return redirect(url_for("admin_profile_bp.profile"))
 
         # Store data in jwt
-        response = redirect(url_for('member_profile_bp.send_otp'))
+        response = redirect(url_for('admin_profile_bp.send_otp'))
         identity = {'email': user.email}
         claims = {"updated_data": updated_data, "update_option": "basic"}
         token = create_access_token(identity=identity, additional_claims=claims)
@@ -214,17 +190,17 @@ def profile():
 
     image_url = get_image_url(user)
 
-    # Render the base member profile template
+    # Render the base admin profile template
     return render_template(f"{TEMPLATE_FOLDER}/profile.html", form=form, user=user, image=image_url)
 
 
 # Send otp route
-@member_profile_bp.route("/send_otp", methods=['GET'])
+@admin_profile_bp.route("/send_otp", methods=['GET'])
 @jwt_required()
 @login_required
 def send_otp():
-    # Check if the user is a member
-    check = check_member(fallback_endpoint='login_auth_bp.login')
+    # Check if the user is a admin
+    check = check_admin(fallback_endpoint='login_auth_bp.login')
     if check:
         return check
 
@@ -232,13 +208,13 @@ def send_otp():
     if 'profile_update_stage' not in session:
         flash("Your session has expired. Please try again.", "error")
         logger.error(f"Session expired")
-        return redirect(url_for('member_profile_bp.profile'))
+        return redirect(url_for('admin_profile_bp.profile'))
 
     # Check whether auth stage correct (profile_update_stage == send_otp or verify_email)
     check = check_auth_stage(
         auth_process="profile_update_stage",
         allowed_stages=['send_otp', 'verify_email'],
-        fallback_endpoint='member_profile_bp.profile',
+        fallback_endpoint='admin_profile_bp.profile',
         flash_message="Your session has expired. Please try again.",
         log_message="Invalid profile update stage",
         keys_to_keep=ESSENTIAL_KEYS
@@ -250,7 +226,7 @@ def send_otp():
     check_jwt = check_jwt_values(
         required_identity_keys=['email'],
         required_claims=["update_option"],
-        fallback_endpoint='member_profile_bp.profile',
+        fallback_endpoint='admin_profile_bp.profile',
         flash_message="An error occurred. Please try again later.",
         keys_to_keep=ESSENTIAL_KEYS
     )
@@ -263,7 +239,7 @@ def send_otp():
     allowed_options = ('basic', 'set_password', 'reset_password', 'change_profile_picture')
     if update_option not in allowed_options:
         clear_unwanted_session_keys(ESSENTIAL_KEYS)
-        response = make_response(redirect(url_for("member_profile_bp.profile")))
+        response = make_response(redirect(url_for("admin_profile_bp.profile")))
         unset_jwt_cookies(response)
         flash("An error occurred. Please try again later.", 'error')
         logger.error(f"Attempted to verify email without allowed update option. Update option = '{update_option}'")
@@ -273,7 +249,7 @@ def send_otp():
     updated_data = jwt.get("updated_data")
     if update_option == "basic" and not updated_data:
         clear_unwanted_session_keys(ESSENTIAL_KEYS)
-        response = make_response(redirect(url_for("member_profile_bp.profile")))
+        response = make_response(redirect(url_for("admin_profile_bp.profile")))
         unset_jwt_cookies(response)
         flash("An error occurred. Please try again later.", 'error')
         logger.error(f"Attempted to verify email to update basic data without updated data.")
@@ -290,7 +266,7 @@ def send_otp():
     # Update JWT token with OTP and expiry
     claims = {"otp_data": otp_data, "updated_data": updated_data, "update_option": update_option}
     new_token = create_access_token(identity=identity, additional_claims=claims)
-    response = redirect(url_for('member_profile_bp.verify_email'))
+    response = redirect(url_for('admin_profile_bp.verify_email'))
     set_access_cookies(response, new_token)
 
     # Try sending email using utility send_email function
@@ -324,12 +300,12 @@ def send_otp():
 
 
 # Verify email route
-@member_profile_bp.route("/verify_email", methods=["GET", "POST"])
+@admin_profile_bp.route("/verify_email", methods=["GET", "POST"])
 @jwt_required()
 @login_required
 def verify_email():
-    # Check if the user is a member
-    check = check_member(fallback_endpoint='login_auth_bp.login')
+    # Check if the user is a admin
+    check = check_admin(fallback_endpoint='login_auth_bp.login')
     if check:
         return check
 
@@ -337,7 +313,7 @@ def verify_email():
     if 'action' in request.args and request.args.get('action') == 'back':
         # Clear session and JWT data
         session.pop("profile_update_stage", None)
-        response = redirect(url_for('member_profile_bp.profile'))
+        response = redirect(url_for('admin_profile_bp.profile'))
         unset_jwt_cookies(response)
         flash("Profile details update canceled.", "info")
         logger.info("User opted to cancel the profile details update process.")
@@ -347,7 +323,7 @@ def verify_email():
     check = check_auth_stage(
         auth_process="profile_update_stage",
         allowed_stages=['verify_email'],
-        fallback_endpoint='member_profile_bp.profile',
+        fallback_endpoint='admin_profile_bp.profile',
         flash_message="Your session has expired. Please try again.",
         log_message="Invalid profile update stage",
         keys_to_keep=ESSENTIAL_KEYS
@@ -359,7 +335,7 @@ def verify_email():
     check_jwt = check_jwt_values(
         required_identity_keys=['email'],
         required_claims=['otp_data', 'update_option'],
-        fallback_endpoint='member_profile_bp.profile',
+        fallback_endpoint='admin_profile_bp.profile',
         flash_message="An error occurred. Please try again later.",
         keys_to_keep=ESSENTIAL_KEYS
     )
@@ -372,7 +348,7 @@ def verify_email():
     allowed_options = ('basic', 'set_password', 'reset_password', 'change_profile_picture')
     if update_option not in allowed_options:
         clear_unwanted_session_keys(ESSENTIAL_KEYS)
-        response = make_response(redirect(url_for("member_profile_bp.profile")))
+        response = make_response(redirect(url_for("admin_profile_bp.profile")))
         unset_jwt_cookies(response)
         flash("An error occurred. Please try again later.", 'error')
         logger.error(f"Attempted to verify email without allowed update option. Update option = '{update_option}'")
@@ -382,7 +358,7 @@ def verify_email():
     updated_data = jwt.get("updated_data")
     if update_option == "basic" and not updated_data:
         clear_unwanted_session_keys(ESSENTIAL_KEYS)
-        response = make_response(redirect(url_for("member_profile_bp.profile")))
+        response = make_response(redirect(url_for("admin_profile_bp.profile")))
         unset_jwt_cookies(response)
         flash("An error occurred. Please try again later.", 'error')
         logger.error(f"Attempted to verify email to update basic data without updated data.")
@@ -393,7 +369,7 @@ def verify_email():
     otp_data = jwt.get('otp_data')
     otp_expiry = datetime.fromisoformat(otp_data['expiry'])
     if otp_expiry < datetime.now(timezone.utc):
-        return redirect(url_for('member_profile_bp.send_otp', expired_otp=True))
+        return redirect(url_for('admin_profile_bp.send_otp', expired_otp=True))
     
     # Check if the user account exists
     identity = get_jwt_identity()
@@ -401,7 +377,7 @@ def verify_email():
     if not user:
         flash("An error occurred. Please try updating your details again.", "error")
         logger.error(f"User account not found for email: {identity['email']}")
-        return redirect(url_for('member_profile_bp.profile'))
+        return redirect(url_for('admin_profile_bp.profile'))
 
     form = OtpForm()
     if request.method == "POST" and form.validate_on_submit():
@@ -413,13 +389,13 @@ def verify_email():
         if hashed_user_otp != otp_data['otp']:
             flash("Invalid OTP. Please try again.", "error")
             logger.warning(f"Invalid OTP attempt for user: {user.username}")
-            return redirect(url_for("member_profile_bp.verify_email"))
+            return redirect(url_for("admin_profile_bp.verify_email"))
         
         # Prepare for redirection based on update_option
         # Retrieving and updating jwt identity and additional claims
         identity['email_verified'] = True
         claims = {'update_option': update_option}
-        response = redirect(url_for("member_profile_bp.save_changes"))
+        response = redirect(url_for("admin_profile_bp.save_changes"))
 
         # Saving update stage according to update option
         if update_option == "basic":
@@ -427,13 +403,13 @@ def verify_email():
             claims['updated_data'] = updated_data
         elif update_option == "set_password":
             session['profile_update_stage'] = 'set_password'
-            response = redirect(url_for("member_profile_bp.set_password"))
+            response = redirect(url_for("admin_profile_bp.set_password"))
         elif update_option == "reset_password":
             session['profile_update_stage'] = 'reset_password'
-            response = redirect(url_for("member_profile_bp.reset_password"))
+            response = redirect(url_for("admin_profile_bp.reset_password"))
         elif update_option == "change_profile_picture":
             session['profile_update_stage'] = 'change_profile_picture'
-            response = redirect(url_for("member_profile_bp.change_profile_picture"))
+            response = redirect(url_for("admin_profile_bp.change_profile_picture"))
         
         # Set jwt token & redirect
         new_token = create_access_token(identity=identity, additional_claims=claims)
@@ -447,12 +423,12 @@ def verify_email():
 
 
 # Save (basic) changes route
-@member_profile_bp.route("/save_changes", methods=['GET'])
+@admin_profile_bp.route("/save_changes", methods=['GET'])
 @jwt_required()
 @login_required
 def save_changes():
-    # Check if the user is a member
-    check = check_member(fallback_endpoint='login_auth_bp.login')
+    # Check if the user is a admin
+    check = check_admin(fallback_endpoint='login_auth_bp.login')
     if check:
         return check
 
@@ -460,7 +436,7 @@ def save_changes():
     check = check_auth_stage(
         auth_process="profile_update_stage",
         allowed_stages=['save_changes'],
-        fallback_endpoint='member_profile_bp.profile',
+        fallback_endpoint='admin_profile_bp.profile',
         flash_message="Your session has expired. Please try again.",
         log_message="Invalid profile update stage",
         keys_to_keep=ESSENTIAL_KEYS
@@ -472,7 +448,7 @@ def save_changes():
     check_jwt = check_jwt_values(
         required_identity_keys=['email', 'email_verified'],
         required_claims=['updated_data', 'update_option'],
-        fallback_endpoint='member_profile_bp.profile',
+        fallback_endpoint='admin_profile_bp.profile',
         flash_message="An error occurred. Please try again later.",
         keys_to_keep=ESSENTIAL_KEYS
     )
@@ -484,7 +460,7 @@ def save_changes():
     update_option = jwt.get("update_option")
     if update_option != 'basic':
         clear_unwanted_session_keys(ESSENTIAL_KEYS)
-        response = make_response(redirect(url_for("member_profile_bp.profile")))
+        response = make_response(redirect(url_for("admin_profile_bp.profile")))
         unset_jwt_cookies(response)
         flash("An error occurred. Please try again later.", 'error')
         logger.error(f"User {current_user.username}' attempted to save basic profile changes with incorrect update option '{update_option}'.")
@@ -496,7 +472,7 @@ def save_changes():
     if not user:
         flash("An error occurred. Please try updating your details again.", "error")
         logger.error(f"User account not found for email: {identity['email']}")
-        return redirect(url_for('member_profile_bp.profile'))
+        return redirect(url_for('admin_profile_bp.profile'))
     
     # Update user data according to data in jwt claims
     updated_data = jwt.get("updated_data", {})
@@ -522,9 +498,9 @@ def save_changes():
         flash_message = ["An error occurred while updating your profile. Please try again later.", "error"]
         log_message = [f"Error updating profile for user '{user.username}': {e}", "error"]
 
-    # Clear member update stage data & jwt data, redirect back to member profile
+    # Clear admin update stage data & jwt data, redirect back to admin profile
     session.pop("profile_update_stage")
-    response = redirect(url_for('member_profile_bp.profile'))
+    response = redirect(url_for('admin_profile_bp.profile'))
     unset_jwt_cookies(response)
     
     # Display messages
@@ -538,12 +514,12 @@ def save_changes():
 
 
 # Set password route - For users who logged in via Google Sign-in without passwords
-@member_profile_bp.route("/set_password", methods=['GET', 'POST'])
+@admin_profile_bp.route("/set_password", methods=['GET', 'POST'])
 @jwt_required()
 @login_required
 def set_password():
-    # Check if user is member
-    check = check_member(fallback_endpoint='login_auth_bp.login')
+    # Check if user is admin
+    check = check_admin(fallback_endpoint='login_auth_bp.login')
     if check:
         return check
 
@@ -551,7 +527,7 @@ def set_password():
     if 'action' in request.args and request.args.get('action') == 'back':
         # Clear session and JWT data
         session.pop("profile_update_stage", None)
-        response = redirect(url_for('member_profile_bp.profile'))
+        response = redirect(url_for('admin_profile_bp.profile'))
         unset_jwt_cookies(response)
         flash("Setting of password canceled.", "info")
         logger.info("User opted to restart cancel password setting.")
@@ -561,7 +537,7 @@ def set_password():
     check = check_auth_stage(
         auth_process="profile_update_stage",
         allowed_stages=['set_password'],
-        fallback_endpoint='member_profile_bp.profile',
+        fallback_endpoint='admin_profile_bp.profile',
         flash_message="Your session has expired. Please try again.",
         log_message="Invalid profile update stage",
         keys_to_keep=ESSENTIAL_KEYS
@@ -573,7 +549,7 @@ def set_password():
     check_jwt = check_jwt_values(
         required_identity_keys=['email', 'email_verified'],
         required_claims=['update_option'],
-        fallback_endpoint='member_profile_bp.profile',
+        fallback_endpoint='admin_profile_bp.profile',
         flash_message="An error occurred. Please try again later.",
         keys_to_keep=ESSENTIAL_KEYS
     )
@@ -585,7 +561,7 @@ def set_password():
     update_option = jwt.get("update_option")
     if update_option != 'set_password':
         clear_unwanted_session_keys(ESSENTIAL_KEYS)
-        response = make_response(redirect(url_for("member_profile_bp.profile")))
+        response = make_response(redirect(url_for("admin_profile_bp.profile")))
         unset_jwt_cookies(response)
         flash("An error occurred. Please try again later.", 'error')
         logger.error(f"User {current_user.username}' attempted to set their password with incorrect update option '{update_option}'.")
@@ -597,7 +573,7 @@ def set_password():
     if not user:
         flash("An error occurred. Please try setting your password again.", "error")
         logger.error(f"User account not found for email: {identity['email']}")
-        return redirect(url_for('member_profile_bp.profile'))
+        return redirect(url_for('admin_profile_bp.profile'))
     
     form = PasswordForm()
 
@@ -609,7 +585,7 @@ def set_password():
         if user.password_hash and check_password_hash(user.password_hash, password):
             flash("The new password cannot be the same as your current password. Please choose a different password.", "error")
             logger.warning(f"User {user.email} attempted to reuse their current password when resetting.")
-            return redirect(url_for('member_profile_bp.set_password'))
+            return redirect(url_for('admin_profile_bp.set_password'))
         
         # Update user's password
         try:
@@ -622,9 +598,9 @@ def set_password():
             flash_message = ["An error occurred when saving your password. Please try again later", "error"]
             log_message = [f"Error saving password for user '{user.username}': {e}", "error"]
         
-        # Clear member update stage data & jwt data, redirect back to member profile
+        # Clear admin update stage data & jwt data, redirect back to admin profile
         session.pop("profile_update_stage")
-        response = redirect(url_for('member_profile_bp.profile'))
+        response = redirect(url_for('admin_profile_bp.profile'))
         unset_jwt_cookies(response)
 
         # Display messages
@@ -643,12 +619,12 @@ def set_password():
 
 
 # Reset password route
-@member_profile_bp.route("/reset_password", methods=['GET', 'POST'])
+@admin_profile_bp.route("/reset_password", methods=['GET', 'POST'])
 @jwt_required()
 @login_required
 def reset_password():
-    # Check if user is member
-    check = check_member(fallback_endpoint='login_auth_bp.login')
+    # Check if user is admin
+    check = check_admin(fallback_endpoint='login_auth_bp.login')
     if check:
         return check
 
@@ -656,7 +632,7 @@ def reset_password():
     if 'action' in request.args and request.args.get('action') == 'back':
         # Clear session and JWT data
         session.pop("profile_update_stage", None)
-        response = redirect(url_for('member_profile_bp.profile'))
+        response = redirect(url_for('admin_profile_bp.profile'))
         unset_jwt_cookies(response)
         flash("Password reset canceled.", "info")
         logger.info("User opted to restart cancel password reset.")
@@ -666,7 +642,7 @@ def reset_password():
     check = check_auth_stage(
         auth_process="profile_update_stage",
         allowed_stages=['reset_password'],
-        fallback_endpoint='member_profile_bp.profile',
+        fallback_endpoint='admin_profile_bp.profile',
         flash_message="Your session has expired. Please try again.",
         log_message="Invalid profile update stage",
         keys_to_keep=ESSENTIAL_KEYS
@@ -678,7 +654,7 @@ def reset_password():
     check_jwt = check_jwt_values(
         required_identity_keys=['email', 'email_verified'],
         required_claims=['update_option'],
-        fallback_endpoint='member_profile_bp.profile',
+        fallback_endpoint='admin_profile_bp.profile',
         flash_message="An error occurred. Please try again later.",
         keys_to_keep=ESSENTIAL_KEYS
     )
@@ -690,7 +666,7 @@ def reset_password():
     update_option = jwt.get("update_option")
     if update_option != 'reset_password':
         clear_unwanted_session_keys(ESSENTIAL_KEYS)
-        response = make_response(redirect(url_for("member_profile_bp.profile")))
+        response = make_response(redirect(url_for("admin_profile_bp.profile")))
         unset_jwt_cookies(response)
         flash("An error occurred. Please try again later.", 'error')
         logger.error(f"User {current_user.username}' attempted to reset their password with incorrect update option '{update_option}'.")
@@ -702,7 +678,7 @@ def reset_password():
     if not user:
         flash("An error occurred. Please try resetting your password again.", "error")
         logger.error(f"User account not found for email: {identity['email']}")
-        return redirect(url_for('member_profile_bp.profile'))
+        return redirect(url_for('admin_profile_bp.profile'))
 
     form = ResetPasswordForm()
 
@@ -715,13 +691,13 @@ def reset_password():
         if not check_password_hash(user.password_hash, curr_password):
             flash("The current password you entered is incorrect. Please try again.", "error")
             logger.warning(f"User {user.email} entered an incorrect current password")
-            return redirect(url_for('member_profile_bp.reset_password'))
+            return redirect(url_for('admin_profile_bp.reset_password'))
 
         # Check if the new password is the same as the current password
         if check_password_hash(user.password_hash, new_password):
             flash("Your new password cannot be the same as your current password.", "error")
             logger.warning(f"User {user.username} attempted to set the same password as the current one")
-            return redirect(url_for('member_profile_bp.reset_password'))
+            return redirect(url_for('admin_profile_bp.reset_password'))
 
         # Update user's password
         try:
@@ -734,9 +710,9 @@ def reset_password():
             flash_message = ["An error occurred when resetting your password. Please try again later", "error"]
             log_message = [f"Error saving password for user '{user.username}' when resetting it: {e}", "error"]
         
-        # Clear member update stage data & jwt data, redirect back to member profile
+        # Clear admin update stage data & jwt data, redirect back to admin profile
         session.pop("profile_update_stage")
-        response = redirect(url_for('member_profile_bp.profile'))
+        response = redirect(url_for('admin_profile_bp.profile'))
         unset_jwt_cookies(response)
 
         # Display messages
@@ -752,4 +728,54 @@ def reset_password():
 
     # Render the reset password template
     return render_template(f"{TEMPLATE_FOLDER}/reset_password.html", form=form, user=user, image=image_url)
+
+
+# Send admin key route
+@admin_profile_bp.route("/send_admin_key", methods=['GET'])
+@login_required
+def send_admin_key():
+    # Check if the user is a admin
+    check = check_admin(fallback_endpoint='login_auth_bp.login')
+    if check:
+        return check
+
+    try:
+        # Fetch the admin user
+        user = Admin.query.filter_by(id=current_user.id, username=current_user.username, email=current_user.email).first()
+
+        if not user:
+            flash("User not found.", "error")
+            logger.error(f"User not found in the database for ID: {current_user.id}")
+            return redirect(url_for('login_auth_bp.login'))
+
+        # Check if the admin key is expired or near expiry and regenerate if necessary
+        if not user.admin_key_expires_at or user.admin_key_expires_at < datetime.utcnow():
+            user.generate_admin_key()
+            db.session.commit()
+            logger.info(f"Admin key has been re-generated for admin user '{user.username}'.")
+
+        # Prepare the email body
+        email_body = (
+            f"Dear {user.username},\n\n"
+            f"Here is your admin key: {user.admin_key}\n"
+            f"Please keep this key secure and do not share it with anyone.\n"
+            f"Remember to delete this email after securely storing the key.\n\n"
+            f"Best regards,\n"
+            f"tastefully"
+        )
+
+        # Send the email
+        if send_email(user.email, "Your Admin Key", email_body):
+            flash("Your personal admin key has been sent to your email.", "info")
+            logger.info(f"Admin user '{user.username}' has been sent their personal admin key.")
+        else:
+            flash("An error occurred while sending your admin key. Please try again later.", "error")
+            logger.error(f"Failed to send email containing admin key to user '{user.username}'.")
+
+    except Exception as e:
+        db.session.rollback()
+        flash("An unexpected error occurred. Please try again later.", "error")
+        logger.error(f"An error occurred while processing admin key for user '{current_user.username}': {e}")
+
+    return redirect(url_for("admin_profile_bp.profile"))
 

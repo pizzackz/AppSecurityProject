@@ -1,7 +1,7 @@
 import logging
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash
-from app.models import db, User, Admin, Member, MenuItem
+from app.models import db, Admin, Member, MenuItem, MasterKey
 
 
 # Set up logging
@@ -14,9 +14,30 @@ def seed_database():
     """Create all database tables and seed the database with test data."""
     db.create_all()
     # create_menu_items()
-    # create_admins()
-    create_members()
+    # create_fake_master_keys(5)
+    create_admins()
+    # create_members()
     logging.info("Database initialised and test data added.")
+
+
+# Create fake master keys for simplicity, remove them later
+def create_fake_master_keys(num_keys=5):
+    """
+    Generate a specified number of fake master keys with a 30-day expiration.
+    
+    Args:
+        num_keys (int): Number of fake master keys to generate.
+    """
+    try:
+        for _ in range(num_keys):
+            new_key = MasterKey.generate_master_key()
+            db.session.add(new_key)
+        
+        db.session.commit()
+        print(f"Successfully created {num_keys} fake master keys.")
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error creating fake master keys: {e}")
 
 
 # Create test data for menu items
@@ -120,8 +141,9 @@ def create_admins():
     # Check if the test data already exists to avoid duplicate entries
     if Admin.query.count() == 0:
         # Create sample admin
-        Admin.create(username="admin1", email="admin1@example.com", password_hash="hashed_password1"),
-        Admin.create(username="admin2", email="admin2@example.com", password_hash="hashed_password2")
+        password = "password"
+        Admin.create(username="admin1", email="admin1@gmail.com", password_hash=generate_password_hash(password)),
+        Admin.create(username="admin2", email="admin2@gmail.com", password_hash=generate_password_hash(password))
 
         # Commit the session to the database
         db.session.commit()
@@ -155,13 +177,13 @@ def create_members():
         sample_members = [
             Member.create(
                 username="member1",
-                email="member1@example.com",
+                email="member1@gmail.com",
                 subscription_plan="premium",
                 password_hash=hashed_password
             ),
             Member.create(
                 username="member2",
-                email="member2@example.com",
+                email="member2@gmail.com",
                 subscription_plan="standard",
                 password_hash=hashed_password
             ),

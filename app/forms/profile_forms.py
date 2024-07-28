@@ -3,7 +3,7 @@ from flask_wtf.file import FileAllowed, FileRequired
 from wtforms import Form, StringField, FileField, TelField
 from wtforms.validators import Length, Optional
 
-from app.forms.validators import unique_username, validate_phone_number, validate_postal_code, validate_file_size_limit
+from app.forms.validators import validate_phone_number, validate_postal_code, validate_file_size_limit
 from app import profile_pictures
 
 

@@ -36,3 +36,19 @@ WHERE login_details.id = %s]
 2024-07-20 16:52:03,037 - flask_app - INFO - Members test data already exists.
 2024-07-20 16:53:18,037 - flask_app - INFO - Deleted 0 rows from Member table.
 2024-07-20 16:53:18,251 - flask_app - INFO - Members test data added!
+2024-07-28 13:52:26,729 - flask_app - ERROR - An error occurred while clearing Admin table: (MySQLdb.OperationalError) (1054, "Unknown column 'admin.master_key_id' in 'field list'")
+[SQL: SELECT `admin`.id AS admin_id, user.id AS user_id, user.username AS user_username, user.email AS user_email, user.password_hash AS user_password_hash, user.google_id AS user_google_id, user.phone_number AS user_phone_number, user.address AS user_address, user.postal_code AS user_postal_code, user.created_at AS user_created_at, user.updated_at AS user_updated_at, user.type AS user_type, `admin`.master_key_id AS admin_master_key_id 
+FROM user INNER JOIN `admin` ON user.id = `admin`.id]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2024-07-28 13:53:36,096 - flask_app - INFO - Deleted 0 rows from Admin table.
+2024-07-28 13:53:36,302 - flask_app - INFO - Admins test data added!
+2024-07-28 14:37:02,406 - flask_app - INFO - Deleted 0 rows from Admin table.
+2024-07-28 14:37:02,639 - flask_app - INFO - Admins test data added!
+2024-07-28 14:48:38,699 - flask_app - INFO - Deleted 0 rows from Admin table.
+2024-07-28 14:48:39,280 - flask_app - INFO - Admins test data added!
+2024-07-28 14:49:15,564 - flask_app - INFO - Deleted 2 rows from Admin table.
+2024-07-28 14:49:16,013 - flask_app - INFO - Admins test data added!
+2024-07-28 15:56:48,624 - flask_app - INFO - Deleted 0 rows from Admin table.
+2024-07-28 15:56:49,044 - flask_app - INFO - Admins test data added!
+2024-07-28 15:58:07,830 - flask_app - INFO - Deleted 2 rows from Admin table.
+2024-07-28 15:58:08,283 - flask_app - INFO - Admins test data added!

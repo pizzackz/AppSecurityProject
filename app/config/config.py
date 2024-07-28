@@ -101,3 +101,6 @@ class Config:
     # File uploads configurations
     UPLOADED_PROFILEPICTURES_DEST = os.path.join(BASE_DIR, "static", "uploads", "profile_pictures")
 
+    # VirusTotal API key
+    VIRUSTOTAL_API_KEY = os.environ.get('VIRUSTOTAL_API_KEY')
+
