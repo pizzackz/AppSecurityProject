@@ -71,6 +71,8 @@ def profile():
     if action == "unlink_account" and user.google_id:
         try:
             user.google_id = None
+            user.profile_images.google_url = None
+            user.profile_images.source = "file_system"
             db.session.commit()
             flash("Successfully unlinked your Google account!", "success")
             logger.info(f"User '{user.username}' successfully unlinked their Google account.")
@@ -590,7 +592,7 @@ def set_password():
         password = form.password.data
 
         # Check if inputted password same as current password
-        if check_password_hash(user.password_hash, password):
+        if user.password_hash and check_password_hash(user.password_hash, password):
             flash("The new password cannot be the same as your current password. Please choose a different password.", "error")
             logger.warning(f"User {user.email} attempted to reuse their current password when resetting.")
             return redirect(url_for('member_profile_bp.set_password'))

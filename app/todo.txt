@@ -1,9 +1,10 @@
 General:
-    Write handlers for possible status codes (401, 404, 421, 500)
+    Write handlers for possible status codes (401, 404, 421, 429, 500)
     Review & enhance session handling mechanisms
     Allow messages to be displayed when accessing pages that user is not allowed to
 
 Models:
+    Implement daily generation of admin master key
     Add new column for ending date for premium members
     Write sql scripts for seeding of database
     Write a function to generate new user id
@@ -21,14 +22,11 @@ Login:
     Update login details wherever necessary
 
 Member Profile:
-    Implement VirusTotal for virus checking of profile picture uploads
     Subscription plan to include remaining days in templates
     Implement log out for active account using same username after successful reset of password
     Fix password reset save button not able to be disabled
 
 Admin Profile:
-    Similar to Member Profile but without subscription plan
-    Allow button to send master key to email
     Implement daily update of master key
     Implement log out for active account using same username after successful reset of password
     Fix password reset save button not able to be disabled

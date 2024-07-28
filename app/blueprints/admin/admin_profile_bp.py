@@ -18,7 +18,7 @@ from app.forms.auth_forms import OtpForm, ResetPasswordForm, PasswordForm
 from app.utils import clean_input, generate_otp, send_email, check_auth_stage, check_jwt_values, check_admin, clear_unwanted_session_keys, get_image_url, upload_pfp, reset_pfp
 
 
-admin_profile_bp: Blueprint = Blueprint("admin_profile_bp", __name__, url_prefix="/profile")
+admin_profile_bp: Blueprint = Blueprint("admin_profile_bp", __name__, url_prefix="/admin/profile")
 logger: Logger = logging.getLogger('tastefully')
 
 # Initialise variables
@@ -71,6 +71,8 @@ def profile():
     if action == "unlink_account" and user.google_id:
         try:
             user.google_id = None
+            user.profile_images.google_url = None
+            user.profile_images.source = "file_system"
             db.session.commit()
             flash("Successfully unlinked your Google account!", "success")
             logger.info(f"User '{user.username}' successfully unlinked their Google account.")
@@ -80,6 +82,10 @@ def profile():
             logger.error(f"Unsuccessful unlinking user '{user.username}' from their Google account: {e}")
 
         return redirect(url_for("admin_profile_bp.profile"))
+
+    # Redirect to handle sending & possibly refreshing of admin key
+    if action == "send_admin_key":
+        return redirect(url_for("admin_profile_bp.send_admin_key"))
 
     form = MemberProfileForm()
 
@@ -576,7 +582,7 @@ def set_password():
         password = form.password.data
 
         # Check if inputted password same as current password
-        if check_password_hash(user.password_hash, password):
+        if user.password_hash and check_password_hash(user.password_hash, password):
             flash("The new password cannot be the same as your current password. Please choose a different password.", "error")
             logger.warning(f"User {user.email} attempted to reuse their current password when resetting.")
             return redirect(url_for('admin_profile_bp.set_password'))
@@ -722,4 +728,54 @@ def reset_password():
 
     # Render the reset password template
     return render_template(f"{TEMPLATE_FOLDER}/reset_password.html", form=form, user=user, image=image_url)
+
+
+# Send admin key route
+@admin_profile_bp.route("/send_admin_key", methods=['GET'])
+@login_required
+def send_admin_key():
+    # Check if the user is a admin
+    check = check_admin(fallback_endpoint='login_auth_bp.login')
+    if check:
+        return check
+
+    try:
+        # Fetch the admin user
+        user = Admin.query.filter_by(id=current_user.id, username=current_user.username, email=current_user.email).first()
+
+        if not user:
+            flash("User not found.", "error")
+            logger.error(f"User not found in the database for ID: {current_user.id}")
+            return redirect(url_for('login_auth_bp.login'))
+
+        # Check if the admin key is expired or near expiry and regenerate if necessary
+        if not user.admin_key_expires_at or user.admin_key_expires_at < datetime.utcnow():
+            user.generate_admin_key()
+            db.session.commit()
+            logger.info(f"Admin key has been re-generated for admin user '{user.username}'.")
+
+        # Prepare the email body
+        email_body = (
+            f"Dear {user.username},\n\n"
+            f"Here is your admin key: {user.admin_key}\n"
+            f"Please keep this key secure and do not share it with anyone.\n"
+            f"Remember to delete this email after securely storing the key.\n\n"
+            f"Best regards,\n"
+            f"tastefully"
+        )
+
+        # Send the email
+        if send_email(user.email, "Your Admin Key", email_body):
+            flash("Your personal admin key has been sent to your email.", "info")
+            logger.info(f"Admin user '{user.username}' has been sent their personal admin key.")
+        else:
+            flash("An error occurred while sending your admin key. Please try again later.", "error")
+            logger.error(f"Failed to send email containing admin key to user '{user.username}'.")
+
+    except Exception as e:
+        db.session.rollback()
+        flash("An unexpected error occurred. Please try again later.", "error")
+        logger.error(f"An error occurred while processing admin key for user '{current_user.username}': {e}")
+
+    return redirect(url_for("admin_profile_bp.profile"))
 
