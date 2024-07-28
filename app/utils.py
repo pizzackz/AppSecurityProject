@@ -5,6 +5,7 @@ import bleach
 import logging
 import imghdr
 import hashlib
+import requests
 import uuid
 
 from logging import Logger
@@ -12,15 +13,18 @@ from flask import Response, session, redirect, url_for, flash, make_response, cu
 from flask_mail import Message
 from flask_login import current_user, logout_user
 from flask_jwt_extended import get_jwt, get_jwt_identity, unset_jwt_cookies
+from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 from typing import Optional, List, Set, Dict
 
 from app import db, profile_pictures
+from app.config.config import Config
 from app.models import User, ProfileImage
 
 
 # Initialise variables
 logger: Logger = logging.getLogger('tastefully')
+VIRUSTOTAL_API_KEY = Config.VIRUSTOTAL_API_KEY
 ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png']
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
@@ -449,6 +453,7 @@ def save_new_profile_picture(user_id: int, file, profile_image: ProfileImage):
     unique_filename = f"{unique_hash}{file_extension}"
 
     # Save the file
+    file.stream.seek(0)
     filename = profile_pictures.save(file, name=unique_filename)
 
     # Update the ProfileImage object
@@ -477,11 +482,19 @@ def upload_pfp(user: User, profile_image: ProfileImage, new_profile_picture, fal
         logger.info(f"User '{user.username}' tried to upload an empty image file.")
         return redirect(url_for(fallback_endpoint))
 
+    image_to_save = new_profile_picture
     try:
+        # Scan the new profile picture with VirusTotal
+        scan_result = scan_file_with_virustotal(new_profile_picture, VIRUSTOTAL_API_KEY)
+        if 'data' in scan_result and scan_result['data'].get('attributes', {}).get('last_analysis_stats', {}).get('malicious', 0) > 0:
+            flash('The uploaded file is potentially malicious and has not been saved.', 'error')
+            logger.warning(f"Potentially malicious file upload attempted by user '{user.username}'.")
+            return redirect(url_for(fallback_endpoint))
+
         # Remove the old profile picture if it exists
         delete_old_profile_picture(profile_image)
         # Save the new profile picture and update the profile image record
-        save_new_profile_picture(user.id, new_profile_picture, profile_image)
+        save_new_profile_picture(user.id, image_to_save, profile_image)
 
         db.session.commit()
 
@@ -548,3 +561,65 @@ def get_image_url(user: User):
 
     return image_url
 
+
+# Retrieve analysis report from virustotal
+def get_virustotal_analysis_report(analysis_id: str, api_key: str) -> dict:
+    """
+    Retrieve the analysis report from VirusTotal.
+
+    Args:
+        analysis_id (str): The analysis ID for the uploaded file.
+        api_key (str): The API key for VirusTotal.
+
+    Returns:
+        dict: The analysis report from VirusTotal.
+    """
+    # Prepare request url and header
+    url = f'https://www.virustotal.com/api/v3/analyses/{analysis_id}'
+    headers = {'x-apikey': api_key}
+
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(f"Error retrieving analysis report from VirusTotal: {response.status_code} {response.text}")
+    except Exception as e:
+        logger.error(f"Error retrieving analysis report from VirusTotal: {e}")
+        return {}
+
+
+# Scan file for potential virus
+def scan_file_with_virustotal(file: FileStorage, api_key: str) -> dict:
+    """
+    Scan a file with VirusTotal using a FileStorage object.
+
+    Args:
+        file (FileStorage): The file to be scanned.
+        api_key (str): The API key for VirusTotal.
+
+    Returns:
+        dict: The analysis results from VirusTotal.
+    """
+    # Prepare request url and header
+    url = 'https://www.virustotal.com/api/v3/files'
+    headers = {'x-apikey': api_key}
+
+    try:
+        # Prepare the file for upload
+        file.stream.seek(0)  # Ensure file stream is at the beginning
+        files = {'file': (file.filename, file.stream, file.content_type)}
+        response = requests.post(url, headers=headers, files=files)
+
+        if response.status_code == 200:
+            # File successfully uploaded, retrieve the analysis ID
+            analysis_id = response.json().get('data', {}).get('id')
+            if analysis_id:
+                return get_virustotal_analysis_report(analysis_id, api_key)
+            else:
+                raise Exception("No analysis ID received from VirusTotal.")
+        else:
+            raise Exception(f"Error uploading file to VirusTotal: {response.status_code} {response.text}")
+    except Exception as e:
+        logger.error(f"Error scanning file with VirusTotal: {e}")
+        return {}

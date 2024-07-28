@@ -1,4 +1,5 @@
-import secrets
+import random
+import base64
 import string
 import logging
 import hashlib
@@ -12,7 +13,6 @@ from sqlalchemy.sql import func
 from typing import Optional
 
 from app import db
-from app.config.config import Config
 
 # Initialise variables
 logger = logging.getLogger("tastefully")
@@ -103,10 +103,6 @@ class Member(User):
             if not acc_status:
                 raise Exception("Failed to create account status record for member")
 
-            login_details = LoginDetails.create(id=new_member.id)
-            if not login_details:
-                raise Exception("Failed to create login details record for member")
-
             profile_image = ProfileImage.create_by_google(id=new_member.id, google_url=google_image_url)
             if not profile_image:
                 raise Exception("Failed to create profile image record for member")
@@ -125,23 +121,17 @@ class Admin(User):
     __tablename__ = "admin"
 
     # ForeignKey reference to 'user.id' and primary key for 'admin'
-    id = Column(Integer, ForeignKey("user.id"), primary_key=True)
-    master_key = Column(String(64), default=lambda: Admin.generate_master_key(), nullable=False)
+    id = db.Column(Integer, ForeignKey("user.id"), primary_key=True)
+    admin_key = db.Column(String(255), nullable=True)
+    admin_key_expires_at = db.Column(DateTime, nullable=True)
 
     # Joined Table Inheritance polymorphic properties
     __mapper_args__ = {"polymorphic_identity": "admin"}
 
     def __repr__(self):
-        return f"<Admin(id='{self.id}', username='{self.username}', master_key='{self.master_key}')>"
+        return f"<Admin(id='{self.id}', username='{self.username}', admin_key='{self.admin_key}')>"
 
     # Methods for CRUD functionalities
-    # Generate master keys
-    @staticmethod
-    def generate_master_key(length: int = 64) -> str:
-        """Generate a secure random master key"""
-        alphabet = string.ascii_letters + string.digits + string.punctuation
-        return "".join(secrets.choice(alphabet) for _ in range(length))
-
     # Create new admin
     @staticmethod
     def create(username: str, email: str, password_hash: str):
@@ -156,9 +146,13 @@ class Admin(User):
             if not acc_status:
                 raise Exception("Failed to create account status record for admin")
 
-            login_details = LoginDetails.create(id=new_admin.id)
-            if not login_details:
-                raise Exception("Failed to create login details record for admin")
+            profile_image = ProfileImage.create(id=new_admin.id)
+            if not profile_image:
+                raise Exception("Failed to create profile image record for admin")
+
+            admin_key = new_admin.generate_admin_key()
+            if not admin_key:
+                raise Exception("Failed to generate an admin key for admin")
 
             db.session.commit()
             return new_admin
@@ -166,6 +160,48 @@ class Admin(User):
             db.session.rollback()
             print(f"An error occurred: {e}")
             return None
+
+    # Create new admin through google signin
+    @staticmethod
+    def create_by_google(username: str, email: str, google_id: str, google_image_url: str):
+        try:
+            # Create new member object
+            new_admin = Admin(username=username, email=email, google_id=google_id, type="admin")
+            db.session.add(new_admin)
+            db.session.flush()
+
+            acc_status = AccountStatus.create(id=new_admin.id)
+            if not acc_status:
+                raise Exception("Failed to create account status record for admin")
+
+            profile_image = ProfileImage.create_by_google(id=new_admin.id, google_url=google_image_url)
+            if not profile_image:
+                raise Exception("Failed to create profile image record for admin")
+            
+            admin_key = new_admin.generate_admin_key()
+            if not admin_key:
+                raise Exception("Failed to generate an admin key for admin")
+
+            db.session.commit()
+
+            return new_admin
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"An error occurred while creating admin: {e}")
+            return None
+
+    # Generate dynamic one-time use admin key
+    def generate_admin_key(self):
+        master_key = MasterKey.get_valid_key()
+        if not master_key:
+            return None
+        
+        data = f"{master_key}{self.id}{self.username}{self.email}"
+        self.admin_key = hashlib.sha256(data.encode()).hexdigest()
+        self.admin_key_expires_at = (datetime.now() + timedelta(days=1)).isoformat()
+        db.session.commit()
+
+        return data
 
 
 # AccountStatus model to store important info about current 'User' model's account status such as lock related info or failed login attempts
@@ -244,6 +280,33 @@ class ProfileImage(db.Model):
             db.session.rollback()
             print(f"Error occurred when creating new profile image record: {e}")
             return None
+
+
+# MasterKey model to store all master keys
+class MasterKey(db.Model):
+    __tablename__ = "master_key"
+
+    id = db.Column(Integer, primary_key=True)
+    value = db.Column(String(255), nullable=False)
+    created_at = db.Column(DateTime, default=func.current_timestamp(), nullable=False)
+    expires_at = db.Column(DateTime, nullable=False)
+
+    def __repr__(self):
+        return f"<MasterKey(id='{self.id}', expires_at='{self.expires_at}')>"
+
+    # Methods for master keys
+    # Generate master key value
+    @staticmethod
+    def generate_master_key():
+        new_key = os.urandom(32).hex()
+        expires_at = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
+        return MasterKey(value=new_key, expires_at=expires_at)
+
+    # Retrieve any of the valid keys
+    @staticmethod
+    def get_valid_key():
+        current_time = datetime.now().isoformat()
+        return MasterKey.query.filter(MasterKey.expires_at > current_time).first()
 
 
 # LoginDetails model to store info about last login and logout times

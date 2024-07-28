@@ -2,9 +2,11 @@ import logging
 import base64
 import os
 
+from datetime import datetime, timedelta
 from logging import Logger, StreamHandler, Formatter
 from dotenv import load_dotenv
-from flask import Flask, Response, g, session
+
+from flask import Flask, Response, g
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
 from flask_limiter import Limiter
@@ -99,6 +101,7 @@ def inject_nonce():
     return dict(nonce=g.get("nonce"))
 
 
+# To create the actual flask application
 def create_app() -> Flask:
     app: Flask = Flask(__name__)  # Create Flask application instance
     app.config.from_object(Config)  # Load configuration from Config class in 'config.py'
@@ -145,9 +148,11 @@ def create_app() -> Flask:
     app.register_blueprint(member_recipe_bp)
     # app.register_blueprint(member_forum_bp)
 
+    from app.blueprints.admin.admin_profile_bp import admin_profile_bp
     from app.blueprints.admin.admin_log_bp import admin_log_bp
     from app.blueprints.admin.admin_recipe_bp import admin_recipe_bp
     from app.blueprints.admin.admin_feedback_bp import admin_feedback_bp
+    app.register_blueprint(admin_profile_bp)
     app.register_blueprint(admin_recipe_bp)
     app.register_blueprint(admin_log_bp)
     app.register_blueprint(admin_feedback_bp)
@@ -161,7 +166,7 @@ def create_app() -> Flask:
     # Register CLI commands
     register_commands(app)
 
-    # Register before request, after request, and context processor functions
+    # Register before request, after request, and context processor functions    
     app.before_request(set_nonce)
     app.context_processor(inject_nonce)
     app.after_request(set_security_headers)
