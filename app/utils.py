@@ -423,9 +423,9 @@ def delete_old_profile_picture(profile_image: ProfileImage):
                 os.remove(file_path)
                 current_app.logger.info(f"Deleted old profile picture: {file_path}")
                 
-                # Update the ProfileImage object to reflect the deletion
-                profile_image.filename = "default.png"
-                profile_image.source = "file_system"
+            # Update the ProfileImage object to reflect the deletion
+            profile_image.filename = "default.png"
+            profile_image.source = "file_system"
         except Exception as e:
             current_app.logger.error(f"Error deleting old profile picture {file_path}: {e}")
 
@@ -555,7 +555,7 @@ def get_image_url(user: User):
             if os.path.exists(image_path):
                 image_url = url_for('static', filename=f'uploads/profile_pictures/{user.profile_images.filename}')
             else:
-                current_app.logger.warning(f"Profile image for user {user.id} not found: {image_path}")
+                logger.warning(f"Profile image for user {user.id} not found: {image_path}")
         elif user.profile_images.source == 'google':
             image_url = user.profile_images.google_url
 
@@ -623,3 +623,4 @@ def scan_file_with_virustotal(file: FileStorage, api_key: str) -> dict:
     except Exception as e:
         logger.error(f"Error scanning file with VirusTotal: {e}")
         return {}
+

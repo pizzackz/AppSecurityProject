@@ -22,7 +22,6 @@ Login:
     Update login details wherever necessary
 
 Member Profile:
-    Subscription plan to include remaining days in templates
     Implement log out for active account using same username after successful reset of password
     Fix password reset save button not able to be disabled
 

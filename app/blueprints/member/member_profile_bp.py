@@ -83,8 +83,8 @@ def profile():
 
         return redirect(url_for("member_profile_bp.profile"))
 
-    # Redirect to handle subscrition plan actions (upgrade to premium, renew premium, cancel premium)
-    if action in ("renew_plan", "upgrade_plan", "cancel_plan"):
+    # Redirect to handle subscrition plan actions (upgrade to premium, renew premium)
+    if action in ("renew_plan", "upgrade_plan"):
         clear_unwanted_session_keys(ESSENTIAL_KEYS)
         endpoint = "member_subscription_bp.plan_select"
 
@@ -96,6 +96,20 @@ def profile():
             response = redirect(url_for(endpoint, action="cancel_plan"))
 
         return response
+    
+    # Handle proper cancellation of premium subscription plan
+    if action == "cancel_plan":
+        try:
+            user.subscription_plan = "standard"
+            user.subscription_end_date = None
+            db.session.commit()
+
+            flash("Your subscription has successfully been cancelled!", "success")
+            logger.info(f"User '{user.username}' has successfully cancelled their subscription.")
+        except Exception as e:
+            flash("An erorr occurred while trying to cancel your subscription. Please try again later.", "error")
+            logger.error(f"Error tring to cancel subscription for user '{user.username}': {e}")
+        return redirect(url_for("member_profile_bp"))
 
     form = MemberProfileForm()
     

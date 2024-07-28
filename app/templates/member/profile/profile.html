@@ -27,12 +27,12 @@
                 <!-- Display current plan inforamtion -->
                 {% if user.subscription_plan == 'premium' %}
                 <div>
-                    <p>Current Plan: <b><u>Premium</u></b></p>
+                    <p>Current Plan: <u>Premium</u> &lpar;<span id="subscription-days-left"></span>d left&rpar;</p>
                     <button type="submit" name="action" value="renew_plan" class="btn btn-warning rounded-pill">Renew!</button>
                 </div>
                 {% elif user.subscription_plan == 'standard' %}
                 <div>
-                    <p>Current Plan: <b><u>Standard</u></b></p>
+                    <p>Current Plan: <u>Standard</u></p>
                     <button type="submit" name="action" value="upgrade_plan" class="btn btn-warning rounded-pill">Upgrade!</button>
                 </div>
                 {% endif %}
@@ -131,4 +131,24 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+
+{% block scripts %}
+    {{ super() }}
+    <script nonce="{{ nonce }}">
+        document.addEventListener('DOMContentLoaded', function() {
+            // Function to calculate the difference in days between two dates
+            function calculateDateDifference(dateString, elementId) {
+                var currentDate = new Date();  // Get the current date
+                var providedDate = new Date(dateString.replace(' ', 'T'));  // Ensure ISO format
+                var diffInTime = providedDate - currentDate;
+                var diffInDays = Math.ceil(diffInTime / (1000 * 3600 * 24));
+                document.getElementById(elementId).innerText = diffInDays;
+            }
+
+            // Use the user.subscription_end_date passed from the backend
+            calculateDateDifference('{{ user.subscription_end_date }}', 'subscription-days-left');
+        });
+    </script>
 {% endblock %}
