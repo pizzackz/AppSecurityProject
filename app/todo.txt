@@ -30,11 +30,39 @@ Admin Profile:
     Implement log out for active account using same username after successful reset of password
     Fix password reset save button not able to be disabled
 
-Admin Account Mangement (deals with creation, full retrieval - read-only & deletion of admin accounts):
-    Use obscured url endpoints
-    Authenticate using master key
-    Store authenticated flag in session
-    Set authenticated flag session to timeout after inactivity (10mins) or 30mins
-    Optional - Whitelist allowed IP addresses (may not be possible)
-    Strict logging of ALL transactions made
+Admin Account Management Flow Summary:
+    Secure Interface Access:
+        All routes require validation of a valid master key and session duration.
 
+    Admin Account Creation:
+        User inputs: username, email, password, confirm password.
+        Validations: Check master key, session, and input data.
+        JWT issued with identity (username, email), creation_stage set to send_otp.
+        send_otp route validates JWT and sends OTP email; sets stage to verify_email.
+        verify_email route checks OTP, JWT claims, and finalizes account creation.
+
+    Two-Factor Authentication (2FA):
+        OTP generated, hashed, stored in JWT; expires in 5 minutes.
+        On successful OTP verification, admin account is created.
+
+    Admin Account Deletion:
+        Admin accounts can be deleted after master key validation.
+        No updates allowed through the management interface, only via profile pages.
+
+    Session Handling:
+        On any check failure (master key, session expiry), the session is cleared and redirected to authentication.
+
+    Read-Only Interface:
+        The interface allows viewing admin accounts, with actions limited to creation and deletion.
+
+    Logging and Monitoring:
+        Every action is logged for security and auditing purposes.
+        
+    Rate Limiting:
+        Rate limiting is implemented on authentication and sensitive actions to prevent brute force attacks.
+    
+    JWT Encryption:
+        JWTs are encrypted to protect sensitive information in transit and at rest, ensuring secure handling of sensitive data like OTPs and user identity information.
+    
+    Flask-JWT-Extended Integration:
+        Used for handling JWT creation, validation, and management, with additional encryption of sensitive data using the cryptography library.

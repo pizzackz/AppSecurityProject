@@ -196,7 +196,7 @@ class Admin(User):
         master_key = MasterKey.get_valid_key()
         if not master_key:
             return None
-        
+
         data = f"{master_key}{self.id}{self.username}{self.email}"
         self.admin_key = hashlib.sha256(data.encode()).hexdigest()
         self.admin_key_expires_at = (datetime.now() + timedelta(days=1)).isoformat()
