@@ -92,7 +92,7 @@ def get_reddit_instance():
         return None
 
 
-@member_forum_bp.route('/me')
+@member_forum_bp.route('/forum')
 def me():
     reddit_user = get_reddit_instance()
     if not reddit_user:
@@ -106,7 +106,7 @@ def me():
         return f"Error fetching user information: {e}", 500
 
 
-@member_forum_bp.route('/subreddit')
+@member_forum_bp.route('/forum/posts')
 def subreddit():
     reddit_user = get_reddit_instance()
     if not reddit_user:
