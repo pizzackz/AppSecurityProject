@@ -140,13 +140,13 @@ def create_app() -> Flask:
     from app.blueprints.member.member_order_bp import member_order_bp
     from app.blueprints.member.member_feedback_bp import member_feedback_bp
     from app.blueprints.member.member_recipe_bp import member_recipe_bp
-    # from app.blueprints.member.member_forum_bp import member_forum_bp
+    from app.blueprints.member.member_forum_bp import member_forum_bp
     app.register_blueprint(member_profile_bp)
     app.register_blueprint(member_subscription_bp)
     app.register_blueprint(member_order_bp)
     app.register_blueprint(member_feedback_bp)
     app.register_blueprint(member_recipe_bp)
-    # app.register_blueprint(member_forum_bp)
+    app.register_blueprint(member_forum_bp)
 
     from app.blueprints.admin.admin_profile_bp import admin_profile_bp
     from app.blueprints.admin.admin_log_bp import admin_log_bp

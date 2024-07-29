@@ -47,10 +47,6 @@ def get_refresh_token():
     token = Token.query.order_by(Token.id.desc()).first()
     return token.refresh_token if token else None
 
-@member_forum_bp.route('/')
-def home():
-    return '<a href="/authorize">Authorize with Reddit</a>'
-
 
 @member_forum_bp.route('/authorize')
 def authorize():
@@ -72,7 +68,7 @@ def authorize_callback():
 
         # Store the refresh token securely
         store_refresh_token(refresh_token)
-        return redirect(url_for('me'))
+        return redirect(url_for('home_bp.home'))
     except Exception as e:
         logging.error(f"Error during authorization: {e}")
         return f"Error during authorization: {e}", 500
@@ -115,7 +111,10 @@ def subreddit():
     try:
         subreddit = reddit_user.subreddit('learnpython')
         posts = [post.title for post in subreddit.hot(limit=5)]
-        return render_template('template_test.html', posts=posts)
+        return render_template('member/forum/customer_forum.html', posts=posts)
+    except praw.exceptions.PRAWException as e:
+        logging.error(f"PRAWException: {e}")
+        return f"Error fetching subreddit information: {e}", 500
     except Exception as e:
-        logging.error(f"Error fetching subreddit information: {e}")
+        logging.error(f"Unexpected error: {e}")
         return f"Error fetching subreddit information: {e}", 500
