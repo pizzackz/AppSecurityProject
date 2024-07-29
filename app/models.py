@@ -420,6 +420,7 @@ class Recipe(db.Model):
         db.DateTime, nullable=False, default=func.current_timestamp()
     )
     user_created = db.Column(db.String(100), nullable=False)
+    user_created_id = db.Column(db.Integer, nullable=False)
     type = db.Column(db.String(50), nullable=False)  # Standard or Premium
     calories = db.Column(db.Integer, nullable=False)
     prep_time = db.Column(db.Integer, nullable=False)  # in minutes
@@ -439,6 +440,7 @@ class RecipeDeleted(db.Model):
     date_created = db.Column(db.DateTime, nullable=False)
     date_deleted = db.Column(db.DateTime, nullable=False, default=func.current_timestamp())
     user_created = db.Column(db.String(100), nullable=False)
+    user_created_id = db.Column(db.Integer, nullable=False)
     type = db.Column(db.String(50), nullable=False)  # Standard or Premium
     calories = db.Column(db.Integer, nullable=False)
     prep_time = db.Column(db.Integer, nullable=False)  # in minutes

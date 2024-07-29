@@ -10,10 +10,6 @@ function remove_ingredient(num) {
     ingredient_list.splice(num, 1);
     display_ingredient();
 }
-// Sending POST request
-function search_ingredients() {
-    document.getElementById('ingredients').value = ingredient_list;
-}
 
 
 // Display ingredient

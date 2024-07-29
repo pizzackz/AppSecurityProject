@@ -24,6 +24,19 @@
 </head>
 
 <body>
+<!-- Get the navbar from member/_member_navbar.html -->
+    {% block navbar %}
+    {% if current_user.type == 'Admin' %}
+        {% include "includes/_admin_navbar.html" %}
+    {% elif current_user.type == 'Member' %}
+        {% include "includes/_member_navbar.html" %}
+    {% elif current_user.type == 'Premium' %}
+        {% include "includes/_premium_navbar.html" %}
+    {% else %}
+        {% include "includes/_guest_navbar.html" %}
+    {% endif %}
+    {% endblock %}
+
     <div id="popup"></div>
 
     {% block content %}Base Content{% endblock %}

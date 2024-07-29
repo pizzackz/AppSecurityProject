@@ -59,3 +59,26 @@ body {
     margin-left: auto;
     text-align: center;
 } 
+
+nav {
+    background-color:#ffedc5ff;
+    border-bottom: black 1px solid;
+}
+
+.logo {
+    height: 3.5rem;
+    width: auto;
+    margin-left: 1rem;
+}
+
+.nav-middle {
+    text-align:center;
+}
+
+.profile-section {
+    height: 3.5rem;
+    border: black 1px solid;
+    margin-right: 1rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}

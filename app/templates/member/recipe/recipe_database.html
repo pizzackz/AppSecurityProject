@@ -70,9 +70,11 @@
           <p class="card-text">
             {{ recipe.ingredients }}
           </p>
-          <a href="/member/view_recipe/{{ recipe.id }}" class="btn btn-success m-2">View Recipe</a>
-          <a href="/member/update_recipe/{{ recipe.id }}" class="btn btn-primary m-2">Edit Recipe</a>
-          <a nonce="{{ nonce }}" id="delete_{{ recipe.id }}" class="btn btn-danger m-2 delete_button" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
+          <a href="{{ url_for('member_recipe_bp.view_recipe', recipe_id=recipe.id) }}" class="btn btn-success m-2">View Recipe</a>
+          {% if recipe.user_created_id == user.id %}
+            <a href="{{ url_for('member_recipe_bp.update_recipe', recipe_id=recipe.id) }}" class="btn btn-primary m-2">Edit Recipe</a>
+            <a nonce="{{ nonce }}" id="delete_{{ recipe.id }}" class="btn btn-danger m-2 delete_button" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
+          {% endif %}
           <p class="card-text user">By {{ recipe.user_created }}</p>
         </div>
       </div>
@@ -86,9 +88,29 @@
           <p class="card-text">
             {{ recipe.ingredients }}
           </p>
-          <a href="/member/view_recipe/{{ recipe.id }}" class="btn btn-success m-2">View Recipe</a>
+          {% if current_user.type != 'Premium' %}
+            <a href="{{ url_for('member_subscription_bp.plan_select') }}" class="btn btn-warning m-2">Upgrade to Premium</a>
+          {% else %}
+            <a href="{{ url_for('member_recipe_bp.view_recipe', recipe_id=recipe.id) }}" class="btn btn-success m-2">View Recipe</a>
+          {% endif %}
           <p class="card-text user">By {{ recipe.user_created }}</p>
            </div>
+      </div>
+      {% endif %}
+      {% if recipe.type == 'Private' and recipe.user_created_id == user.id %}
+      <div class="card m-2 recipe_card" data-recipe-id="{{ recipe.id }}" data-recipe-name="{{ recipe.name }}">
+        <img src="{{ url_for('static', filename='images_recipe/' + recipe.picture) }}" class="card-img-top" alt="{{ recipe.name }}">
+        <div class="card-body">
+          <h6 class="premium">PRIVATE</h6>
+          <h5 class="card-title">{{ recipe.name }}</h5>
+          <p class="card-text">
+            {{ recipe.ingredients }}
+          </p>
+          <a href="{{ url_for('member_recipe_bp.view_recipe', recipe_id=recipe.id) }}" class="btn btn-success m-2">View Recipe</a>
+          <a href="{{ url_for('member_recipe_bp.update_recipe', recipe_id=recipe.id) }}" class="btn btn-primary m-2">Edit Recipe</a>
+          <a nonce="{{ nonce }}" id="delete_{{ recipe.id }}" class="btn btn-danger m-2 delete-button" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
+          <p class="card-text user">By {{ recipe.user_created }}</p>
+        </div>
       </div>
       {% endif %}
       {% endfor %}

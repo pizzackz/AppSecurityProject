@@ -8,28 +8,32 @@ from flask import (
     session,
     flash,
     url_for,
+    jsonify
 )
 import re
 import imghdr
 import imageio
 import requests
-from werkzeug.utils import secure_filename
-from app.models import Recipe
+from app.models import Recipe, User
 import os
-from sqlalchemy import or_
-
-from datetime import datetime
+from sqlalchemy import or_, and_, case
+from flask_login import current_user, login_required
+from app import limiter
+from ...utils import scan_file_with_virustotal
 
 # import random
 # import sys
 import html
 
-from app.forms.forms import CreateRecipeFormMember, RecipeSearch
+from app.forms.forms import CreateRecipeFormMember, RecipeSearch, AICreateRecipeForm
 from app import db
 from bs4 import BeautifulSoup
+import google.generativeai as genai
 
 member_recipe_bp = Blueprint("member_recipe_bp", __name__)
 
+genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 def is_image(filename):
     # Check if the file is an image
@@ -51,7 +55,8 @@ def is_square_image(filename):
 
 
 # Recipe Pages
-@member_recipe_bp.route("/member/recipe_database", methods=["GET", "POST"])
+@member_recipe_bp.route("/recipe_database", methods=["GET", "POST"])
+@login_required
 def recipe_database():
     print(db)  # Checking Database Status
     form = RecipeSearch()
@@ -107,6 +112,16 @@ def recipe_database():
                     or_(
                         Recipe.ingredients.contains(i),
                         Recipe.name.contains(i)
+                    ),
+                    and_(
+                        or_(
+                            Recipe.type == 'Standard',
+                            Recipe.type == 'Premium',
+                            and_ (
+                                Recipe.type == 'Private',
+                                Recipe.user_created_id == current_user.id
+                            )
+                        )
                     )
                 ).all()
                 for recipe in all_recipes:
@@ -134,19 +149,35 @@ def recipe_database():
             search_results = search_results[start:end]
 
             return render_template("member/recipe/recipe_database.html", form=form, recipes=search_results,
-                                   total_pages=total_pages, page=page)
+                                   total_pages=total_pages, page=page, user=current_user)
 
     # Get pages
     total_pages = (Recipe.query.count() // per_page) + 1
     print(f'Total pages: {total_pages}')
     print(f'There are {Recipe.query.count()} recipe')
 
-    items_on_page = Recipe.query.slice(start, end)
+    items_on_page = Recipe.query.filter(
+        or_(
+            Recipe.type == 'Standard',
+            Recipe.type == 'Premium',
+            and_(
+                Recipe.type == 'Private',
+                Recipe.user_created_id == current_user.id
+            )
+        )
+    ).order_by(
+        case(
+            (Recipe.type == 'Private', 0),  # Ensure 'Private' recipes appear first
+            else_=1
+        )
+    ).slice(start, end).all()
+
 
     return render_template("member/recipe/recipe_database.html", form=form, recipes=items_on_page,
-                           total_pages=total_pages, page=page)
+                           total_pages=total_pages, page=page, user=current_user)
 
-@member_recipe_bp.route('/member/create_recipe', methods=['GET', 'POST'])
+@member_recipe_bp.route('/create_recipe', methods=['GET', 'POST'])
+@login_required
 def create_recipe():
     form = CreateRecipeFormMember()
     if request.method == "POST":
@@ -271,35 +302,12 @@ def create_recipe():
             if not is_image(picture):
                 flash('Invalid image format', 'error')
                 return redirect(url_for('member_recipe_bp.create_recipe'))
-
-            # if not is_square_image(picture):
-            #     flash('Image size must be 1:1', 'error')
-            #     return redirect(url_for('member_recipe_bp.create_recipe'))
-
-            def scan_image_for_malware(api_key, filename):
-                url = 'https://www.virustotal.com/vtapi/v2/file/scan'
-                params = {'apikey': api_key}
-                with open(filename, 'rb') as file:
-                    files = {'file': file}
-                    response = requests.post(url, files=files, params=params)
-                    result = response.json()
-                return result
-
-            def is_image_safe(result):
-                if 'response_code' in result and result['response_code'] == 1:
-                    if 'positives' in result and result['positives'] == 0:
-                        return True
-                return False
-
-            api_key = 'your_virustotal_api_key'
-            filename = picture.filename
-
-            # result = scan_image_for_malware(api_key, filename)
-
-            # if not is_image_safe(result):
-            #     print("The image is not safe. Proceed with using it.")
-            #     flash('Please reupload the image', 'error')
-            #     return redirect(url_for('member_recipe_bp.create_recipe'))
+            picture2 = picture
+            scan_result = scan_file_with_virustotal(picture2, os.getenv('VIRUSTOTAL_API_KEY'))
+            if 'data' in scan_result and scan_result['data'].get('attributes', {}).get('last_analysis_stats', {}).get(
+                    'malicious', 0) > 0:
+                flash('The uploaded file is potentially malicious and has not been saved.', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
 
             # Save the image file
             picture_filename = picture.filename
@@ -311,7 +319,7 @@ def create_recipe():
             # Store in database
             new_recipe = Recipe(name=name, ingredients=ingredient_cleaned, instructions=soup.prettify(),
                                 picture=picture_filename, type=recipe_type, calories=calories, prep_time=prep_time,
-                                user_created='JohnDoeTesting')
+                                user_created=current_user.username, user_created_id= current_user.id)
             try:
                 db.session.add(new_recipe)
                 db.session.commit()
@@ -323,9 +331,16 @@ def create_recipe():
     return render_template('member/recipe/recipe_create.html', form=form)
 
 
-@member_recipe_bp.route('/member/view_recipe/<recipe_id>', methods=['GET', 'POST'])
+@member_recipe_bp.route('/view_recipe/<recipe_id>', methods=['GET', 'POST'])
+@login_required
 def view_recipe(recipe_id):
     recipe = Recipe.query.filter_by(id=recipe_id).first()
+    if recipe.type == 'Private' and recipe.user_created != current_user.username:
+        flash('Action cannot be done', 'error')
+        return redirect(url_for('member_recipe_bp.recipe_database'))
+    if recipe.type == 'Premium' and current_user.type != 'premium':
+        flash('Action cannot be done', 'error')
+        return redirect(url_for('member_recipe_bp.recipe_database'))
     recipe_data = {
         'id': recipe.id,
         'name': recipe.name,
@@ -342,18 +357,32 @@ def view_recipe(recipe_id):
     return render_template('member/recipe/recipe_view2.html', recipe=recipe_data)
 
 
-@member_recipe_bp.route('/member/delete_recipe/<recipe_id>', methods=['GET', 'POST'])
+@member_recipe_bp.route('/delete_recipe/<recipe_id>', methods=['GET', 'POST'])
+@login_required
 def delete_recipe(recipe_id):
     recipe = Recipe.query.filter_by(id=recipe_id).first()
+    if recipe.type == 'Private' and recipe.user_created != current_user.username:
+        flash('Action cannot be done', 'error')
+        return redirect(url_for('member_recipe_bp.recipe_database'))
+    if recipe.type == 'Premium':
+        flash('Action cannot be done', 'error')
+        return redirect(url_for('member_recipe_bp.recipe_database'))
     flash(f'{recipe.name} was deleted', 'info')
     db.session.delete(recipe)
     db.session.commit()
     return redirect(url_for('member_recipe_bp.recipe_database'))
 
 
-@member_recipe_bp.route('/member/update_recipe/<recipe_id>', methods=['GET', 'POST'])
+@member_recipe_bp.route('/update_recipe/<recipe_id>', methods=['GET', 'POST'])
+@login_required
 def update_recipe(recipe_id):
     recipe = Recipe.query.filter_by(id=recipe_id).first()
+    if recipe.type == 'Private' and recipe.user_created != current_user.username:
+        flash('Action cannot be done', 'error')
+        return redirect(url_for('member_recipe_bp.recipe_database'))
+    if recipe.type == 'Premium':
+        flash('Action cannot be done', 'error')
+        return redirect(url_for('member_recipe_bp.recipe_database'))
     form = CreateRecipeFormMember()
     if request.method == 'POST':
         name = form.name.data
@@ -488,4 +517,97 @@ def update_recipe(recipe_id):
 
     return render_template('member/recipe/recipe_update.html', form=form, ingredients=ingredients)
 
+@member_recipe_bp.route('/ai_recipe_creator', methods=['GET', 'POST'])
+@login_required
+def ai_recipe_creator():
+    form = AICreateRecipeForm()
+    return render_template('member/recipe/recipe_ai_creator.html', form=form)
 
+@member_recipe_bp.route('/api/recipe-creator-ai', methods=['POST'])
+# @jwt_required()
+@limiter.limit('10 per minute')
+@limiter.limit('100 per hour')
+def recipe_creator_ai():
+    # Get user inputs from json data
+    print('AI Recipe Creator Activating')
+    cuisine = request.json.get('cuisine')
+    ingredients = request.json.get('ingredients')
+    dietary_preference = request.json.get('dietary_preference')
+    allergy = request.json.get('allergy')
+    meal_type = request.json.get('meal_type')
+    difficulty = request.json.get('difficulty')
+    print(difficulty)
+    remarks = request.json.get('remarks')
+
+    # Clean Inputs
+    regex = r'^[a-zA-Z ]+$'  # Regex pattern allowing only letters and spaces
+    regex2 = r'^[a-zA-Z, ]+$'
+
+    cuisine = cuisine.strip()
+    if cuisine != '':
+        if len(cuisine) > 12:
+            return jsonify({'content': 'Cuisine is too long. Please keep within 12 characters'})
+        if not re.fullmatch(regex, cuisine):
+            return jsonify({'content':'Only letters and spaces allowed in cuisine'})
+
+    ingredients = ingredients.strip()
+    if ingredients != '':
+        if len(ingredients) > 30:
+            return jsonify({'content': 'Ingredients are too long. Please keep within 30 characters'})
+        if not re.fullmatch(regex2, ingredients):
+            return jsonify({'content':'Only letters, spaces and commas allowed in ingredients'})
+
+    dietary_preference = dietary_preference.strip()
+    if dietary_preference != '':
+        if len(dietary_preference) > 15:
+            return jsonify({'content': 'Dietary preference is too long. Please keep within 15 characters'})
+        if not re.fullmatch(regex, dietary_preference):
+            return jsonify({'content':'Only letters and spaces allowed in dietary preference'})
+
+    allergy = allergy.strip()
+    if allergy != '':
+        if len(allergy) > 15:
+            return jsonify({'content': 'Allergy is too long. Please keep within 15 characters'})
+        if not re.fullmatch(regex, allergy):
+            return jsonify({'content':'Only letters and spaces allowed in allergy'})
+
+    meal_type = meal_type.strip()
+    if meal_type != '':
+        if len(meal_type) > 15:
+            return jsonify({'content': 'Meal type is too long. Please keep within 15 characters'})
+        if not re.fullmatch(regex, meal_type):
+            return jsonify({'content':'Only letters and spaces allowed in meal type'})
+
+    difficulty = difficulty.strip()
+    if difficulty not in ['easy', 'medium', 'hard', 'any']:
+        return jsonify({'content':'Please try again.'})
+
+    remarks = remarks.strip()
+    if remarks != '':
+        if len(remarks) > 30:
+            return jsonify({'content': 'Remarks is too long. Please keep within 30 characters'})
+        if not re.fullmatch(regex2, remarks):
+            return jsonify({'content':'Only letters, spaces and commas allowed in remarks'})
+
+    messages = ''
+    messages += """You are a recipe creator.
+                       Ignore all unrelated inputs, and only output recipe in 
+                       the following format: Name, ingredients, description (Put in the other details 
+                       inside like calories, and other things the user specifies), and instructions. 
+                       Do not put #, * or any other special symbols."""
+
+    messages += f'''You are creating a recipe for {cuisine} cuisine. 
+                    Ensure {ingredients} are in the recipe. The dietary preference is
+                    {dietary_preference}. The allergies are {allergy}. The meal type is {meal_type}.
+                    The difficulty is {difficulty}.
+                    Remarks are (Ignore this part if irrelevant) {remarks}'''
+
+    print(messages)
+    response = model.generate_content(messages)
+    cleaned = response.text
+    cleaned = cleaned.replace("## ", "")
+    cleaned = cleaned.replace("**", "")
+    cleaned = cleaned.replace("* ", "- ")
+
+    print(cleaned)
+    return jsonify({'content': cleaned})
