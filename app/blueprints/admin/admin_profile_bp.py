@@ -702,7 +702,7 @@ def reset_password():
         except Exception as e:
             flash_message = ["An error occurred when resetting your password. Please try again later", "error"]
             log_message = [f"Error saving password for user '{user.username}' when resetting it: {e}", "error"]
-        
+
         # Clear admin update stage data & jwt data, redirect back to admin profile
         session.pop("profile_update_stage")
         response = redirect(url_for('admin_profile_bp.profile'))
