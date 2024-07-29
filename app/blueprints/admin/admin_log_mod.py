@@ -1,72 +1,60 @@
 import logging
 import os
-import pandas as pd
-import mysql.connector
-from mysql.connector import Error
+import threading
+from app import db
 
-
-def connect_to_JacenDB():
-    try:
-        connection = mysql.connector.connect(
-            host='localhost',
-            database='app_sec_log',
-            user='jcen',
-            password='Soulsting@123'
-        )
-        if connection.is_connected():
-            print("success")
-        return connection
-    except Error as e:
-        print(f"Error: {e}")
-        return none
-
-def create_table(connection):
-    try:
-        cursor = connection.cursor()
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS INFO (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                datetime DATETIME,
-                priority_level VARCHAR(255),
-                user_acct VARCHAR(255),
-                program_affected
-                
-            )
-        """)
-        connection.commit()
-        print("Table created successfully")
-    except mysql.connector.Error as err:
-        print(f"Error: {err}")
-
-
-# logging.basicConfig(level=logging.INFO, filename="db_main.log", filemode="a",
-#                      format="%(asctime)s - %(levelname)s - %(message)s")
-class LOG:
-    def DB_log_setter(): 
-        logging.basicConfig(level=logging.INFO, filename="db_main.log", filemode="a",
-                            format="%(asctime)s \\\ %(levelname)s \\\ %(message)s")
-
-    def T_log_setter():
-        logging.basicConfig(level=logging.INFO, filename="t.log", filemode="a",
-                            format="%(asctime)s \\\ %(levelname)s \\\ %(message)s")
-        
-    def acct_log_setter():
-        logging.basicConfig(level=logging.INFO, filename="acct_base.log", filemode="a",
-                            format="%(asctime)s \\\ %(levelname)s \\\ %(message)s") 
-        
-
-    def INFO(username, action, info):
-        logging.info(f"{username}\\\{action}\\\{__file__}\\\{info}")
-
-    def WARNING(username, action, warning):
-        logging.warning(f"{username}\\\{action}\\\{__file__}\\\{warning}")
-
-    def CRITICAL(username, action, risk):
-        logging.critical(f"{username} \\\ {action} \\\ {__file__} \\\ {risk}")
+def general_log_setter(): 
+    logging.basicConfig(level=logging.INFO, filename="general.log", filemode="a",
+                        format="%(asctime)s||%(message)s")
+def transaction_log_setter():
+    logging.basicConfig(level=logging.INFO, filename="transaction.log", filemode="a",
+                        format="%(asctime)s||%(message)s")
     
-    def SYS_ERROR(username, action, error):
-        logging.error(f"{username} \\\ {action} \\\ {__file__} \\\ {error}")
+def account_log_setter():
+    logging.basicConfig(level=logging.INFO, filename="account.log", filemode="a",
+                        format="%(asctime)s||%(message)s") 
     
+
+# def log_trans(self, priority_level, category, username, action, info):
+#     file_name = os.path.basename(__file__)
+#     # Get the subdirectory (without the root directory)
+#     subdirectory = os.path.dirname(file_path)
+#     root_directory = '/path/to/your/directory'
+#     if subdirectory.startswith(root_directory):
+#         subdirectory = subdirectory[len(root_directory):].lstrip(os.path.sep)
+#     if priority_level=='info':
+#         if category=='general':
+#             self.general_log_setter()
+#             logging.info(f"Info||General||{username}||{subdirectory}\\{file_name}||{action}||{info}")
+#         elif category=='transaction':
+#             self.transaction_log_setter()
+#             logging.info(f"Info||Transaction||{username}||{subdirectory}\\{file_name}||{action}||{info}")
+#         elif category=='account':
+#             self.account_log_setter()
+#             logging.info(f"Info||Account||{username}||{subdirectory}\\{file_name}||{action}||{info}")
+
+def log_trans(priority_level, category, user_id, action, info):
+    file_name = os.path.basename(__file__)
+    # Get the subdirectory (without the root directory)
+    subdirectory = os.path.dirname(file_path)
+    root_directory = '/path/to/your/directory'
+    if subdirectory.startswith(root_directory):
+        subdirectory = subdirectory[len(root_directory):].lstrip(os.path.sep)
+    if priority_level=='info':
+        if category=='general':
+            new_log=General(priority_level=priority_level, category=category, user=user_id, action=action, message_info=info)
+        elif category=='transaction':
+            self.transaction_log_setter()
+            logging.info(f"Info||Transaction||{username}||{subdirectory}\\{file_name}||{action}||{info}")
+        elif category=='account':
+            self.account_log_setter()
+            logging.info(f"Info||Account||{username}||{subdirectory}\\{file_name}||{action}||{info}")
+    
+    try:
+        db.session.add(new_log)
+        db.session.commit()
+    except:
+        return 'empty'
 
 
 L=LOG
@@ -78,7 +66,7 @@ L=LOG
 file_path = '/path/to/your/directory/subdirectory/filename.ext'
 
 # Get the file name
-file_name = os.path.basename(file_path)
+file_name = os.path.basename(__file__)
 
 # Get the subdirectory (without the root directory)
 subdirectory = os.path.dirname(file_path)
