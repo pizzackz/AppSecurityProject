@@ -449,7 +449,6 @@ def reset_password():
 
     if request.method == "POST" and form.validate_on_submit():
         # Retrieve new password
-        curr_password = form.curr_password.data
         new_password = form.new_password.data
 
         # Check if user exists
@@ -458,12 +457,6 @@ def reset_password():
             flash("An error occurred. Please restart the recovery process.", "error")
             logger.error(f"User not found for email: {email}")
             return redirect(url_for('recovery_auth_bp.recovery'))
-
-        # Check if curr_password inputted same as current password
-        if not check_password_hash(user.password_hash, curr_password):
-            flash("The current password you entered is incorrect. Please try again.", "error")
-            logger.warning(f"User {user.email} entered an incorrect current password")
-            return redirect(url_for('recovery_auth_bp.reset_password', token=token))
 
         # Check if the new password is the same as the current password
         if check_password_hash(user.password_hash, new_password):

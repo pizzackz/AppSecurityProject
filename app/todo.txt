@@ -21,14 +21,14 @@ Login:
     Track login attempts, check for locked accounts
     Update login details wherever necessary
 
+Password forms:
+    Fix password reset/ set buttons not being able to be disabled on frontend
+
 Member Profile:
     Implement log out for active account using same username after successful reset of password
-    Fix password reset save button not able to be disabled
 
 Admin Profile:
-    Implement daily update of master key
     Implement log out for active account using same username after successful reset of password
-    Fix password reset save button not able to be disabled
 
 Admin Account Management Flow Summary:
     Secure Interface Access:

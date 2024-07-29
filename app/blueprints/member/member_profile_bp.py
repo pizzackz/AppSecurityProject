@@ -598,7 +598,7 @@ def set_password():
         flash("An error occurred. Please try setting your password again.", "error")
         logger.error(f"User account not found for email: {identity['email']}")
         return redirect(url_for('member_profile_bp.profile'))
-    
+
     form = PasswordForm()
 
     if request.method == "POST" and form.validate_on_submit():
@@ -707,15 +707,8 @@ def reset_password():
     form = ResetPasswordForm()
 
     if request.method == "POST" and form.validate_on_submit():
-        # Retrieve inputted passwords
-        curr_password = form.curr_password.data
+        # Retrieve inputted password
         new_password = form.new_password.data
-
-        # Check if curr_password inputted same as current password
-        if not check_password_hash(user.password_hash, curr_password):
-            flash("The current password you entered is incorrect. Please try again.", "error")
-            logger.warning(f"User {user.email} entered an incorrect current password")
-            return redirect(url_for('member_profile_bp.reset_password'))
 
         # Check if the new password is the same as the current password
         if check_password_hash(user.password_hash, new_password):

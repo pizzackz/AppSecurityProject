@@ -48,7 +48,6 @@ class ExtraInfoForm(FlaskForm):
 
 # Account Recovery Phase 3 - Set new password
 class ResetPasswordForm(FlaskForm):
-    curr_password = PasswordField("Current Password", validators=[DataRequired(), Length(min=8)])
     new_password = PasswordField("New Password", validators=[DataRequired(), Length(min=8), validate_password_complexity])
     confirm_password = PasswordField("Confirm Password", validators=[DataRequired(), Length(min=8), EqualTo("new_password", "Passwords must match")])
 

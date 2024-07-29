@@ -14,7 +14,7 @@ def seed_database():
     """Create all database tables and seed the database with test data."""
     db.create_all()
     # create_menu_items()
-    # create_fake_master_keys(5)
+    create_fake_master_keys(5)
     create_admins()
     # create_members()
     logging.info("Database initialised and test data added.")
