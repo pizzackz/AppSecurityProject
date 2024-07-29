@@ -9,6 +9,7 @@
 {% block scripts %}
 {{ super() }}
 <script nonce="{{ nonce }}" src="{{ url_for('static', filename='js/recipe/recipe_update.js' ) }}"></script>
+<script nonce="{{ nonce }}" src="https://cdn.tiny.cloud/1/8ghrh6yshln8fcgy7idp9gt79rls7yiv815se4n23f5cgrmn/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
 {% for ingredient in ingredients %}
 <script nonce="{{ nonce }}">
 
@@ -47,8 +48,7 @@
             <div id="control_panel" class="text-center form-group">
                 <h1 id="ingredients_title">Ingredients</h1><br>
                 <div class="input_ingredient">
-                    <input type="text" class="form-control form-control-lg col-auto" id="ingredient"
-                           placeholder="chicken, tomato">
+                    {{ form.ingredients(class="form-control", id="ingredients", placeholder="chicken, salad") }}
                     <div id="autocomplete" class="autocomplete">
                     </div>
                     <input type="button" value="+" id="add_ingredient" class="btn btn-success btn-lg col">
@@ -59,8 +59,6 @@
                 <div class="input_ingredient">
                     <input type="button" value="Remove All" class="btn btn-danger btn-lg" id="remove_all">
                 </div>
-
-                {{ form.ingredients(class="form-control", id="ingredients", placeholder="chicken, salad") }}
             </div>
 
             <h1 id="picture-title">Picture</h1><br>

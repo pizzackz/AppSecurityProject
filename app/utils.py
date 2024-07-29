@@ -491,6 +491,8 @@ def upload_pfp(user: User, profile_image: ProfileImage, new_profile_picture, fal
             logger.warning(f"Potentially malicious file upload attempted by user '{user.username}'.")
             return redirect(url_for(fallback_endpoint))
 
+        print(scan_result)
+
         # Remove the old profile picture if it exists
         delete_old_profile_picture(profile_image)
         # Save the new profile picture and update the profile image record

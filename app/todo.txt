@@ -25,6 +25,7 @@ Password forms:
     Fix password reset/ set buttons not being able to be disabled on frontend
 
 Member Profile:
+    Allow deletion of own account
     Implement log out for active account using same username after successful reset of password
 
 Admin Profile:

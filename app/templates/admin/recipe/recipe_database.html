@@ -73,7 +73,7 @@
             </p>
             <a href="/admin/view_recipe/{{ recipe.id }}" class="btn btn-success m-2">View Recipe</a>
             <a href="/admin/update_recipe/{{ recipe.id }}" class="btn btn-primary m-2">Edit Recipe</a>
-            <a nonce="{{ nonce }}" id="delete_{{ recipe.id }}" class="btn btn-danger m-2 delete_button" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
+            <a nonce="{{ nonce }}" id="delete_{{ recipe.id }}" class="btn btn-danger m-2 delete-button" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
             <p class="card-text user">By {{ recipe.user_created }}</p>
           </div>
         </div>
@@ -89,14 +89,8 @@
               </p>
               <a href="{{ url_for('admin_recipe_bp.view_recipe', recipe_id=recipe.id) }}" class="btn btn-success m-2">View Recipe</a>
               <a href="{{ url_for('admin_recipe_bp.update_recipe', recipe_id=recipe.id) }}" class="btn btn-primary m-2">Edit Recipe</a>
-              <a nonce="{{ nonce }}" id="delete_{{ recipe.id }}" class="btn btn-danger m-2  delete_button" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
+              <a nonce="{{ nonce }}" id="delete_{{ recipe.id }}" class="btn btn-danger m-2 delete-button" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
               <p class="card-text user">By {{ recipe.user_created }}</p>
-              <script nonce="{{ nonce }}">
-                var selected = document.getElementById('delete_{{ recipe.id }}');
-                selected.onclick = function () {
-                  confirmdelete('{{ recipe.name }}', '{{ recipe.id }}')
-                }
-              </script>
             </div>
           </div>
         {% endif %}
@@ -111,14 +105,8 @@
               </p>
               <a href="{{ url_for('admin_recipe_bp.view_recipe', recipe_id=recipe.id) }}" class="btn btn-success m-2">View Recipe</a>
               <a href="{{ url_for('admin_recipe_bp.update_recipe', recipe_id=recipe.id) }}" class="btn btn-primary m-2">Edit Recipe</a>
-              <a nonce="{{ nonce }}" id="delete_{{ recipe.id }}" class="btn btn-danger m-2 delete_button" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
+              <a nonce="{{ nonce }}" id="delete_{{ recipe.id }}" class="btn btn-danger m-2 delete-button" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
               <p class="card-text user">By {{ recipe.user_created }}</p>
-              <script nonce="{{ nonce }}">
-                var selected = document.getElementById('delete_{{ recipe.id }}');
-                selected.onclick = function () {
-                  confirmdelete('{{ recipe.name }}', '{{ recipe.id }}')
-                }
-              </script>
             </div>
           </div>
         {% endif %}

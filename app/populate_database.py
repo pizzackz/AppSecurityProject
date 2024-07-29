@@ -32,7 +32,7 @@ def create_fake_master_keys(num_keys=5):
         for _ in range(num_keys):
             new_key = MasterKey.generate_master_key()
             db.session.add(new_key)
-        
+
         db.session.commit()
         print(f"Successfully created {num_keys} fake master keys.")
     except Exception as e:

@@ -20,6 +20,8 @@ from sqlalchemy import or_, and_, case
 from app.populate_recipes import populate_recipes
 from hashlib import sha256
 from app import limiter
+from ...utils import scan_file_with_virustotal
+from flask_login import current_user
 
 from datetime import datetime, timedelta
 import html
@@ -55,21 +57,21 @@ def is_image(filename):
         return False, None
 
 
-def scan_image_for_malware(api_key, filename):
-    url = 'https://www.virustotal.com/vtapi/v2/file/scan'
-    params = {'apikey': api_key}
-    with open(filename, 'rb') as file:
-        files = {'file': file}
-        response = requests.post(url, files=files, params=params)
-        result = response.json()
-    return result
+# def scan_image_for_malware(api_key, filename):
+#     url = 'https://www.virustotal.com/vtapi/v2/file/scan'
+#     params = {'apikey': api_key}
+#     with open(filename, 'rb') as file:
+#         files = {'file': file}
+#         response = requests.post(url, files=files, params=params)
+#         result = response.json()
+#     return result
 
 
-def is_image_safe(result):
-    if 'response_code' in result and result['response_code'] == 1:
-        if 'positives' in result and result['positives'] == 0:
-            return True
-    return False
+# def is_image_safe(result):
+#     if 'response_code' in result and result['response_code'] == 1:
+#         if 'positives' in result and result['positives'] == 0:
+#             return True
+#     return False
 
 
 # Recipe Pages
@@ -232,13 +234,6 @@ def create_recipe():
             # Parse HTML
             soup = BeautifulSoup(instructions, 'html.parser')
 
-            # Remove all script tags
-            # for script in soup(["script", "style"]):
-            #     script.decompose()
-            # # Remove all iFrame and input tags
-            # for iframe in soup(["iframe", "input", "link", "submit", "link", "meta", "a"]):
-            #     iframe.decompose()
-
             # Only allow whitelisted tags
             whitelist = ['b', 'i', 'ul', 'ol', 'li', 'hr', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'em']
             for tag in soup.find_all(True):
@@ -326,6 +321,13 @@ def create_recipe():
             if not is_image(picture):
                 flash('Invalid image format', 'error')
                 return redirect(url_for('admin_recipe_bp.create_recipe'))
+
+            picture2 = picture
+            scan_result = scan_file_with_virustotal(picture2, os.getenv('VIRUSTOTAL_API_KEY'))
+            if 'data' in scan_result and scan_result['data'].get('attributes', {}).get('last_analysis_stats', {}).get(
+                    'malicious', 0) > 0:
+                flash('The uploaded file is potentially malicious and has not been saved.', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
             # if not is_square_image(picture):
             #     flash('Image size must be 1:1', 'error')
             #     return redirect(url_for('admin_recipe_bp.create_recipe'))
@@ -354,7 +356,7 @@ def create_recipe():
             #     return redirect(url_for('admin_recipe_bp.create_recipe'))
 
             # Store in database
-            new_recipe = Recipe(name=name, ingredients=ingredient_cleaned, instructions=instructions, picture=picture_filename, type=recipe_type, calories=calories, prep_time=prep_time, user_created='JohnDoeTesting')
+            new_recipe = Recipe(name=name, ingredients=ingredient_cleaned, instructions=instructions, picture=picture_filename, type=recipe_type, calories=calories, prep_time=prep_time, user_created=current_user.username, user_created_id=current_user.id)
             try:
                 db.session.add(new_recipe)
                 db.session.commit()
@@ -386,7 +388,6 @@ def view_recipe(recipe_id):
 
 @admin_recipe_bp.route('/admin/delete_recipe/<recipe_id>', methods=['GET', 'POST'])
 def delete_recipe(recipe_id):
-    global locked_recipes
     try:
         # Try to fetch the row with name 'locked_recipes'
         locked_recipes = RecipeConfig.query.filter_by(name='locked_recipes').first()
@@ -404,7 +405,7 @@ def delete_recipe(recipe_id):
         return redirect(url_for('admin_recipe_bp.recipe_database'))
     recipe = Recipe.query.filter_by(id=recipe_id).first()
     flash(f'{recipe.name} was deleted', 'info')
-    old_recipe = RecipeDeleted(name=recipe.name, ingredients=recipe.ingredients, instructions=recipe.instructions, picture=recipe.picture, type=recipe.type, calories=recipe.calories, prep_time=recipe.prep_time, user_created=recipe.user_created, date_created=recipe.date_created)
+    old_recipe = RecipeDeleted(name=recipe.name, ingredients=recipe.ingredients, instructions=recipe.instructions, picture=recipe.picture, type=recipe.type, calories=recipe.calories, prep_time=recipe.prep_time, user_created=recipe.user_created, user_created_id=recipe.user_created_id , date_created=recipe.date_created)
     db.session.add(old_recipe)
     db.session.delete(recipe)
     db.session.commit()
@@ -533,7 +534,12 @@ def update_recipe(recipe_id):
             if not is_image(picture):
                 flash('Invalid image format', 'error')
                 return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
-                # Save the image file
+            picture2 = picture
+            scan_result = scan_file_with_virustotal(picture2, os.getenv('VIRUSTOTAL_API_KEY'))
+            if 'data' in scan_result and scan_result['data'].get('attributes', {}).get('last_analysis_stats', {}).get(
+                    'malicious', 0) > 0:
+                flash('The uploaded file is potentially malicious and has not been saved.', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
             picture_filename = picture.filename
             picture_filename = picture_filename.split('.')
             if len(picture_filename) != 2:
@@ -795,7 +801,7 @@ def delete_recipe_forever(recipe_id):
 def restore_recipe(recipe_id):
     recipe = RecipeDeleted.query.filter_by(id=recipe_id).first()
     flash(f'{recipe.name} was restored', 'info')
-    new_recipe = Recipe(name=recipe.name, ingredients=recipe.ingredients, instructions=recipe.instructions, picture=recipe.picture, type=recipe.type, calories=recipe.calories, prep_time=recipe.prep_time, user_created=recipe.user_created, date_created=recipe.date_created)
+    new_recipe = Recipe(name=recipe.name, ingredients=recipe.ingredients, instructions=recipe.instructions, picture=recipe.picture, type=recipe.type, calories=recipe.calories, prep_time=recipe.prep_time, user_created=recipe.user_created, user_created_id=recipe.user_created_id , date_created=recipe.date_created)
     db.session.add(new_recipe)
     db.session.delete(recipe)
     db.session.commit()
