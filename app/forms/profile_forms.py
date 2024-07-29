@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileAllowed, FileRequired
+from flask_wtf.file import FileAllowed
 from wtforms import Form, StringField, FileField, TelField
 from wtforms.validators import Length, Optional
 
@@ -8,7 +8,7 @@ from app import profile_pictures
 
 
 # Main member profile form to display all fields
-class MemberProfileForm(FlaskForm):
+class ProfileForm(FlaskForm):
     username = StringField("Username", validators=[Optional(), Length(min=2, max=20)])
     email = StringField("Email")
     phone_number = TelField('Phone Number', validators=[Optional(), validate_phone_number])

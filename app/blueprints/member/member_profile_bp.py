@@ -13,7 +13,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import db
 from app.models import User, Member, ProfileImage
-from app.forms.profile_forms import MemberProfileForm
+from app.forms.profile_forms import ProfileForm
 from app.forms.auth_forms import OtpForm, ResetPasswordForm, PasswordForm
 from app.utils import clean_input, generate_otp, send_email, check_auth_stage, check_jwt_values, check_member, clear_unwanted_session_keys, get_image_url, upload_pfp, reset_pfp
 
@@ -111,7 +111,7 @@ def profile():
             logger.error(f"Error tring to cancel subscription for user '{user.username}': {e}")
         return redirect(url_for("member_profile_bp"))
 
-    form = MemberProfileForm()
+    form = ProfileForm()
     
     # Force refresh if clicked on 'revert'
     if request.method == "POST" and action == "revert":
