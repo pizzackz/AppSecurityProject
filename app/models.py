@@ -288,7 +288,7 @@ class MasterKey(db.Model):
     __tablename__ = "master_key"
 
     id = db.Column(Integer, primary_key=True)
-    value = db.Column(String(255), nullable=False)
+    value = db.Column(String(64), nullable=False)
     created_at = db.Column(DateTime, default=func.current_timestamp(), nullable=False)
     expires_at = db.Column(DateTime, nullable=False)
 

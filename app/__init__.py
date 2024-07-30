@@ -135,6 +135,9 @@ def create_app() -> Flask:
     app.register_blueprint(signup_auth_bp)
     app.register_blueprint(recovery_auth_bp)
 
+    from app.blueprints.account_management.admin_control_bp import admin_control_bp
+    app.register_blueprint(admin_control_bp)
+
     from app.blueprints.member.member_profile_bp import member_profile_bp
     from app.blueprints.member.member_subscription_bp import member_subscription_bp
     from app.blueprints.member.member_order_bp import member_order_bp

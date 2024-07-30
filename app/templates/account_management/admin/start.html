@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+{% extends "account_management/base.html" %}
+
+{% block title %}Admin Control{% endblock %}
+{% from "includes/_form_helper.html" import render_field %}
+
+{% block content %}
+<style nonce="{{ nonce }}">
+    #container {
+        display: flex;
+        justify-content: center;
+        margin-top: 10rem;
+    }
+
+    #content {
+        max-width: 50vw;
+    }
+
+</style>
+
+<div class="container-fluid row g-0" id="container">
+    <div id="content" class="fs-4">
+        <form method="POST" action="" id="enter-master-key-form">
+            <input type="hidden" id="_csrf_token" name="_csrf_token" value="{{ csrf_token() }}" />
+            <div class="form-group row">
+                <label for="master_key" class="text-center mb-2">Enter Master Key</label>
+                <div class="input-group">
+                    <input class="form-control fs-6" id="master_key" name="master_key" type="text" placeholder="Paste the master key here" required />
+                    <button type="submit" class="btn btn-primary d-flex align-items-center submit-disabler">
+                        <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

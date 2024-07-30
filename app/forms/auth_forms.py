@@ -36,7 +36,7 @@ class PasswordForm(FlaskForm):
 
 # Account Recovery Phase 2 - Choosing to recover username or set new password
 class RecoverOptionsForm(FlaskForm):
-    recovery_option = RadioField("", choices=[("recover_username", "Recover Username"), ("reset_password", "Change Password")], default="username", validate_choice=True)
+    recovery_option = RadioField("", choices=[("recover_username", "Recover Username"), ("reset_password", "Change Password")], default="username", validators=[DataRequired()], validate_choice=True)
 
 
 # Signup optional fields - Save phone & address
@@ -54,10 +54,10 @@ class ResetPasswordForm(FlaskForm):
 
 # Confirmation form for new member account creation after Google Signin
 class ConfirmNewMemberForm(FlaskForm):
-    confirm = RadioField("Do you want to create a new member account?", choices=[("yes", "Yes"), ("no", "No")], validators=[DataRequired()])
+    confirm = RadioField("Do you want to create a new member account?", choices=[("yes", "Yes"), ("no", "No")], validators=[DataRequired()], validate_choice=True)
 
 
 # Confirmation form for linking google account
 class ConfirmGoogleLinkForm(FlaskForm):
-    confirm = RadioField("Do you want to link your current tastefully account with google?", choices=[("yes", "Yes"), ("no", "No")], validators=[DataRequired()])
+    confirm = RadioField("Do you want to link your current tastefully account with google?", choices=[("yes", "Yes"), ("no", "No")], validators=[DataRequired()], validate_choice=True)
 
