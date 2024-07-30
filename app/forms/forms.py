@@ -1,5 +1,5 @@
 from wtforms import Form, StringField, FileField, TextAreaField, IntegerField, SelectField, DecimalField, SubmitField, validators, HiddenField, DateField, TimeField, SelectMultipleField, IntegerRangeField, BooleanField
-from wtforms.validators import DataRequired, Length, NumberRange
+from wtforms.validators import DataRequired, Length, NumberRange, Regexp
 from flask_wtf import FlaskForm, RecaptchaField
 
 from app.forms.validators import six_digit_postal_code_validator, phone_number_validator
@@ -51,10 +51,10 @@ class AICreateRecipeForm(FlaskForm):
     """
 
 class CreateFeedback(FlaskForm):
-    name = StringField('Your Name', [validators.Length(min=1, max=150), validators.DataRequired()])
+    name = StringField('Your Name', [validators.Length(min=1, max=150), validators.DataRequired(), Regexp(r'^[a-zA-Z]+$', message="Name must contain only letters.")])
     category = SelectField('Category', choices=[("product", "Product"), ("website", "Website"), ("delivery", "Delivery"), ("others", "Others")])
     rating = DecimalField('Overall Satisfaction', [validators.NumberRange(min=1, max=5)])
-    comment = TextAreaField('Feedback', [validators.DataRequired()])
+    comment = TextAreaField('Feedback', [validators.DataRequired(), validators.Length(max=500)])
 
 
 # Order form to order menu items

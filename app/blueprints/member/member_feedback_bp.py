@@ -8,7 +8,10 @@ from flask import (
     session,
     flash,
     url_for,
+    
 )
+from flask_login import login_required
+from bleach import clean
 from app.models import Feedback
 from app import db
 
@@ -16,15 +19,34 @@ from app.forms.forms import CreateFeedback
 
 member_feedback_bp = Blueprint("member_feedback_bp", __name__)
 
+@login_required
 
 @member_feedback_bp.route("/feedback", methods=["GET", "POST"])
 def feedback():
     feedback_form = CreateFeedback()
     if request.method == 'POST' and feedback_form.validate_on_submit():
-        name = feedback_form.name.data
+        #sanitise name
+        name = clean(feedback_form.name.data)
+
+        #ensure category is valid
+        valid_categories = ["product", "website", "delivery", "others"]
         category = feedback_form.category.data
-        rating = feedback_form.rating.data
-        comment = feedback_form.comment.data
+        if category not in valid_categories:
+            flash('Invalid category selection.', 'danger')
+            return render_template('feedback.html', form=feedback_form)
+        
+        #ensure rating is valid
+        try:
+            rating = float(feedback_form.rating.data)
+            if not (1 <= rating <= 5):
+                flash('Rating must be between 1 and 5.', 'danger')
+                return render_template('feedback.html', form=feedback_form)
+        except ValueError:
+            flash('Invalid rating value.', 'danger')
+            return render_template('feedback.html', form=feedback_form)
+        
+        #sanitise comment
+        comment = clean(feedback_form.comment.data)
 
 
         # Storing in database
@@ -32,6 +54,7 @@ def feedback():
         try:
             db.session.add(new_feedback)
             db.session.commit()
+            flash('Feedback successfully submitted!', 'success')
         except:
             print('Error in creating feedback')
             flash('An error occurred while creating the feedback. Please try again.', 'danger')
