@@ -19,9 +19,9 @@ from app.forms.forms import CreateFeedback
 
 member_feedback_bp = Blueprint("member_feedback_bp", __name__)
 
-@login_required
 
 @member_feedback_bp.route("/feedback", methods=["GET", "POST"])
+@login_required
 def feedback():
     feedback_form = CreateFeedback()
     if request.method == 'POST' and feedback_form.validate_on_submit():

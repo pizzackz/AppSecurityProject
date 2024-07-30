@@ -8,6 +8,7 @@ from flask import (
     session,
     flash,
     url_for,
+    jsonify
 )
 import praw
 import logging
@@ -15,7 +16,7 @@ import sqlite3
 import os
 
 from app import db
-from app.models import Token
+from app.models import Token, Post
 
 member_forum_bp = Blueprint("member_forum_bp", __name__)
 
@@ -89,27 +90,13 @@ def get_reddit_instance():
 
 
 @member_forum_bp.route('/forum')
-def me():
-    reddit_user = get_reddit_instance()
-    if not reddit_user:
-        return redirect(url_for('authorize'))
-
-    try:
-        user = reddit_user.user.me()
-        return f'Hello, {user.name}!'
-    except Exception as e:
-        logging.error(f"Error fetching user information: {e}")
-        return f"Error fetching user information: {e}", 500
-
-
-@member_forum_bp.route('/forum/posts')
 def subreddit():
     reddit_user = get_reddit_instance()
     if not reddit_user:
         return redirect(url_for('authorize'))
 
     try:
-        subreddit = reddit_user.subreddit('learnpython')
+        subreddit = reddit_user.subreddit('food')
         posts = [post.title for post in subreddit.hot(limit=5)]
         return render_template('member/forum/customer_forum.html', posts=posts)
     except praw.exceptions.PRAWException as e:
@@ -118,3 +105,32 @@ def subreddit():
     except Exception as e:
         logging.error(f"Unexpected error: {e}")
         return f"Error fetching subreddit information: {e}", 500
+
+
+@member_forum_bp.route('/forum/create_post')
+def create_post():
+    reddit_user = get_reddit_instance()
+    if not reddit_user:
+        return redirect(url_for('authorize'))
+
+    data = request.json
+    title = data.get('title')
+    body = data.get('body')
+
+    try:
+        submission = reddit_user.subreddit('learnpython').submit(title, selftext=body)
+        
+        # Store post information in the database
+        new_post = Post(
+            reddit_id=submission.id,
+            title=submission.title,
+            description=submission.description,
+            created_utc=submission.created_utc
+        )
+        db.session.add(new_post)
+        db.session.commit()
+        
+        return jsonify({'message': 'Post created successfully!', 'post_id': submission.id}), 201
+    except Exception as e:
+        logging.error(f"Error creating post: {e}")
+        return jsonify({'error': str(e)}), 500
