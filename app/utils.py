@@ -8,6 +8,7 @@ import hashlib
 import requests
 import uuid
 
+from datetime import datetime, timezone
 from logging import Logger
 from flask import Response, session, redirect, url_for, flash, make_response, current_app
 from flask_mail import Message
@@ -236,8 +237,39 @@ def check_auth_stage(
         unset_jwt_cookies(response)
         flash(flash_message, 'error')
         logger.error(f"{log_message}: '{auth_stage}' not in {allowed_stages}")
-        return make_response(response)
-    
+        return response
+    return None
+
+
+# Check expired session
+def check_expired_session(
+        key_to_check: str,
+        fallback_endpoint: str,
+        flash_message: str = "Your session has expired. Please re-authenticate with a valid master key.",
+        log_message: str = "Session has expired.",
+        keys_to_keep: Optional[Set[str]] = None
+) -> Optional[Response]:
+    """
+    Utility function to check if the session is expired based on 'key_to_check'.
+
+    Parameters:
+    - key_to_check (str): The key in session that contains the expiry information.
+    - fallback_endpoint (str): The endpoint to redirect to if the session data is not valid.
+    - flash_message (str, optional): The message to flash if the session is expired. Defaults to a generic message.
+    - log_message (str, optional): The message to log if the session is expired. Defaults to a generic message.
+
+    Returns:
+    - None if the session is expired.
+    - Redirect response if the session data is not valid.
+    """
+    expired_datetime = session.get(key_to_check)
+    if not expired_datetime or expired_datetime < datetime.now(timezone.utc):
+        clear_unwanted_session_keys(keys_to_keep)
+        response = make_response(redirect(url_for(fallback_endpoint)))
+        unset_jwt_cookies(response)
+        flash(flash_message, 'error')
+        logger.error(log_message)
+        return response
     return None
 
 

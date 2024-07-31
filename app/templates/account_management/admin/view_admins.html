@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+{% extends "account_management/base.html" %}
+
+{% block title %}View Admins{% endblock %}
+
+{% block content %}
+
+<form action="" method="post" id="set-password-form">
+    <input type="hidden" id="_csrf_token" name="_csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" name="action" value="delete" class="btn btn-outline-primary rounded-pill">Delete Admin</button>
+</form>
+
+{% endblock %}
+

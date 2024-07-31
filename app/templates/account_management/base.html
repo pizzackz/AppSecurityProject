@@ -23,6 +23,7 @@
 </head>
 
 <body>
+    {% block navbar %}Admin Control navbar{% endblock %}
     {% for message in get_flashed_messages(category_filter=["info"]) %}
         <div class="alert alert-info alert-dismissible fade show" role="alert">
             {{ message }}

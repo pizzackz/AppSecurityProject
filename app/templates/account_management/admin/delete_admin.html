@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+{% extends "account_management/base.html" %}
+
+{% block title %}Delete Admin{% endblock %}
+
+{% block content %}
+{% from 'includes/_form_helper.html' import render_field %}
+
+<form action="" method="post" id="set-password-form">
+    {{ form.hidden_tag() }}
+    <div class="form-group">
+        {{ render_field(form.master_key, class="form-control", placeholder="Enter a valid master key") }}
+    </div>
+    <div class="form-group">
+        {{ form.recaptcha.label }} {{ form.recaptcha() }}
+    </div>
+    <button type="submit" name="action" value="delete" class="btn btn-primary rounded-pill">Delete</button>
+</form>
+
+{% endblock %}
+

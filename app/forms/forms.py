@@ -1,8 +1,8 @@
-from wtforms import Form, StringField, FileField, TextAreaField, IntegerField, SelectField, DecimalField, SubmitField, validators, HiddenField, DateField, TimeField, SelectMultipleField, IntegerRangeField, BooleanField
-from wtforms.validators import DataRequired, Length, NumberRange, Regexp
+from wtforms import Form, StringField, FileField, TextAreaField, IntegerField, SelectField, DecimalField, SubmitField, validators, HiddenField, DateField, TimeField, PasswordField
+from wtforms.validators import DataRequired, Length, NumberRange, Regexp, EqualTo
 from flask_wtf import FlaskForm, RecaptchaField
 
-from app.forms.validators import six_digit_postal_code_validator, phone_number_validator
+from app.forms.validators import validate_email_format, unique_username, unique_email, six_digit_postal_code_validator, phone_number_validator
 
 
 # Create recipe form for members and admin, can double as Update recipe form
@@ -15,6 +15,7 @@ class CreateRecipeForm(FlaskForm):
     prep_time = IntegerField("Preparation Time (minutes)", validators=[DataRequired(), NumberRange(min=0)], render_kw={"class": "form-control"})
     recipe_type = SelectField("Type", choices=[("Standard", "Standard"), ("Premium", "Premium"), ("Private", "Private")], validators=[DataRequired()], render_kw={"class": "form-control"})
     submit = SubmitField("Create Recipe", render_kw={"class": "btn btn-primary"})
+
 
 class CreateRecipeFormMember(FlaskForm):
     name = StringField("Name", validators=[DataRequired(), Length(max=20)], render_kw={"class": "form-control"})
@@ -30,6 +31,7 @@ class CreateRecipeFormMember(FlaskForm):
 class RecipeSearch(FlaskForm):
     ingredients = StringField("Ingredients", validators=[DataRequired()], render_kw={"class": "form-control"})
     submit = SubmitField("Search", render_kw={"class": "btn btn-primary"})
+
 
 class AICreateRecipeForm(FlaskForm):
     cuisine = StringField("Cuisine", validators=[Length(max=12)], render_kw={'class': 'form-control'})
@@ -49,6 +51,7 @@ class AICreateRecipeForm(FlaskForm):
     difficulty = request.json.get('difficulty')
     remarks = request.json.get('remarks')
     """
+
 
 class CreateFeedback(FlaskForm):
     name = StringField('Your Name', [validators.Length(min=1, max=150), validators.DataRequired(), Regexp(r'^[a-zA-Z]+$', message="Name must contain only letters.")])
@@ -74,3 +77,18 @@ class OrderForm(FlaskForm):
     selected_items = StringField('Selected Items', [validators.DataRequired()])
     recaptcha = RecaptchaField()
     submit = SubmitField('Schedule Delivery')
+
+
+# Create admin form
+class CreateAdminForm(FlaskForm):
+    username = StringField("Username", validators=[DataRequired(), Length(min=2, max=20), unique_username])
+    email = StringField("Email", validators=[DataRequired(), validate_email_format, unique_email])
+    password = PasswordField("Password", validators=[DataRequired(), Length(min=8)])
+    confirm_password = PasswordField("Confirm Password", validators=[DataRequired(), Length(min=8), EqualTo("password", "Passwords must match")])
+    recaptcha = RecaptchaField()
+
+
+# Delete admin form
+class DeleteAdminForm(FlaskForm):
+    master_key = StringField("Re-enter Master Key", validators=[DataRequired()])
+    recaptcha = RecaptchaField()

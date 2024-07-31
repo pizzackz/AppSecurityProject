@@ -47,7 +47,7 @@ class Config:
     CSP_DIRECTIVES = {
         'default-src': ["'self'", 'https://cdn.jsdelivr.net', 'https://cdn.tiny.cloud'],
         'style-src': ["'self'", 'https://cdn.jsdelivr.net', 'https://cdn.tiny.cloud'],
-        'script-src': ["'self'", 'https://cdn.jsdelivr.net', 'https://cdn.ckeditor.com', 'https://js.stripe.com/v3/', 'https://cdn.tiny.cloud', 'https://www.google.com'],
+        'script-src': ["'self'", 'https://cdn.jsdelivr.net', 'https://cdn.ckeditor.com', 'https://js.stripe.com/v3/', 'https://www.gstatic.com', 'https://cdn.tiny.cloud', 'https://www.google.com'],
         'font-src': ["'self'", 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com'],
         'img-src': ["'self'", 'data:', 'https://sp.tinymce.com', 'https://lh3.googleusercontent.com'],
         'connect-src': ["'self'", 'https://cdn.tiny.cloud'],

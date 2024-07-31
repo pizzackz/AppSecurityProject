@@ -32,6 +32,9 @@ Admin Profile:
     Implement log out for active account using same username after successful reset of password
 
 Admin Account Management Flow Summary:
+    Create navbar to access create, view, login
+    Style create_admin & delete_admin, follow how the previous Sem admin panel looks like
+
     Secure Interface Access:
         All routes require validation of a valid master key and session duration.
 
@@ -67,3 +70,4 @@ Admin Account Management Flow Summary:
     
     Flask-JWT-Extended Integration:
         Used for handling JWT creation, validation, and management, with additional encryption of sensitive data using the cryptography library.
+    

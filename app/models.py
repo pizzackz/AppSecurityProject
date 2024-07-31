@@ -191,6 +191,20 @@ class Admin(User):
             db.session.rollback()
             logger.error(f"An error occurred while creating admin: {e}")
             return None
+    
+    # To delete admin
+    @staticmethod
+    def delete(id: Column[int]):
+        try:
+            admin = Admin.query.get(id)
+            db.session.delete(admin)
+            db.session.commit()
+            return admin
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"An error occurred while deleting admin with id '{id}'")
+            return None
+
 
     # Generate dynamic one-time use admin key
     def generate_admin_key(self):
@@ -301,7 +315,7 @@ class MasterKey(db.Model):
     @staticmethod
     def generate_master_key():
         new_key = os.urandom(32).hex()
-        expires_at = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
+        expires_at = (datetime.now(timezone.utc) + timedelta(days=1)).isoformat()
         return MasterKey(value=new_key, expires_at=expires_at)
 
     # Retrieve any of the valid keys

@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timedelta, timezone
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash
 from app.models import db, Admin, Member, MenuItem, MasterKey
@@ -16,7 +17,7 @@ def seed_database():
     # create_menu_items()
     create_fake_master_keys(5)
     create_admins()
-    # create_members()
+    create_members()
     logging.info("Database initialised and test data added.")
 
 
@@ -191,6 +192,10 @@ def create_members():
 
         # Commit the session to the database
         db.session.commit()
+
+        sample_members[0].subscription_end_date = datetime.now(timezone.utc) + timedelta(days=30)
+        db.session.commit()
+
         logger.info("Members test data added!")
     else:
         logger.info("Members test data already exists.")
