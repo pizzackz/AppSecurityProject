@@ -3,10 +3,17 @@
 
 {% block title %}View Admins{% endblock %}
 
+{% block navbar %}
+{% include "includes/_admin_control_navbar.html" %}
+{% endblock %}
+
 {% block content %}
+
+<h1>Admins list </h1>
 
 <form action="" method="post" id="set-password-form">
     <input type="hidden" id="_csrf_token" name="_csrf_token" value="{{ csrf_token() }}">
+    <!-- To be replaced later on -->
     <button type="submit" name="action" value="delete" class="btn btn-outline-primary rounded-pill">Delete Admin</button>
 </form>
 

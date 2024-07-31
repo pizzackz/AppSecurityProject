@@ -1,0 +1,67 @@
+<nav class="navbar navbar-expand-lg navbar-light shadow shadow-sm">
+    <div class="container-fluid">
+        <!-- Logo image -->
+        <a class="navbar-brand" href="{{ url_for('home_bp.home') }}">
+            <img class="logo" src="{{ url_for('static', filename='images/logo/logo.png') }}" />
+        </a>
+
+        <!-- Centered session timer -->
+        <div class="mx-auto d-flex align-items-center justify-content-center">
+            <span id="session-timer" class="nav-link text-center">You have to re-authenticate in <span id="session-time-left"></span></span>
+        </div>
+
+        <!-- Button to toggle collapse/expand navbar when screen too small -->
+        <button class="navbar-toggler bypass-disable" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Collapsible content of navbar linking -->
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ms-auto justify-content-end">
+                <li class="nav-item">
+                    <a href="{{ url_for('admin_control_bp.view_admins') }}" class="nav-link">Admin List</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('admin_control_bp.create_admin') }}" class="nav-link">Create Admin</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('login_auth_bp.login') }}" class="nav-link">Login</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<script nonce="{{ nonce }}">
+    document.addEventListener('DOMContentLoaded', function () {
+        var sessionExpiry = new Date("{{ session.get('session_expiry') }}");
+        var timerElement = document.getElementById('session-time-left');
+
+        function updateTimer() {
+            var now = new Date();
+            var timeLeft = sessionExpiry - now;
+
+            if (timeLeft <= 0) {
+                window.location.href = "{{ url_for('admin_control_bp.start', expired_session=True) }}";
+                return;
+            }
+
+            var minutes = Math.floor(timeLeft / 60000);
+            var seconds = Math.floor((timeLeft % 60000) / 1000);
+            timerElement.textContent = minutes + "m " + (seconds < 10 ? '0' : '') + seconds + "s";
+
+            // Highlight the timer in red if time left is 3 minutes or less
+            if (timeLeft <= 180000) { // 3 minutes in milliseconds
+                timerElement.style.color = 'red';
+                timerElement.style.fontWeight = 'bold';
+            } else {
+                timerElement.style.color = '';
+                timerElement.style.fontWeight = '';
+            }
+
+            setTimeout(updateTimer, 1000);
+        }
+
+        updateTimer();
+    });
+</script>

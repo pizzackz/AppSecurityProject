@@ -84,6 +84,14 @@ def start():
     # Clear all session data and jwt tokens
     clear_unwanted_session_keys()
 
+    # Check wheter user got redirected after session timed out
+    if request.args.get("expired_session") == "True":
+        flash("The session has expired. You will need to re-authenticate again.", "info")
+        logger.info("Session has expired and user has been redirected back to reauthenticate.")
+        response = redirect(url_for('admin_control_bp.start'))
+        unset_jwt_cookies(response)
+        return response
+
     if request.method == "POST":
         form_data = request.form.get("master_key")
 
@@ -128,6 +136,9 @@ def start():
         }
         set_session_data(session_data)
 
+        flash("Succesfully authenticated. You are given 30mins before needing to re-authenticate.", "success")
+        logger.info("A user was successfully authenticated to access the admin control pages.")
+
         response = redirect(url_for("admin_control_bp.view_admins"))
         unset_jwt_cookies(response)
         return response
@@ -149,7 +160,7 @@ def view_admins():
 
 # Admin creation route for creating new admins (requires 2FA with OTP sent to email)
 @admin_control_bp.route("/2", methods=['GET', 'POST'])
-def create_admins():
+def create_admin():
     # Conduct essential checks to manage access control
     check_result = admin_control_checks()
     if check_result:
@@ -189,7 +200,7 @@ def send_otp():
     check = check_auth_stage(
         auth_process="create_admin_stage",
         allowed_stages=['send_otp', 'verify_email'],
-        fallback_endpoint='admin_control_bp.create_admins',
+        fallback_endpoint='admin_control_bp.create_admin',
         flash_message="Your session has expired. Please re-authenticate with a valid master key.",
         log_message="Invalid admin creation stage",
         keys_to_keep=ESSENTIAL_KEYS
@@ -201,7 +212,7 @@ def send_otp():
     check_jwt = check_jwt_values(
         required_identity_keys=['username', 'email', 'password_hash'],
         required_claims=None,
-        fallback_endpoint='admin_control_bp.create_admins',
+        fallback_endpoint='admin_control_bp.create_admin',
         keys_to_keep=ESSENTIAL_KEYS
     )
     if check_jwt:
@@ -211,7 +222,7 @@ def send_otp():
     identity = get_jwt_identity()
     otp = generate_otp()
     hashed_otp = hashlib.sha256(otp.encode("utf-8")).hexdigest()
-    otp_expiry = (datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat()  # OTP valid for 5 minutes
+    otp_expiry = (datetime.now(timezone.utc) + timedelta(seconds=10)).isoformat()  # OTP valid for 5 minutes
     otp_data = {'otp': hashed_otp, 'expiry': otp_expiry}
 
     # Update JWT token with OTP and expiry
@@ -220,7 +231,7 @@ def send_otp():
     set_access_cookies(response, new_token)
 
     # Try sending email using utility send_email function
-    email_body = f"Your OTP is {otp}. It will expire in 10 minutes."
+    email_body = f"Your OTP is {otp}. It will expire in 5 minutes."
     create_admin_stage = session.get("create_admin_stage")
     if send_email(identity['email'], "Your OTP Code", email_body):
         flash_msg = "OTP has been sent to your email address."
@@ -240,7 +251,7 @@ def send_otp():
     else:
         if create_admin_stage == "send_otp":
             clear_unwanted_session_keys(ESSENTIAL_KEYS)
-            response = redirect(url_for("admin_control_bp.create_admins"))
+            response = redirect(url_for("admin_control_bp.create_admin"))
             unset_jwt_cookies(response)
         flash("An error occurred while sending the OTP. Please try again.", "error")
         logger.error(f"Failed to send OTP to {identity['email']}")
@@ -253,11 +264,11 @@ def send_otp():
 @admin_control_bp.route("/2/verify_email", methods=["GET", "POST"])
 @jwt_required()
 def verify_email():
-    # Redirect to signup & clear temp data in session & jwt when pressed 'back'
+    # Redirect to create admin & clear temp data in session & jwt when pressed 'back'
     if 'action' in request.args and request.args.get('action') == 'back':
         # Clear session and JWT data
         clear_unwanted_session_keys(ESSENTIAL_KEYS)
-        response = redirect(url_for('admin_control_bp.create_admins'))
+        response = redirect(url_for('admin_control_bp.create_admin'))
         unset_jwt_cookies(response)
         flash("Admin creation process restarted.", "info")
         logger.info("User opted to restart the admin creation process.")
@@ -267,7 +278,7 @@ def verify_email():
     check = check_auth_stage(
         auth_process="create_admin_stage",
         allowed_stages=['send_otp', 'verify_email'],
-        fallback_endpoint='admin_control_bp.create_admins',
+        fallback_endpoint='admin_control_bp.create_admin',
         flash_message="Your session has expired. Please re-authenticate with a valid master key.",
         log_message="Invalid admin creation stage",
         keys_to_keep=ESSENTIAL_KEYS
@@ -279,7 +290,7 @@ def verify_email():
     check_jwt = check_jwt_values(
         required_identity_keys=['username', 'email', 'password_hash'],
         required_claims=['otp_data'],
-        fallback_endpoint='admin_control_bp.create_admins',
+        fallback_endpoint='admin_control_bp.create_admin',
         keys_to_keep=ESSENTIAL_KEYS
     )
     if check_jwt:
@@ -309,7 +320,7 @@ def verify_email():
 
             # Clear JWT & session data
             clear_unwanted_session_keys(ESSENTIAL_KEYS)
-            response = redirect(url_for("admin_control_bp.create_admins"))
+            response = redirect(url_for("admin_control_bp.create_admin"))
             flash("Email verified successfuly. New admin account created!", "success")
             logger.info(f"New admin account with username '{identity['username']}' created succesfully!")
 
@@ -319,7 +330,7 @@ def verify_email():
             logger.warning(f"Invalid OTP attempt for user: {identity['email']}")
 
     # Render the verify email template
-    return render_template(f'{TEMPLATE_FOLDER}/verify_email.html', form=form)
+    return render_template(f'{TEMPLATE_FOLDER}/verify_email.html', form=form, otp_expiry=otp_expiry)
 
 
 # Delete admin route
@@ -329,6 +340,16 @@ def delete_admin():
     check_result = admin_control_checks()
     if check_result:
         return check_result
+
+    # Redirect to create admin & clear temp data in session & jwt when pressed 'back'
+    if 'action' in request.args and request.args.get('action') == 'back':
+        # Clear session and JWT data
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        response = redirect(url_for('admin_control_bp.view_admins'))
+        unset_jwt_cookies(response)
+        flash("Admin deletion process cance;led.", "info")
+        logger.info("User opted to cancel the admin deletion process.")
+        return response
     
     # Check whether admin_id in session
     no_admin_id = check_session_keys(
