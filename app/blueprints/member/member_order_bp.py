@@ -69,6 +69,7 @@ def add_no_cache_headers(response):
 # Order Blueprint
 
 @member_order_bp.route('/menu', methods=['POST', 'GET'])
+@login_required
 def menu():
     form = MenuForm()
     items = MenuItem.query.all()
@@ -82,13 +83,26 @@ def menu():
 
 
 @member_order_bp.route('/booking', methods=['GET', 'POST'])
+@login_required
 def booking():
     form = OrderForm()
 
-    # Check if selected items are in session
-    selected_items = get_session_data('selected_items')
-    if not selected_items:
-        flash('Please select items from the menu first.', 'error')
+    # Retrieve session data
+    try:
+        session_data = get_session_data(['selected_items'])
+        selected_items = [item for item in session_data.get('selected_items', []) if item]
+
+        # Security check: Ensure the user has selected items from the menu
+        if not selected_items:
+            flash("An error occurred while processing your request. Please try again.", "error")
+            return redirect(url_for('member_order_bp.menu'))
+        # Security check: Ensure the user has completed the menu step
+    except TypeError as t:
+        logger.error(f"Invalid session data: {t}")
+        flash("An error occurred while processing your request. Please try again.", "error")
+        return redirect(url_for('member_order_bp.menu'))
+
+
 
         return redirect(url_for('member_order_bp.menu'))
 
@@ -124,6 +138,7 @@ def booking():
 
 
 @member_order_bp.route('/order', methods=['GET', 'POST'])
+@login_required
 def order():
     form = OrderForm()
 
@@ -160,16 +175,17 @@ def order():
         flash("An error occurred while processing your request. Please try again.", "error")
         return redirect(url_for('member_order_bp.menu'))
 
-    if form.validate_on_submit():
+    if request.method == 'POST' and form.validate_on_submit():
         try:
             new_order = Order(
                 customer_name=form.name.data,
+                user_id=current_user.id,
                 address=form.address.data,
                 postal_code=form.postal_code.data,
                 phone_number=form.phone_number.data,
                 delivery_date=form.selected_date.data,
                 delivery_time=form.selected_time.data,
-                selected_items=form.selected_items.data
+                selected_items=form.selected_items.data,
             )
             db.session.add(new_order)
             db.session.commit()
@@ -192,8 +208,12 @@ def order():
             db.session.rollback()
             logger.error(f"Database error when creating order: {e}")
             flash("An error occurred while creating your order. Please try again.", "danger")
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            flash("An unexpected error occurred. Please try again.", "danger")
 
         return redirect(url_for('member_order_bp.success'))
+
     else:
         for field, errors in form.errors.items():
             for error in errors:
@@ -205,6 +225,7 @@ def order():
 
 
 @member_order_bp.route('/order_confirm', methods=['POST', 'GET'])
+@login_required
 def success():
     clear_session_data(['selected_items', 'delivery_date', 'delivery_time'])
     if request.method == "POST":
@@ -215,10 +236,11 @@ def success():
 
 # Order History Blueprint
 @member_order_bp.route('/order_history', methods=['GET'])
-# @login_required
+@login_required
 def order_history():
     # Fetch orders for the current user
-    user_id = 3  # Assuming the user is logged in and `current_user` is set
+    user_id = current_user.id
+    user_id = current_user.id
     orders = Order.query.filter_by(user_id=user_id).all()
 
     return render_template('member/order/order_history.html', orders=orders)

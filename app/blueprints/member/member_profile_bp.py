@@ -36,7 +36,7 @@ def profile():
     check = check_member(fallback_endpoint='login_auth_bp.login')
     if check:
         return check
-    
+
     action = request.form.get("action", None) or request.args.get("action", None)
     print(f"action = {action}")
 
@@ -83,7 +83,7 @@ def profile():
 
         return redirect(url_for("member_profile_bp.profile"))
 
-    # Redirect to handle subscrition plan actions (upgrade to premium, renew premium)
+    # Redirect to handle subscription plan actions (upgrade to premium, renew premium)
     if action in ("renew_plan", "upgrade_plan"):
         clear_unwanted_session_keys(ESSENTIAL_KEYS)
         endpoint = "member_subscription_bp.plan_select"
@@ -92,11 +92,9 @@ def profile():
             response = redirect(url_for(endpoint, action="renew_plan"))
         elif action == "upgrade_plan":
             response = redirect(url_for(endpoint, action="upgrade_plan"))
-        else:
-            response = redirect(url_for(endpoint, action="cancel_plan"))
 
         return response
-    
+
     # Handle proper cancellation of premium subscription plan
     if action == "cancel_plan":
         try:
@@ -112,7 +110,7 @@ def profile():
         return redirect(url_for("member_profile_bp"))
 
     form = ProfileForm()
-    
+
     # Force refresh if clicked on 'revert'
     if request.method == "POST" and action == "revert":
         flash("All changes made were reverted!", "success")
@@ -126,7 +124,7 @@ def profile():
             flash("Your profile picture cannot be removed since you are linked to Google.", "info")
             logger.info(f"User '{user.username}' tried to update their profile picture despite being linked to google.")
             return redirect(url_for("member_profile_bp.profile"))
-        
+
         profile_image = ProfileImage.query.get(user.id)
         # Check if profile image record exists
         if not profile_image:
