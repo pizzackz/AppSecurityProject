@@ -34,7 +34,7 @@
 
     <!-- Return Button -->
     <form action="" method="post">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="_csrf_token" id="_csrf_token" value="{{ csrf_token() }}">
         <div class="text-center mt-4">
             <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded" name="return" value="True">Return</button>
         </div>

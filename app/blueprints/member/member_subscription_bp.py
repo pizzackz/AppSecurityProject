@@ -7,6 +7,7 @@ from flask import Blueprint, request, redirect, url_for, render_template, jsonif
 from app import db, csrf
 from sqlalchemy.sql import func
 from app.models import Payment
+from app.config.config import Config
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -96,7 +97,7 @@ def stripe_webhook():
 def success():
     if request.method == "POST":
         if request.form.get('return') == 'True':
-            return redirect(url_for('member_subscription_bp.home'))
+            return redirect(url_for('home_bp.home'))
     return render_template('member/transaction-processing/success.html')
 
 
@@ -104,7 +105,7 @@ def success():
 def cancel():
     if request.method == "POST":
         if request.form.get('return') == 'True':
-            return redirect(url_for('member_subscription_bp.home'))
+            return redirect(url_for('home'))
     return render_template('member/transaction-processing/cancel.html')
 
 

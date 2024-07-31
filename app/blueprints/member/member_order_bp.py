@@ -9,6 +9,7 @@ from app.utils import clean_input, get_session_data, set_session_data, clear_ses
 import json
 import atexit
 from datetime import datetime, timedelta
+from flask_login import login_required, current_user
 
 # Create a logs directory if it doesn't exist
 if not os.path.exists('logs'):
@@ -65,11 +66,7 @@ def add_no_cache_headers(response):
     response.headers['Expires'] = '0'
     return response
 
-
-# @member_order_bp.route('/home', methods=['POST', 'GET'])
-# def home():
-#     return render_template('member/transaction-processing/index.html')
-
+# Order Blueprint
 
 @member_order_bp.route('/menu', methods=['POST', 'GET'])
 def menu():
@@ -131,10 +128,15 @@ def order():
     form = OrderForm()
 
     # Retrieve session data
-    session_data = get_session_data(['selected_items', 'delivery_date', 'delivery_time'])
-    selected_items = [item for item in session_data.get('selected_items', []) if item]
-    delivery_date = session_data.get('delivery_date')
-    delivery_time = session_data.get('delivery_time')
+    try:
+        session_data = get_session_data(['selected_items', 'delivery_date', 'delivery_time'])
+        selected_items = [item for item in session_data.get('selected_items', []) if item]
+        delivery_date = session_data.get('delivery_date')
+        delivery_time = session_data.get('delivery_time')
+    except TypeError as t:
+        logger.error(f"Invalid session data: {t}")
+        flash("An error occurred while processing your request. Please try again.", "error")
+        return redirect(url_for('member_order_bp.menu'))
 
     # Security check: Ensure the user has completed the booking step
     if 'delivery_date' not in session_data or 'delivery_time' not in session_data:
@@ -182,6 +184,7 @@ def order():
             db.session.commit()
 
             logger.info(f"Order {new_order.id} created successfully for customer {new_order.customer_name}.")
+            print(f"Order {new_order.id} created successfully for customer {new_order.customer_name}.")
             clear_session_data(['selected_items', 'delivery_date', 'delivery_time'])
             return redirect(url_for('member_order_bp.success'))
 
@@ -206,5 +209,16 @@ def success():
     clear_session_data(['selected_items', 'delivery_date', 'delivery_time'])
     if request.method == "POST":
         if request.form.get('return') == 'True':
-            return redirect(url_for('member_subscription_bp.home'))
+            return redirect(url_for('home_bp.home'))
     return render_template('member/order/success.html')
+
+
+# Order History Blueprint
+@member_order_bp.route('/order_history', methods=['GET'])
+# @login_required
+def order_history():
+    # Fetch orders for the current user
+    user_id = 3  # Assuming the user is logged in and `current_user` is set
+    orders = Order.query.filter_by(user_id=user_id).all()
+
+    return render_template('member/order/order_history.html', orders=orders)
