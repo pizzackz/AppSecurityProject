@@ -33,16 +33,11 @@ Admin Account Management Flow Summary:
     Secure Interface Access:
         All routes require validation of a valid master key and session duration.
 
-    Admin List:
-        Display id, pfp, username, email, created_at, last_login
-    
     Specific Admin Account View:
+        Fix frontend where image isn't spaced properly with the buttons
+        Implement logic for action buttons
         Display id, pfp, username, email, phone_number, address, postal_code, created_at, updated_at, last_login,
             last_logout, account_status, admin_key (click to send), admin_key_expiry (click to re-generate & send)
-
-    Admin Account Deletion:
-        Admin accounts can be deleted after master key validation.
-        No updates allowed through the management interface, only via profile pages.
 
     Session Handling:
         On any check failure (master key, session expiry), the session is cleared and redirected to authentication.
