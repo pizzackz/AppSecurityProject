@@ -80,3 +80,7 @@ FROM user INNER JOIN `admin` ON user.id = `admin`.id]
 2024-08-01 19:16:41,123 - flask_app - INFO - Admins test data added!
 2024-08-01 19:16:41,126 - flask_app - INFO - Deleted 0 rows from Member table.
 2024-08-01 19:16:41,304 - flask_app - INFO - Members test data added!
+2024-08-01 20:19:07,150 - flask_app - INFO - Deleted 0 rows from Admin table.
+2024-08-01 20:19:07,586 - flask_app - INFO - Admins test data added!
+2024-08-01 20:19:07,590 - flask_app - INFO - Deleted 0 rows from Member table.
+2024-08-01 20:19:07,809 - flask_app - INFO - Members test data added!
