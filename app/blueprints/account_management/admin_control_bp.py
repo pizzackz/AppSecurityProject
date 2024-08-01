@@ -153,7 +153,7 @@ def start():
 def view_admins():
     # Just for testing deletion, can safely remove it once done
     if request.form.get("action") == "delete":
-        session['admin_id'] = 1
+        session['admin_id'] = 3
         return redirect(url_for("admin_control_bp.delete_admin"))
     return render_template(f"{TEMPLATE_FOLDER}/view_admins.html")
 
@@ -222,7 +222,7 @@ def send_otp():
     identity = get_jwt_identity()
     otp = generate_otp()
     hashed_otp = hashlib.sha256(otp.encode("utf-8")).hexdigest()
-    otp_expiry = (datetime.now(timezone.utc) + timedelta(seconds=10)).isoformat()  # OTP valid for 5 minutes
+    otp_expiry = (datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat()  # OTP valid for 5 minutes
     otp_data = {'otp': hashed_otp, 'expiry': otp_expiry}
 
     # Update JWT token with OTP and expiry
