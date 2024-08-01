@@ -555,3 +555,30 @@ class Post(db.Model):
     title = db.Column(db.String(512), nullable=False)
     description = db.Column(db.Text, nullable=True)
     created_utc = db.Column(db.DateTime, nullable=False)
+
+
+class Log_general(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    log_datetime = db.Column(db.DateTime, default=db.func.current_timestamp())
+    priority_level = db.Column(db.String(20), nullable=False)
+    user_id = db.Column(db.Integer, nullable=False)
+    file_subdir = db.Column(db.String(255), nullable=False)
+    log_info = db.Column(db.String(255), nullable=False)
+
+
+class Log_account(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    log_datetime = db.Column(db.DateTime, default=db.func.current_timestamp())
+    priority_level = db.Column(db.String(20), nullable=False)
+    user_id = db.Column(db.Integer, nullable=False)
+    file_subdir = db.Column(db.String(255), nullable=False)
+    log_info = db.Column(db.String(255), nullable=False)
+
+
+class Log_transaction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    log_datetime = db.Column(db.DateTime, default=db.func.current_timestamp())
+    priority_level = db.Column(db.String(20), nullable=False)
+    user_id = db.Column(db.Integer, nullable=False)
+    file_subdir = db.Column(db.String(255), nullable=False)
+    log_info = db.Column(db.String(255), nullable=False)
