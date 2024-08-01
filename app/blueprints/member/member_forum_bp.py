@@ -22,17 +22,15 @@ member_forum_bp = Blueprint("member_forum_bp", __name__)
 
 # Set up logging for debugging
 logging.basicConfig(level=logging.DEBUG)
-
-# Replace these with your Reddit app credentials
-CLIENT_ID = 'FSHdft2_A9qmpG28_rAFGg'
-CLIENT_SECRET = '47fiOak87RXcTguWGTayTXUjyrscUw'
-USER_AGENT = 'Python:Tastefully:1.0 (by /u/xdninsans)'
+REDDIT_CLIENT_ID = os.environ.get('REDDIT_CLIENT_ID')
+REDDIT_CLIENT_SECRET = os.environ.get('REDDIT_CLIENT_SECRET')
+REDDIT_USER_AGENT = os.environ.get('REDDIT_USER_AGENT')
 
 # Initialize PRAW
 reddit = praw.Reddit(
-    client_id=CLIENT_ID,
-    client_secret=CLIENT_SECRET,
-    user_agent=USER_AGENT,
+    client_id=REDDIT_CLIENT_ID,
+    client_secret=REDDIT_CLIENT_SECRET,
+    user_agent=REDDIT_USER_AGENT,
     redirect_uri='http://localhost:5000/authorize_callback'
 )
 
