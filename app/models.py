@@ -140,6 +140,10 @@ class Member(User):
             if not profile_image:
                 raise Exception("Failed to create profile image record for member")
 
+            login_details = LoginDetails.create(new_member.id)
+            if not login_details:
+                raise Exception("Failed to create login details record for member")
+
             db.session.commit()
 
             return new_member
@@ -164,6 +168,10 @@ class Member(User):
             profile_image = ProfileImage.create_by_google(id=new_member.id, google_url=google_image_url)
             if not profile_image:
                 raise Exception("Failed to create profile image record for member")
+
+            login_details = LoginDetails.create(new_member.id)
+            if not login_details:
+                raise Exception("Failed to create login details record for member")
 
             db.session.commit()
 
@@ -208,6 +216,10 @@ class Admin(User):
             if not profile_image:
                 raise Exception("Failed to create profile image record for admin")
 
+            login_details = LoginDetails.create(new_admin.id)
+            if not login_details:
+                raise Exception("Failed to create login details record for admin")
+
             admin_key = new_admin.generate_admin_key()
             if not admin_key:
                 raise Exception("Failed to generate an admin key for admin")
@@ -235,6 +247,10 @@ class Admin(User):
             profile_image = ProfileImage.create_by_google(id=new_admin.id, google_url=google_image_url)
             if not profile_image:
                 raise Exception("Failed to create profile image record for admin")
+
+            login_details = LoginDetails.create(new_admin.id)
+            if not login_details:
+                raise Exception("Failed to create login details record for admin")
             
             admin_key = new_admin.generate_admin_key()
             if not admin_key:

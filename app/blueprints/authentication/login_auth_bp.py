@@ -15,7 +15,7 @@ from google_auth_oauthlib.flow import Flow
 
 from app import db, login_manager
 from app.config.config import Config
-from app.models import User, Member, Admin, LockedAccount
+from app.models import User, Member, Admin, LockedAccount, LoginDetails
 from app.forms.auth_forms import LoginForm, OtpForm, ConfirmNewMemberForm, ConfirmGoogleLinkForm
 from app.utils import clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_auth_stage, check_jwt_values
 
@@ -408,6 +408,7 @@ def verify_email():
         unset_jwt_cookies(response)
 
         # Log user in and necessary database updates
+        
         login_details = user.login_details
         login_details.update_login()
         login_user(user)

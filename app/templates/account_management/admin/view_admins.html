@@ -20,6 +20,7 @@
                     <th class="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">Email</th>
                     <th class="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">Joined</th>
                     <th class="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">Last Login</th>
+                    <th class="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">Account Status</th>
                     <th class="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">Actions</th>
                 </tr>
             </thead>
@@ -33,6 +34,16 @@
                     <td class="px-6 py-4 border-b border-gray-300">{{ admin.email }}</td>
                     <td class="px-6 py-4 border-b border-gray-300">{{ admin.created_at.strftime('%B %d, %Y') }}</td>
                     <td class="px-6 py-4 border-b border-gray-300">{{ admin.last_login.strftime('%B %d, %Y %I:%M %p') if admin.last_login else 'Never' }}</td>
+                    <td class="px-6 py-4 border-b border-gray-300">
+                        {% if admin.account_locked %}
+                            <span class="text-red-500">Locked</span>
+                            {% if admin.unlock_request %}
+                                <span class="text-yellow-500">(Unlock Requested)</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-green-500">Active</span>
+                        {% endif %}
+                    </td>
                     <td class="px-6 py-4 border-b border-gray-300">
                         <form method="POST" action="{{ url_for('admin_control_bp.view_admins') }}">
                             <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">

@@ -16,7 +16,7 @@ from google_auth_oauthlib.flow import Flow
 
 from app import db, jwt
 from app.config.config import Config
-from app.models import User, Admin, MasterKey
+from app.models import User, Admin, MasterKey, LockedAccount
 from app.forms.forms import CreateAdminForm, DeleteAdminForm
 from app.forms.auth_forms import OtpForm
 from app.utils import clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_session_keys, check_expired_session, set_session_data, check_auth_stage, check_jwt_values, get_image_url
@@ -169,7 +169,7 @@ def view_admins():
         flash(f"Admin '{admin_id}' selected. Redirecting to details view.", "info")
         logger.info(f"Admin '{admin_id}' selected for viewing details.")
         return redirect(url_for("admin_control_bp.view_admin_details"))
-    
+
     # Fetch all admin accounts
     admins = Admin.query.all()
 
@@ -180,12 +180,73 @@ def view_admins():
         "username": admin.username,
         "email": admin.email,
         "created_at": admin.created_at,
-        "last_login": admin.login_details.last_login if admin.login_details else None
-    } for admin in admins
-    ]
+        "last_login": admin.login_details.last_login if admin.login_details else None,
+        "account_locked": admin.account_status.is_locked if admin.account_status else False,
+        "unlock_request": (
+            LockedAccount.query.filter_by(id=admin.id).first().unlock_request
+            if admin.account_status.is_locked and LockedAccount.query.filter_by(id=admin.id).first()
+            else False
+        ),
+    } for admin in admins]
 
     # Render the view admins template with fetched data
     return render_template(f"{TEMPLATE_FOLDER}/view_admins.html", admin_data=admin_list_data)
+
+
+# Specific admin account view route
+@admin_control_bp.route("/4", methods=['GET', 'POST'])
+def view_admin_details():
+    # Conduct essential checks to manage access control
+    check_result = admin_control_checks()
+    if check_result:
+        return check_result
+
+    # Check admin_id exists in session
+    no_admin_id_in_session = check_session_keys(
+        required_keys=['admin_id'],
+        fallback_endpoint='admin_control_bp.view_admins',
+        flash_message="No admin selected. Please select an admin from the list.",
+        log_message="Attempted to view admin details without selecting an admin.",
+        keys_to_keep=ESSENTIAL_KEYS
+    )
+    if no_admin_id_in_session:
+        return no_admin_id_in_session
+
+    # Check whether admin account exists
+    admin_id = session.get("admin_id")
+    admin = Admin.query.get(admin_id)
+    if not admin:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("Admin account not found.", "error")
+        logger.warning(f"Admin account with ID {admin_id} not found.")
+        return redirect(url_for("admin_control_bp.view_admins"))
+
+    # Prepare data for rendering
+    admin_data = {
+        "image": get_image_url(admin),
+        "id": admin.id,
+        "username": admin.username,
+        "email": admin.email,
+        "phone_number": admin.phone_number,
+        "address": admin.address,
+        "created_at": admin.created_at,
+        "updated_at": admin.updated_at,
+        "last_login": admin.login_details.last_login if admin.login_details else None,
+        "login_count": admin.login_details.login_count if admin.login_details else 0,
+        "account_locked": admin.account_status.is_locked if admin.account_status else False,
+        "unlock_request": (
+            LockedAccount.query.filter_by(id=admin.id).first().unlock_request
+            if admin.account_status.is_locked and LockedAccount.query.filter_by(id=admin.id).first()
+            else False
+        ),
+        "failed_login_attempts": admin.account_status.failed_login_attempts if admin.account_status else 0,
+        "last_failed_login_attempt": admin.account_status.last_failed_login_attempt if admin.account_status else None,
+    }
+
+    print(f"admin data = {admin_data}")
+
+    # Render specific admin view template with fetched data
+    return render_template(f"{TEMPLATE_FOLDER}/view_admin_details.html", admin=admin_data)
 
 
 # Admin creation route for creating new admins (requires 2FA with OTP sent to email)
