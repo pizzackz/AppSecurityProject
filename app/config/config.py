@@ -104,3 +104,8 @@ class Config:
     # VirusTotal API key
     VIRUSTOTAL_API_KEY = os.environ.get('VIRUSTOTAL_API_KEY')
 
+    # Reddit API config
+    REDDIT_CLIENT_ID = os.environ.get('REDDIT_CLIENT_ID')
+    REDDIT_CLIENT_SECRET = os.environ.get('REDDIT_CLIENT_SECRET')
+    REDDIT_USER_AGENT = os.environ.get('REDDIT_USER_AGENT')
+

@@ -19,7 +19,6 @@ from app.forms.forms import CreateFeedback
 
 member_feedback_bp = Blueprint("member_feedback_bp", __name__)
 
-
 @member_feedback_bp.route("/feedback", methods=["GET", "POST"])
 @login_required
 def feedback():
