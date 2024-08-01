@@ -19,7 +19,7 @@ from app.config.config import Config
 from app.models import User, Admin, MasterKey
 from app.forms.forms import CreateAdminForm, DeleteAdminForm
 from app.forms.auth_forms import OtpForm
-from app.utils import clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_session_keys, check_expired_session, set_session_data, check_auth_stage, check_jwt_values
+from app.utils import clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_session_keys, check_expired_session, set_session_data, check_auth_stage, check_jwt_values, get_image_url
 
 
 # Initialise variables
@@ -151,11 +151,41 @@ def start():
 # Admin control view admins route for viewing all admin accounts
 @admin_control_bp.route("/1", methods=['GET', 'POST'])
 def view_admins():
-    # Just for testing deletion, can safely remove it once done
-    if request.form.get("action") == "delete":
-        session['admin_id'] = 3
-        return redirect(url_for("admin_control_bp.delete_admin"))
-    return render_template(f"{TEMPLATE_FOLDER}/view_admins.html")
+    # Conduct essential checks to manage access control
+    check_result = admin_control_checks()
+    if check_result:
+        return check_result
+    
+    # Redirect to admin details when clicked on any entry provided there is an admin id
+    if request.method == "POST":
+        # Check whether have admin id in form
+        admin_id = request.form.get("admin_id")
+        if not admin_id:        
+            flash("Failed to select admin. Please try again.", "error")
+            logger.warning("Failed to retrieve admin ID when trying to view specific admin account details.")
+            return redirect(url_for("admin_control_bp.view_admins"))
+        
+        session['admin_id'] = admin_id
+        flash(f"Admin '{admin_id}' selected. Redirecting to details view.", "info")
+        logger.info(f"Admin '{admin_id}' selected for viewing details.")
+        return redirect(url_for("admin_control_bp.view_admin_details"))
+    
+    # Fetch all admin accounts
+    admins = Admin.query.all()
+
+    # Define which attributes to display in admin list view
+    admin_list_data = [{
+        "image": get_image_url(admin),
+        "id": admin.id,
+        "username": admin.username,
+        "email": admin.email,
+        "created_at": admin.created_at,
+        "last_login": admin.login_details.last_login if admin.login_details else None
+    } for admin in admins
+    ]
+
+    # Render the view admins template with fetched data
+    return render_template(f"{TEMPLATE_FOLDER}/view_admins.html", admin_data=admin_list_data)
 
 
 # Admin creation route for creating new admins (requires 2FA with OTP sent to email)

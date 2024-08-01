@@ -18,8 +18,6 @@ Recovery:
 
 Login:
     Implement rate limiting for login requests
-    Track login attempts, check for locked accounts
-    Update login details wherever necessary
 
 Password forms:
     Fix password reset/ set buttons not being able to be disabled on frontend
@@ -35,16 +33,12 @@ Admin Account Management Flow Summary:
     Secure Interface Access:
         All routes require validation of a valid master key and session duration.
 
-    Admin Account Creation:
-        User inputs: username, email, password, confirm password.
-        Validations: Check master key, session, and input data.
-        JWT issued with identity (username, email), creation_stage set to send_otp.
-        send_otp route validates JWT and sends OTP email; sets stage to verify_email.
-        verify_email route checks OTP, JWT claims, and finalizes account creation.
-
-    Two-Factor Authentication (2FA):
-        OTP generated, hashed, stored in JWT; expires in 5 minutes.
-        On successful OTP verification, admin account is created.
+    Admin List:
+        Display id, pfp, username, email, created_at, last_login
+    
+    Specific Admin Account View:
+        Display id, pfp, username, email, phone_number, address, postal_code, created_at, updated_at, last_login,
+            last_logout, account_status, admin_key (click to send), admin_key_expiry (click to re-generate & send)
 
     Admin Account Deletion:
         Admin accounts can be deleted after master key validation.

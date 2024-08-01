@@ -15,7 +15,7 @@ from google_auth_oauthlib.flow import Flow
 
 from app import db, login_manager
 from app.config.config import Config
-from app.models import User, Member, Admin
+from app.models import User, Member, Admin, LockedAccount
 from app.forms.auth_forms import LoginForm, OtpForm, ConfirmNewMemberForm, ConfirmGoogleLinkForm
 from app.utils import clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_auth_stage, check_jwt_values
 
@@ -108,10 +108,14 @@ def handle_ideal_case2(user_by_email: User, username: str, email: str, profile_p
         logger.error(f"Error updating profile_images for user '{username}': {e}")
         return redirect(url_for('login_auth_bp.login'))
 
-    # Clear any jwt & session data, Log user in
+    # Clear any jwt & session data
     session.clear()
     response = make_response(redirect(url_for(endpoint)))
     unset_jwt_cookies(response)
+
+    # Log user in and necessary login_details updates
+    login_details = user_by_email.login_details
+    login_details.update_login()
     login_user(user_by_email)
 
     # Display messages
@@ -209,10 +213,34 @@ def login():
             logger.warning(f"Login attempt with non-existent username: {username}")
             return redirect(url_for("login_auth_bp.login"))
 
+        # Check if account is locked and retrieve the lock reason
+        if user.account_status.is_locked:
+            locked_account = LockedAccount.query.filter_by(id=user.id).first()
+            
+            # Check if lock request has been sent
+            if locked_account.unlock_request:
+                flash("Your account is currently locked. A request to unlock your account has been sent to support. Please wait for further instructions.", "info")
+                logger.info(f"Attempt to login to locked account with username '{username}' after request for unlock has been sent.")
+                return redirect(url_for('login_auth_bp.login'))
+
+            lock_reason = locked_account.locked_reason if locked_account else "Unknown reason"
+            flash(f"Your account has been locked due to the following reason: {lock_reason}. Please contact support below.", "error")
+            logger.warning(f"Login attempt for locked account with username '{username}'. Lock reason: {lock_reason}")
+            return redirect(url_for("login_auth_bp.login"))
+
         # Check input password not match stored password
         if not check_password_hash(user.password_hash, password):
-            flash("Invalid username or password. Please try again.", "error")
+            user.account_status.increment_failed_logins()  # Track failed login attempts
             logger.warning(f"Incorrect password attempt for username: {username}")
+
+            # Check if account should be locked (attempts >= 7)
+            if user.account_status.failed_login_attempts >= 2:
+                User.lock_account(user.id, locked_reason="Too many failed login attempts")
+                flash("Your account has been locked due to repeated failed login attemps. Please contact support below.", "error")
+                logger.warning(f"Account locked due to failed login attempts for username: {username}.")
+                return redirect(url_for("login_auth_bp.login"))
+
+            flash("Invalid username or password. Please try again.", "error")
             return redirect(url_for("login_auth_bp.login"))
 
         # Create JWT token for sensitive data
@@ -220,6 +248,9 @@ def login():
         identity = {'username': user.username, 'email': user.email}
         token = create_access_token(identity=identity)
         set_access_cookies(response, token)
+
+        # Reset failed login attempts
+        user.account_status.reset_failed_logins()
 
         # Store intermediate stage in session
         session['login_stage'] = 'send_otp'
@@ -371,10 +402,14 @@ def verify_email():
         user = User.query.filter_by(username=identity['username'], email=identity['email']).first()
         endpoint = "home_bp.home"
 
-        # Clear any jwt & session data, Log user in
+        # Clear any jwt & session data
         session.clear()
         response = redirect(url_for(endpoint))
         unset_jwt_cookies(response)
+
+        # Log user in and necessary database updates
+        login_details = user.login_details
+        login_details.update_login()
         login_user(user)
 
         # Display messages
@@ -527,10 +562,14 @@ def confirm_new_member_account():
 
             endpoint = "home_bp.home"
 
-            # Clear any jwt & session data, Log user in
+            # Clear any jwt & session data
             session.clear()
             response = redirect(url_for(endpoint))
             unset_jwt_cookies(response)
+
+            # Log user in and necessary login_details updates
+            login_details = new_user.login_details
+            login_details.update_login()
             login_user(new_user)
 
             # Display messages
@@ -606,10 +645,14 @@ def link_google():
                 # Get correct endpoint based on user type
                 endpoint = "home_bp.home"
 
-                # Clear any jwt & session data, Log user in
+                # Clear any jwt & session data
                 session.clear()
                 response = redirect(url_for(endpoint))
                 unset_jwt_cookies(response)
+
+                # Log user in and necessary login_details updates
+                login_details = user.login_details
+                login_details.update_login()
                 login_user(user)
 
                 # Display messages
