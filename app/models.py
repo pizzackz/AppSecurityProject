@@ -562,7 +562,7 @@ class Feedback(db.Model):
 # Payment model to store payment related information
 class Payment(db.Model):
     __tablename__ = "payments"
-    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, primary_key=True)
     stripe_payment_id = db.Column(db.String(255), unique=True, nullable=False)
     amount = db.Column(db.Integer, nullable=False)
     currency = db.Column(db.String(10), nullable=False)

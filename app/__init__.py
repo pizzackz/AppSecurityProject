@@ -16,8 +16,12 @@ from flask_session import Session
 from flask_mail import Mail
 from flask_jwt_extended import JWTManager
 from flask_uploads import UploadSet, configure_uploads, IMAGES
+from pytz import timezone
 
 from app.config.config import Config
+
+from apscheduler.schedulers.background import BackgroundScheduler
+import stripe
 
 
 # Load environment variables from .env file
@@ -176,3 +180,32 @@ def create_app() -> Flask:
 
     # Return Flask app instance
     return app
+
+
+# Function to get payment intents to check
+def get_payment_intents_to_check():
+    from app.models import Payment  # Importing here to avoid circular dependency
+    # Query the database for payment intents that are pending or require verification
+    pending_payments = Payment.query.filter_by(status='pending').all()
+    return [payment.stripe_payment_id for payment in pending_payments]
+
+
+# Function to check payment status and update database
+def check_payment_status():
+    from app.models import Member  # Importing here to avoid circular dependency
+    # Replace with the logic to get relevant payment intent IDs
+    payment_intents = get_payment_intents_to_check()
+    for payment_intent_id in payment_intents:
+        intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+        if intent.status == 'succeeded':
+            user_id = intent.metadata['user_id']
+            user = Member.query.get(user_id)
+            if user:
+                user.subscription_plan = "Premium"
+                user.subscription_end_date = datetime.now(timezone.utc) + timedelta(days=30)
+                db.session.commit()
+
+# Start the scheduler to run the function periodically
+scheduler = BackgroundScheduler()
+scheduler.add_job(check_payment_status, 'interval', minutes=10)  # Adjust the interval as needed
+scheduler.start()
