@@ -18,6 +18,8 @@ import os
 from app import db
 from app.models import Token, Post
 
+from app.forms.forms import ForumPost
+
 member_forum_bp = Blueprint("member_forum_bp", __name__)
 
 # Set up logging for debugging
@@ -78,9 +80,9 @@ def get_reddit_instance():
     refresh_token = get_refresh_token()
     if refresh_token:
         return praw.Reddit(
-            client_id=CLIENT_ID,
-            client_secret=CLIENT_SECRET,
-            user_agent=USER_AGENT,
+            client_id=REDDIT_CLIENT_ID,
+            client_secret=REDDIT_CLIENT_SECRET,
+            user_agent=REDDIT_USER_AGENT,
             refresh_token=refresh_token
         )
     else:
@@ -105,30 +107,30 @@ def subreddit():
         return f"Error fetching subreddit information: {e}", 500
 
 
-@member_forum_bp.route('/forum/create_post')
+@member_forum_bp.route('/forum/create_post', methods=["GET", "POST"])
 def create_post():
     reddit_user = get_reddit_instance()
     if not reddit_user:
         return redirect(url_for('authorize'))
 
-    data = request.json
-    title = data.get('title')
-    body = data.get('body')
-
-    try:
-        submission = reddit_user.subreddit('learnpython').submit(title, selftext=body)
-        
-        # Store post information in the database
-        new_post = Post(
-            reddit_id=submission.id,
-            title=submission.title,
-            description=submission.description,
-            created_utc=submission.created_utc
-        )
-        db.session.add(new_post)
-        db.session.commit()
-        
-        return jsonify({'message': 'Post created successfully!', 'post_id': submission.id}), 201
-    except Exception as e:
-        logging.error(f"Error creating post: {e}")
-        return jsonify({'error': str(e)}), 500
+    forum = ForumPost
+    if request.method == 'POST' and forum.validate_on_submit():
+        title = forum.title.data
+        body = forum.body.data
+        try:
+            submission = reddit_user.subreddit('food').submit(title, selftext=body)
+            
+            # Store post information in the database
+            new_post = Post(
+                reddit_id=submission.id,
+                title=submission.title,
+                body=submission.body,
+                created_at=submission.created_at
+            )
+            db.session.add(new_post)
+            db.session.commit()
+            
+            return jsonify({'message': 'Post created successfully!', 'post_id': submission.id}), 201
+        except Exception as e:
+            logging.error(f"Error creating post: {e}")
+    return render_template("member/forum/create_post.html", form=forum)

@@ -643,8 +643,8 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     reddit_id = db.Column(db.String(128), nullable=False)
     title = db.Column(db.String(512), nullable=False)
-    description = db.Column(db.Text, nullable=True)
-    created_utc = db.Column(db.DateTime, nullable=False)
+    body = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp(), nullable=False)
 
 
 class Log_general(db.Model):

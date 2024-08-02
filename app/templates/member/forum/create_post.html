@@ -1,0 +1,28 @@
+{% extends "base.html" %} <!-- Used to be customer_base.html -->
+{% block title %}Forum{% endblock %}
+
+{% block css %}
+  {{ super() }}
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+{% endblock %}
+
+{% block content %}
+    <form method="POST" action="">
+        {{ form.csrf_token }}
+          <h3 class="card-title">Create a Post</h3>
+    
+            <div class="form-group">
+                {{ form.title.label }}
+                {{ form.title(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.body.label }}
+                {{ form.body(class="form-control") }}
+            </div>
+            
+        <button type="submit" class="btn btn-primary">Create Post</button>
+    </form>
+{% endblock %}
