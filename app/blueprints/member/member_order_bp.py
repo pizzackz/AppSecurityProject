@@ -178,6 +178,7 @@ def order():
     if request.method == 'POST' and form.validate_on_submit():
         try:
             new_order = Order(
+                user_id=current_user.id,
                 customer_name=form.name.data,
                 user_id=current_user.id,
                 address=form.address.data,
@@ -239,8 +240,13 @@ def success():
 @login_required
 def order_history():
     # Fetch orders for the current user
-    user_id = current_user.id
-    user_id = current_user.id
+    user_id = current_user.id  # Assuming the user is logged in and `current_user` is set
     orders = Order.query.filter_by(user_id=user_id).all()
+
+    # Fetch menu item details for each order
+    for order in orders:
+        item_ids = order.selected_items
+        order.items_details = MenuItem.query.filter(MenuItem.id.in_(item_ids)).all()
+        order.formatted_date = order.created_at.strftime("%b %d, %I:%M %p")
 
     return render_template('member/order/order_history.html', orders=orders)

@@ -3,11 +3,12 @@ import os
 import stripe
 
 from dotenv import load_dotenv
-from flask import Blueprint, request, redirect, url_for, render_template, jsonify, session
+from flask import Blueprint, request, redirect, url_for, render_template, jsonify, session, current_app
 from app import db, csrf
 from sqlalchemy.sql import func
 from app.models import Payment, Member
 from datetime import datetime, timedelta,timezone
+from app.utils import send_email
 
 from flask_login import login_required, current_user
 
@@ -153,6 +154,89 @@ def success():
     if request.method == "POST":
         if request.form.get('return') == 'True':
             return redirect(url_for('home_bp.home'))
+
+    user_id = request.args.get('user_id')
+    action = request.args.get('action')
+    stripe_session_id = request.args.get('session_id')  # Get session_id passed in the success URL
+
+    if not stripe_session_id:
+        logger.error("Missing Stripe session ID")
+        return jsonify({'error': 'Missing Stripe session ID'}), 400
+
+    try:
+        # Retrieve the Stripe session details
+        stripe_session = stripe.checkout.Session.retrieve(stripe_session_id)
+        logger.info(f"Retrieved Stripe session: {stripe_session}")
+
+        user = Member.query.get(user_id)
+        if user:
+            # Database updates
+            if user.subscription_end_date is not None:
+                if user.subscription_end_date.tzinfo is None:
+                    user.subscription_end_date = user.subscription_end_date.replace(tzinfo=timezone.utc)
+            else:
+                user.subscription_end_date = datetime.now(timezone.utc)  # Set a default value if None
+
+            if user.subscription_plan == "premium":
+                action = 'renew'  # Override action to 'renew' if already premium
+
+                # Handle subscription actions
+                if action in ['upgrade', 'renew']:
+                    user.subscription_plan = "premium"
+                    if user.subscription_end_date and user.subscription_end_date > datetime.now(timezone.utc):
+                        user.subscription_end_date += timedelta(days=30)
+                    else:
+                        user.subscription_end_date = datetime.now(timezone.utc) + timedelta(days=30)
+            else:
+                user.subscription_plan = "premium"
+                user.subscription_end_date = datetime.now(timezone.utc) + timedelta(days=30)
+
+            db.session.commit()
+
+            # Email notification
+            subject = "Subscription Successful"
+            body = f"Dear {user.username},\n\nYour transaction was successful. You are now a premium member.\n\nThank you for your subscription!"
+            with current_app.app_context():
+                send_email(user.email, subject, body)
+        else:
+            logger.error(f"No user found with ID {user_id}")
+            return jsonify({'error': 'User not found'}), 404
+
+        # Ensure that the payment_intent exists in the stripe_session
+        subscription_id = stripe_session.subscription
+        if not subscription_id:
+            logger.error("Subscription ID is missing in the Stripe session")
+            return jsonify({'error': 'Subscription ID is missing in the Stripe session'}), 400
+
+        subscription = stripe.Subscription.retrieve(subscription_id)
+        latest_invoice_id = subscription.latest_invoice
+
+        if latest_invoice_id:
+            invoice = stripe.Invoice.retrieve(latest_invoice_id)
+
+            new_payment = Payment(
+                user_id=user.id,
+                stripe_payment_id=invoice.id,  # Assuming your Payment model has this field
+                amount=invoice.amount_paid,
+                currency=invoice.currency,
+                status=invoice.status,
+                created_at=datetime.fromtimestamp(invoice.created, timezone.utc)
+            )
+
+            db.session.add(new_payment)
+            db.session.commit()
+
+        else:
+            logger.error("No invoice found for the subscription")
+            return jsonify({'error': 'No invoice found for the subscription'}), 404
+
+    except stripe.error.InvalidRequestError as e:
+        logger.error(f"Invalid Stripe session ID: {stripe_session_id}")
+        return jsonify({'error': f'Invalid Stripe session ID: {e.user_message}'}), 400
+    except Exception as e:
+        logger.error(f"Error retrieving Stripe session: {e}")
+        return jsonify({'error': f'Error retrieving Stripe session: {str(e)}'}), 500
+
     return render_template('member/transaction-processing/success.html')
 
 

@@ -7,6 +7,7 @@ import imghdr
 import hashlib
 import requests
 import uuid
+import smtplib
 
 from logging import Logger
 from flask import Response, session, redirect, url_for, flash, make_response, current_app
@@ -21,6 +22,8 @@ from app import db, profile_pictures
 from app.config.config import Config
 from app.models import User, ProfileImage
 
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 # Initialise variables
 logger: Logger = logging.getLogger('tastefully')
@@ -28,6 +31,42 @@ VIRUSTOTAL_API_KEY = Config.VIRUSTOTAL_API_KEY
 ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png']
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
+SMTP_SERVER = os.getenv('SMTP_SERVER')
+SMTP_PORT = int(os.getenv('SMTP_PORT'))
+EMAIL_USERNAME = os.getenv('EMAIL_USERNAME')
+EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD')
+FROM_EMAIL = os.getenv('FROM_EMAIL')
+
+
+def send_email(to_email, subject, body):
+    try:
+        # Create the email
+        msg = MIMEMultipart()
+        msg['From'] = FROM_EMAIL
+        msg['To'] = to_email
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body, 'plain'))
+
+        # Connect to the SMTP server
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(EMAIL_USERNAME, EMAIL_PASSWORD)
+        text = msg.as_string()
+        server.sendmail(FROM_EMAIL, to_email, text)
+        server.quit()
+        logger.info(f"Email sent to {to_email}")
+
+    except smtplib.SMTPAuthenticationError as e:
+        logger.error(f"SMTP Authentication error: {str(e)}")
+
+    except smtplib.SMTPConnectError as e:
+        logger.error(f"SMTP Connection error: {str(e)}")
+
+    except smtplib.SMTPException as e:
+        logger.error(f"SMTP error: {str(e)}")
+
+    except Exception as e:
+        logger.error(f"Failed to send email: {str(e)}")
 
 # Simple clean input function using bleach
 def clean_input(data: str, strip: bool = True) -> str:
@@ -62,37 +101,7 @@ def generate_otp(length: int = 6) -> str:
     return otp
 
 
-# Send email function (sending email not work, just printing out mail body for now)
-def send_email(to_email: str, subject: str, body: str) -> bool:
-    """
-    Send an email using Flask-Mail.
-    
-    Args:
-        to_email (str): Recipient email address.
-        subject (str): Email subject.
-        body (str): Email body.
 
-    Returns:
-        bool: True if email sent successfully, False otherwise.
-    """
-    # from app import mail
-
-    # msg = Message(subject, sender=current_app.config['MAIL_USERNAME'], recipients=[to_email])
-    # msg.body = body
-
-    # try:
-    #     mail.send(msg)
-    #     logger.info(f'Email sent to {to_email} with subject "{subject}"')
-    #     return True
-    # except Exception as e:
-    #     logger.error(f"Failed to send email to {to_email} with subject '{subject}': {e}")
-    #     return False
-
-    print(f"Mail message body:\n{body}")
-    return True
-
-
-# Clear unwanted session data (for clean session states, usually base routes)
 def clear_unwanted_session_keys(extra_keys_to_keep: Optional[Set[str]] = None):
     """
     Utility function to clear specific session keys that are not needed.

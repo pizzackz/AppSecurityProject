@@ -438,7 +438,7 @@ class RecipeDeleted(db.Model):
     )  # Storing ingredients as JSON string
     instructions = db.Column(db.Text, nullable=False)
     picture = db.Column(db.String(100))  # Assuming picture URL
-    date_created = db.Column(db.DateTime, nullable=False)
+    date_created = db.Column(db.DateTime, nullable=False, default=func.current_timestamp())
     date_deleted = db.Column(db.DateTime, nullable=False, default=func.current_timestamp())
     user_created = db.Column(db.String(100), nullable=False)
     user_created_id = db.Column(db.Integer, nullable=False)
