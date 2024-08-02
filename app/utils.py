@@ -41,7 +41,7 @@ EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD')
 FROM_EMAIL = os.getenv('FROM_EMAIL')
 
 
-def send_email(to_email, subject, body):
+def send_email(to_email: str, subject: str, body) -> bool:
     try:
         # Create the email
         msg = MIMEMultipart()
@@ -59,17 +59,27 @@ def send_email(to_email, subject, body):
         server.quit()
         logger.info(f"Email sent to {to_email}")
 
+        # For testing purposes
+        print(f"Mail body:\n{str(body)}")
+
+        return True
+
     except smtplib.SMTPAuthenticationError as e:
         logger.error(f"SMTP Authentication error: {str(e)}")
+        return False
 
     except smtplib.SMTPConnectError as e:
         logger.error(f"SMTP Connection error: {str(e)}")
+        return False
 
     except smtplib.SMTPException as e:
         logger.error(f"SMTP error: {str(e)}")
+        return False
 
     except Exception as e:
         logger.error(f"Failed to send email: {str(e)}")
+        return False
+
 
 # Decorator to handle logout in routes that don't require login but user is logged in
 def logout_if_logged_in(f):
@@ -77,7 +87,7 @@ def logout_if_logged_in(f):
     def decorated_function(*args, **kwargs):
         if current_user.is_authenticated:
             flash("You have been successfully logged out!", "success")
-            logger.info(f"User '{current_user}' has been logged out successfully.")
+            logger.info(f"User '{current_user.username}' has been logged out successfully.")
             current_user.login_details.logout()
             logout_user()
         return f(*args, **kwargs)

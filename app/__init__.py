@@ -246,14 +246,13 @@ def create_app() -> Flask:
     csrf.init_app(app)
     db.init_app(app)
     login_manager.init_app(app)
+    login_manager.login_view = "login_auth_bp.login"
     limiter.init_app(app)
     jwt.init_app(app)
     mail.init_app(app)
     configure_uploads(app, profile_pictures)
     start_scheduler(app)
 
-    login_manager.login_view = "login_auth_bp.login"
-    
     # Custom logger for app logic
     setup_custom_logger("tastefully")
 
@@ -268,9 +267,10 @@ def create_app() -> Flask:
     app.register_blueprint(admin_recipe_bp)
     limiter.limit('50 per minute')(admin_recipe_bp)
 
-    # Create all database tables
+   
     with app.app_context():
-        db.create_all()
+        db.create_all()  # Create all database tables
+        generate_new_master_keys()  # Generate 3 master keys initially
 
     # Register CLI commands
     register_commands(app)
