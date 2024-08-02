@@ -10,13 +10,15 @@ import uuid
 
 from datetime import datetime, timezone
 from logging import Logger
+from functools import wraps
+from typing import Optional, List, Set, Dict
+
 from flask import Response, session, redirect, url_for, flash, make_response, current_app
 from flask_mail import Message
 from flask_login import current_user, logout_user
 from flask_jwt_extended import get_jwt, get_jwt_identity, unset_jwt_cookies
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
-from typing import Optional, List, Set, Dict
 
 from app import db, profile_pictures
 from app.config.config import Config
@@ -28,6 +30,19 @@ logger: Logger = logging.getLogger('tastefully')
 VIRUSTOTAL_API_KEY = Config.VIRUSTOTAL_API_KEY
 ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png']
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+
+# Decorator to handle logout in routes that don't require login but user is logged in
+def logout_if_logged_in(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if current_user.is_authenticated:
+            flash("You have been successfully logged out!", "success")
+            logger.info(f"User '{current_user}' has been logged out successfully.")
+            current_user.login_details.logout()
+            logout_user()
+        return f(*args, **kwargs)
+    return decorated_function
 
 
 # Simple clean input function using bleach
@@ -129,6 +144,7 @@ def check_member(keys_to_keep: Optional[Set[str]] = None, fallback_endpoint: str
     if not current_user.is_authenticated or not current_user.type == "member":
         # Clear session and JWT data
         clear_unwanted_session_keys(extra_keys_to_keep=keys_to_keep)
+        current_user.login_details.logout()
         logout_user()
 
         # Unset JWT cookies
@@ -160,6 +176,7 @@ def check_admin(keys_to_keep: Optional[Set[str]] = None, fallback_endpoint: str 
     if not current_user.is_authenticated or not current_user.type == "admin":
         # Clear session and JWT data
         clear_unwanted_session_keys(extra_keys_to_keep=keys_to_keep)
+        current_user.login_details.logout()
         logout_user()
 
         # Unset JWT cookies

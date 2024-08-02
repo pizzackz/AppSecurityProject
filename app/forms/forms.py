@@ -87,6 +87,11 @@ class CreateAdminForm(FlaskForm):
     confirm_password = PasswordField("Confirm Password", validators=[DataRequired(), Length(min=8), EqualTo("password", "Passwords must match")])
     recaptcha = RecaptchaField()
 
+# Lock admin form
+class LockAdminForm(FlaskForm):
+    reason = TextAreaField("Reason for Locking", validators=[DataRequired()])
+    recaptcha = RecaptchaField()
+
 
 # Delete admin form
 class DeleteAdminForm(FlaskForm):

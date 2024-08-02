@@ -4,10 +4,8 @@ General:
     Allow messages to be displayed when accessing pages that user is not allowed to
 
 Models:
-    Implement daily generation of admin master key
-    Add new column for ending date for premium members
-    Write sql scripts for seeding of database
-    Write a function to generate new user id
+    Implement daily generation of master key
+    Write a function to generate unique new user id
 
 Signup:
     Implement rate limiting for OTP requests
@@ -29,31 +27,12 @@ Member Profile:
 Admin Profile:
     Implement log out for active account using same username after successful reset of password
 
-Admin Account Management Flow Summary:
-    Secure Interface Access:
-        All routes require validation of a valid master key and session duration.
+Admin Account Management:
+    Implement log out for active account using same username after successful reset of password
+    Frontend nonsense
+    Make sure to link to Jacen's route for viewing activities
 
-    Specific Admin Account View:
-        Fix frontend where image isn't spaced properly with the buttons
-        Implement logic for action buttons
-        Display id, pfp, username, email, phone_number, address, postal_code, created_at, updated_at, last_login,
-            last_logout, account_status, admin_key (click to send), admin_key_expiry (click to re-generate & send)
-
-    Session Handling:
-        On any check failure (master key, session expiry), the session is cleared and redirected to authentication.
-
-    Read-Only Interface:
-        The interface allows viewing admin accounts, with actions limited to creation and deletion.
-
-    Logging and Monitoring:
-        Every action is logged for security and auditing purposes.
-        
-    Rate Limiting:
-        Rate limiting is implemented on authentication and sensitive actions to prevent brute force attacks.
-    
-    JWT Encryption:
-        JWTs are encrypted to protect sensitive information in transit and at rest, ensuring secure handling of sensitive data like OTPs and user identity information.
-    
-    Flask-JWT-Extended Integration:
-        Used for handling JWT creation, validation, and management, with additional encryption of sensitive data using the cryptography library.
-    
+Member Account Management:
+    Pretty much the same as Admin Account Management
+    Make sure to link to Ervyn's route for viewing order history
+    Make sure to link to Jacen's route for viewing activities

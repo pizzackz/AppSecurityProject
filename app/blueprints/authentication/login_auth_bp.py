@@ -9,15 +9,15 @@ from typing import Union, Dict, Optional
 
 from flask import Blueprint, request, session, redirect, render_template, flash, url_for, make_response
 from flask_jwt_extended import create_access_token, set_access_cookies, unset_jwt_cookies, get_jwt, get_jwt_identity, jwt_required
-from flask_login import login_user, current_user
+from flask_login import login_user
 from werkzeug.security import check_password_hash
 from google_auth_oauthlib.flow import Flow
 
 from app import db, login_manager
 from app.config.config import Config
-from app.models import User, Member, Admin, LockedAccount, LoginDetails
+from app.models import User, Member, Admin, LockedAccount
 from app.forms.auth_forms import LoginForm, OtpForm, ConfirmNewMemberForm, ConfirmGoogleLinkForm
-from app.utils import clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_auth_stage, check_jwt_values
+from app.utils import logout_if_logged_in, clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_auth_stage, check_jwt_values
 
 
 login_auth_bp: Blueprint = Blueprint("login_auth_bp", __name__, url_prefix="/login")
@@ -191,11 +191,12 @@ def handle_defective_cases(user_by_email: Optional[User], user_by_username: Opti
 
 # Initial login route
 @login_auth_bp.route("/", methods=['GET', 'POST'])
+@logout_if_logged_in
 def login():
     """
     Login route to initiate the login process.
     It validates the login form, cleans inputs and stores intermediate stage in session.
-    """
+    """   
     # Clear session keys that are not needed
     clear_unwanted_session_keys()
 

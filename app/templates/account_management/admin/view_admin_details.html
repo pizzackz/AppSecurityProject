@@ -100,15 +100,20 @@
                 <!-- Left Side: Profile Image and Actions -->
                 <div class="lg:w-1/3 p-5 flex flex-col items-center left-section">
                     <!-- Back to Admin List Link -->
-                    <a href="{{ url_for('admin_control_bp.view_admins') }}" class="back-link text-blue-500 hover:underline flex items-center">
+                    <a href="{{ url_for('admin_control_bp.view_admin_details', action='back') }}" class="back-link text-blue-500 hover:underline flex items-center">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                         Back to admin list
                     </a>
 
                     <div class="profile-img-wrapper">
                         <img src="{{ admin.image }}" alt="Admin profile picture">
-                        <div class="status-indicator {% if admin.account_locked %}bg-red-500{% elif admin.last_login %}bg-green-500{% else %}bg-gray-500{% endif %}" data-tooltip="{% if admin.account_locked %}Locked{% elif admin.last_login %}Online{% else %}Offline{% endif %}">
-                        </div>
+                        {% if admin.locked %}
+                        <div class="status-indicator bg-red-500" data-tooltip="Locked"></div>
+                        {% elif admin.status == "Online" %}
+                        <div class="status-indicator bg-green-500" data-tooltip="Online"></div>
+                        {% else %}
+                        <div class="status-indicator bg-blue-500" data-tooltip="Offline"></div>
+                        {% endif %}
                     </div>
 
                     <div class="mt-4 text-center">
@@ -117,21 +122,19 @@
                     </div>
 
                     <div class="mt-4 space-y-2">
-                        {% if admin.account_locked %}
-                        <form action="{{ url_for('admin_control_bp.view_admin_details', action='unlock_account') }}" method="post">
+                        <form action="" method="post">
                             <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-                            <button type="submit" class="w-full py-2 bg-green-500 text-white rounded-md">Unlock Account</button>
+                            {% if admin.locked %}
+                            <button type="submit" name="action" value="unlock" class="btn btn-warning rounded-pill">Unlock</button>
+                            {% else %}
+                            <button type="submit" name="action" value="lock" class="btn btn-danger rounded-pill">Lock</button>
+                            {% endif %}
+                            <button type="submit" name="action" value="delete" class="btn btn-danger rounded-pill">Delete</button>
                         </form>
-                        {% else %}
-                        <form action="{{ url_for('admin_control_bp.view_admin_details', action='lock_account') }}" method="post">
-                            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-                            <button type="submit" class="w-full py-2 bg-red-500 text-white rounded-md">Lock Account</button>
-                        </form>
+                        {% if not admin.locked %}
+                        <a href="{{ url_for('admin_control_bp.view_admin_details', action='reset_password') }}" class="w-full py-2 text-center text-blue-500 hover:underline block">Reset Password</a>
+                        <a href="{{ url_for('admin_control_bp.view_admin_details', action='generate_key') }}" class="w-full py-2 text-center text-blue-500 hover:underline block">Regenerate Key</a>
                         {% endif %}
-                        <form action="{{ url_for('admin_control_bp.view_admin_details', action='reset_password') }}" method="post">
-                            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-                            <button type="submit" class="w-full py-2 bg-yellow-500 text-white rounded-md">Reset Password</button>
-                        </form>
                         <a href="{{ url_for('admin_control_bp.view_admin_details', action='view_activities') }}" class="w-full py-2 text-center text-blue-500 hover:underline block">View Activities</a>
                     </div>
                 </div>
@@ -148,6 +151,10 @@
                             <div>
                                 <label class="text-gray-600">Address</label>
                                 <p>{{ admin.address }}</p>
+                            </div>
+                            <div>
+                                <label class="text-gray-600">Postal Code</label>
+                                <p>{{ admin.postal_code }}</p>
                             </div>
                             <div>
                                 <label class="text-gray-600">Account Created</label>
@@ -174,6 +181,10 @@
                             <div>
                                 <label class="text-gray-600">Last Login</label>
                                 <p>{{ admin.last_login.strftime('%B %d, %Y %I:%M %p') if admin.last_login else 'Never' }}</p>
+                            </div>
+                            <div>
+                                <label class="text-gray-600">Last Logout</label>
+                                <p>{{ admin.last_login.strftime('%B %d, %Y %I:%M %p') if admin.last_logout else 'Never' }}</p>
                             </div>
                             <div>
                                 <label class="text-gray-600">Login Count</label>

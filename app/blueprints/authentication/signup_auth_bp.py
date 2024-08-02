@@ -10,7 +10,7 @@ from werkzeug.security import generate_password_hash
 from app import db
 from app.models import User, Member
 from app.forms.auth_forms import SignupForm, OtpForm, PasswordForm, ExtraInfoForm
-from app.utils import clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_auth_stage, check_jwt_values
+from app.utils import logout_if_logged_in, clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_auth_stage, check_jwt_values
 
 
 signup_auth_bp: Blueprint = Blueprint("signup_auth_bp", __name__, url_prefix="/signup")
@@ -20,11 +20,12 @@ TEMPLATE_FOLDER: str = "authentication/signup"
 
 # Initial signup route
 @signup_auth_bp.route('/', methods=['GET', 'POST'])
+@logout_if_logged_in
 def signup():
     """
     Signup route to initiate the user registration process.
     It validates the signup form, cleans inputs and stores intermediate stage in session.
-    """
+    """    
     # Clear session keys that are not needed
     clear_unwanted_session_keys()
 

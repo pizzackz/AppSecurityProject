@@ -10,7 +10,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
 from app.models import User, LockedAccount, PasswordResetToken
 from app.forms.auth_forms import EmailForm, OtpForm, RecoverOptionsForm, ResetPasswordForm
-from app.utils import clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_auth_stage, check_jwt_values
+from app.utils import logout_if_logged_in, clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_auth_stage, check_jwt_values
 
 
 # Initialise flask blueprint - 'login_aut_bp'
@@ -21,6 +21,7 @@ TEMPLATE_FOLDER = "authentication/recovery"
 
 # Recovery route - Phase 1
 @recovery_auth_bp.route("/", methods=['GET', 'POST'])
+@logout_if_logged_in
 def recovery():
     """
     Recovery route to initiate the account recovery process.

@@ -114,6 +114,7 @@ class Member(User):
     id = db.Column(Integer, ForeignKey("user.id"), primary_key=True)
     subscription_plan = db.Column(String(50), default="standard", nullable=False)
     subscription_end_date = db.Column(DateTime, nullable=True)
+
     orders = db.relationship('Order', backref='member', lazy=True)
 
     # Joined Table Inheritance polymorphic properties
@@ -442,6 +443,13 @@ class LoginDetails(db.Model):
     def update_login(self):
         self.login_count += 1
         self.last_login = func.current_timestamp()
+        self.is_active = True
+        db.session.commit()
+
+    # Logout the user
+    def logout(self):
+        self.last_logout = func.current_timestamp()
+        self.is_active = False
         db.session.commit()
 
 
