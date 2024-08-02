@@ -180,7 +180,6 @@ def order():
             new_order = Order(
                 user_id=current_user.id,
                 customer_name=form.name.data,
-                user_id=current_user.id,
                 address=form.address.data,
                 postal_code=form.postal_code.data,
                 phone_number=form.phone_number.data,
