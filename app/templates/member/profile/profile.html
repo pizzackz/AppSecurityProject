@@ -121,12 +121,6 @@
                     <button type="submit" class="btn btn-light btn-outline-primary rounded-pill" name="action" value="revert">Revert</button>
                     <button type="submit" class="btn btn-primary rounded-pill" name="action" value="next">Next</button>
                 </div>
-
-                <!-- TODO: Subscription cancel link -->
-                {% if user.subscription_plan == 'premium' %}
-                    <a href="{{ url_for('member_profile_bp.profile', action='cancel_plan') }}">I want to cancel the subscription plan.</a>
-                {% endif %}
-
             </form>
         </div>
     </div>

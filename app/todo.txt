@@ -4,7 +4,6 @@ General:
     Allow messages to be displayed when accessing pages that user is not allowed to
 
 Models:
-    Implement daily generation of master key
     Write a function to generate unique new user id
 
 Signup:
@@ -34,5 +33,8 @@ Admin Account Management:
 
 Member Account Management:
     Pretty much the same as Admin Account Management
+    Admin action extends to:
+        Cancelling plan
+        Renew/ Upgrade plan
     Make sure to link to Ervyn's route for viewing order history
     Make sure to link to Jacen's route for viewing activities

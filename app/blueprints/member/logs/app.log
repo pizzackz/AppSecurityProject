@@ -88,3 +88,305 @@ FROM user INNER JOIN `admin` ON user.id = `admin`.id]
 2024-08-02 11:14:29,411 - flask_app - INFO - Admins test data added!
 2024-08-02 11:14:29,415 - flask_app - INFO - Deleted 0 rows from Member table.
 2024-08-02 11:14:29,630 - flask_app - INFO - Members test data added!
+2024-08-02 16:56:35,648 - flask_app - INFO - Retrieved Stripe session: {
+  "after_expiration": null,
+  "allow_promotion_codes": null,
+  "amount_subtotal": 3000,
+  "amount_total": 3000,
+  "automatic_tax": {
+    "enabled": false,
+    "liability": null,
+    "status": null
+  },
+  "billing_address_collection": null,
+  "cancel_url": "http://localhost:5000/cancel",
+  "client_reference_id": null,
+  "client_secret": null,
+  "consent": null,
+  "consent_collection": null,
+  "created": 1722588961,
+  "currency": "sgd",
+  "currency_conversion": null,
+  "custom_fields": [],
+  "custom_text": {
+    "after_submit": null,
+    "shipping_address": null,
+    "submit": null,
+    "terms_of_service_acceptance": null
+  },
+  "customer": "cus_QaSC23MipPWDEO",
+  "customer_creation": "always",
+  "customer_details": {
+    "address": {
+      "city": null,
+      "country": "SG",
+      "line1": null,
+      "line2": null,
+      "postal_code": null,
+      "state": null
+    },
+    "email": "member1@gmail.com",
+    "name": "Member",
+    "phone": null,
+    "tax_exempt": "none",
+    "tax_ids": []
+  },
+  "customer_email": null,
+  "expires_at": 1722675361,
+  "id": "cs_test_a18o7VJd3zD0LvXl36DTknqPAcs11qph3vJ3zsk8virvlnZcTkA07i2bgx",
+  "invoice": "in_1PjHHm06BsEMbNMkMNqACbvK",
+  "invoice_creation": null,
+  "livemode": false,
+  "locale": null,
+  "metadata": {
+    "user_id": "3"
+  },
+  "mode": "subscription",
+  "object": "checkout.session",
+  "payment_intent": null,
+  "payment_link": null,
+  "payment_method_collection": "always",
+  "payment_method_configuration_details": null,
+  "payment_method_options": {
+    "card": {
+      "request_three_d_secure": "automatic"
+    }
+  },
+  "payment_method_types": [
+    "card"
+  ],
+  "payment_status": "paid",
+  "phone_number_collection": {
+    "enabled": false
+  },
+  "recovered_from": null,
+  "saved_payment_method_options": {
+    "allow_redisplay_filters": [
+      "always"
+    ],
+    "payment_method_remove": null,
+    "payment_method_save": null
+  },
+  "setup_intent": null,
+  "shipping_address_collection": null,
+  "shipping_cost": null,
+  "shipping_details": null,
+  "shipping_options": [],
+  "status": "complete",
+  "submit_type": null,
+  "subscription": "sub_1PjHHm06BsEMbNMkFM5BLNEB",
+  "success_url": "http://localhost:5000/success?user_id=3&action=None&session_id={CHECKOUT_SESSION_ID}",
+  "total_details": {
+    "amount_discount": 0,
+    "amount_shipping": 0,
+    "amount_tax": 0
+  },
+  "ui_mode": "hosted",
+  "url": null
+}
+2024-08-02 16:57:55,075 - flask_app - INFO - Retrieved Stripe session: {
+  "after_expiration": null,
+  "allow_promotion_codes": null,
+  "amount_subtotal": 3000,
+  "amount_total": 3000,
+  "automatic_tax": {
+    "enabled": false,
+    "liability": null,
+    "status": null
+  },
+  "billing_address_collection": null,
+  "cancel_url": "http://localhost:5000/cancel",
+  "client_reference_id": null,
+  "client_secret": null,
+  "consent": null,
+  "consent_collection": null,
+  "created": 1722589047,
+  "currency": "sgd",
+  "currency_conversion": null,
+  "custom_fields": [],
+  "custom_text": {
+    "after_submit": null,
+    "shipping_address": null,
+    "submit": null,
+    "terms_of_service_acceptance": null
+  },
+  "customer": "cus_QaSD1LI16YnLdS",
+  "customer_creation": "always",
+  "customer_details": {
+    "address": {
+      "city": null,
+      "country": "SG",
+      "line1": null,
+      "line2": null,
+      "postal_code": null,
+      "state": null
+    },
+    "email": "member2@gmail.com",
+    "name": "Member",
+    "phone": null,
+    "tax_exempt": "none",
+    "tax_ids": []
+  },
+  "customer_email": null,
+  "expires_at": 1722675447,
+  "id": "cs_test_a1IdJioJcIHejikB7tMNJ5iZFvd4W55wOUkgIV9e7OIE5st6Lo0ufiMRfS",
+  "invoice": "in_1PjHJ306BsEMbNMkNLwurRPy",
+  "invoice_creation": null,
+  "livemode": false,
+  "locale": null,
+  "metadata": {
+    "user_id": "4"
+  },
+  "mode": "subscription",
+  "object": "checkout.session",
+  "payment_intent": null,
+  "payment_link": null,
+  "payment_method_collection": "always",
+  "payment_method_configuration_details": null,
+  "payment_method_options": {
+    "card": {
+      "request_three_d_secure": "automatic"
+    }
+  },
+  "payment_method_types": [
+    "card"
+  ],
+  "payment_status": "paid",
+  "phone_number_collection": {
+    "enabled": false
+  },
+  "recovered_from": null,
+  "saved_payment_method_options": {
+    "allow_redisplay_filters": [
+      "always"
+    ],
+    "payment_method_remove": null,
+    "payment_method_save": null
+  },
+  "setup_intent": null,
+  "shipping_address_collection": null,
+  "shipping_cost": null,
+  "shipping_details": null,
+  "shipping_options": [],
+  "status": "complete",
+  "submit_type": null,
+  "subscription": "sub_1PjHJ306BsEMbNMkZJrESCts",
+  "success_url": "http://localhost:5000/success?user_id=4&action=None&session_id={CHECKOUT_SESSION_ID}",
+  "total_details": {
+    "amount_discount": 0,
+    "amount_shipping": 0,
+    "amount_tax": 0
+  },
+  "ui_mode": "hosted",
+  "url": null
+}
+2024-08-02 16:59:58,176 - flask_app - INFO - Retrieved Stripe session: {
+  "after_expiration": null,
+  "allow_promotion_codes": null,
+  "amount_subtotal": 3000,
+  "amount_total": 3000,
+  "automatic_tax": {
+    "enabled": false,
+    "liability": null,
+    "status": null
+  },
+  "billing_address_collection": null,
+  "cancel_url": "http://localhost:5000/cancel",
+  "client_reference_id": null,
+  "client_secret": null,
+  "consent": null,
+  "consent_collection": null,
+  "created": 1722589173,
+  "currency": "sgd",
+  "currency_conversion": null,
+  "custom_fields": [],
+  "custom_text": {
+    "after_submit": null,
+    "shipping_address": null,
+    "submit": null,
+    "terms_of_service_acceptance": null
+  },
+  "customer": "cus_QaSF74RDOeWELk",
+  "customer_creation": "always",
+  "customer_details": {
+    "address": {
+      "city": null,
+      "country": "SG",
+      "line1": null,
+      "line2": null,
+      "postal_code": null,
+      "state": null
+    },
+    "email": "member2@gmail.com",
+    "name": "Member",
+    "phone": null,
+    "tax_exempt": "none",
+    "tax_ids": []
+  },
+  "customer_email": null,
+  "expires_at": 1722675573,
+  "id": "cs_test_a1vWT0rNVUkXng9SaqsOt4zWhe2nAYdq3ncLlVjtn4FXvpfqLcLYfhgKv3",
+  "invoice": "in_1PjHL206BsEMbNMkvzG8FCEw",
+  "invoice_creation": null,
+  "livemode": false,
+  "locale": null,
+  "metadata": {
+    "user_id": "4"
+  },
+  "mode": "subscription",
+  "object": "checkout.session",
+  "payment_intent": null,
+  "payment_link": null,
+  "payment_method_collection": "always",
+  "payment_method_configuration_details": null,
+  "payment_method_options": {
+    "card": {
+      "request_three_d_secure": "automatic"
+    }
+  },
+  "payment_method_types": [
+    "card"
+  ],
+  "payment_status": "paid",
+  "phone_number_collection": {
+    "enabled": false
+  },
+  "recovered_from": null,
+  "saved_payment_method_options": {
+    "allow_redisplay_filters": [
+      "always"
+    ],
+    "payment_method_remove": null,
+    "payment_method_save": null
+  },
+  "setup_intent": null,
+  "shipping_address_collection": null,
+  "shipping_cost": null,
+  "shipping_details": null,
+  "shipping_options": [],
+  "status": "complete",
+  "submit_type": null,
+  "subscription": "sub_1PjHL206BsEMbNMkAO765iDU",
+  "success_url": "http://localhost:5000/success?user_id=4&action=None&session_id={CHECKOUT_SESSION_ID}",
+  "total_details": {
+    "amount_discount": 0,
+    "amount_shipping": 0,
+    "amount_tax": 0
+  },
+  "ui_mode": "hosted",
+  "url": null
+}
+2024-08-02 16:59:59,293 - flask_app - ERROR - Error retrieving Stripe session: (MySQLdb.IntegrityError) (1062, "Duplicate entry '4' for key 'payments.PRIMARY'")
+[SQL: INSERT INTO payments (user_id, stripe_payment_id, amount, currency, status, created_at) VALUES (%s, %s, %s, %s, %s, %s)]
+[parameters: (4, 'in_1PjHL206BsEMbNMkvzG8FCEw', 3000, 'sgd', 'paid', datetime.datetime(2024, 8, 2, 8, 59, 52, tzinfo=datetime.timezone.utc))]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+2024-08-02 17:02:07,592 - flask_app - INFO - Deleted 0 rows from Admin table.
+2024-08-02 17:02:08,424 - flask_app - INFO - Admins test data added!
+2024-08-02 17:02:08,430 - flask_app - INFO - Deleted 0 rows from Member table.
+2024-08-02 17:02:08,765 - flask_app - INFO - Members test data added!
+2024-08-02 17:02:23,666 - flask_app - INFO - Deleted 0 rows from MenuItem table.
+2024-08-02 17:02:23,680 - flask_app - INFO - Menu Items test data added!
+2024-08-02 17:02:23,738 - flask_app - INFO - Deleted 2 rows from Admin table.
+2024-08-02 17:02:24,239 - flask_app - INFO - Admins test data added!
+2024-08-02 17:02:24,262 - flask_app - INFO - Deleted 2 rows from Member table.
+2024-08-02 17:02:24,500 - flask_app - INFO - Members test data added!

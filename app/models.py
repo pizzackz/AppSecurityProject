@@ -287,7 +287,7 @@ class Admin(User):
 
         data = f"{master_key}{self.id}{self.username}{self.email}"
         self.admin_key = hashlib.sha256(data.encode()).hexdigest()
-        self.admin_key_expires_at = (datetime.now() + timedelta(days=1)).isoformat()
+        self.admin_key_expires_at = datetime.now() + timedelta(days=1)
         db.session.commit()
 
         return data
