@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+{% extends "account_management/base.html" %}
+
+{% block title %}Verify Email{% endblock %}
+{% from "includes/_form_helper.html" import render_field %}
+
+{% block css %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/authentication/password_checker.css') }}" />
+<style nonce="{{ nonce }}">
+    #main-wrapper {
+        margin-top: 7rem;
+        background-color: #f0f2f5;
+    }
+    .centered-container {
+        width: 70%;
+        max-width: 50vw;
+        border-radius: 3rem;
+        min-height: 50vh;
+        align-content: center;
+    }
+    .form-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    .form-content {
+        flex-grow: 1;
+    }
+    .form-actions {
+        text-align: center;
+        gap: 1rem;
+    }
+    .left-column {
+        padding-left: 1.25rem;
+    }
+    .right-column {
+        padding-right: 1.25rem;
+    }
+    .otp-expired {
+        color: red;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block navbar %}
+{% include "includes/_admin_control_navbar.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-center" id="main-wrapper">
+    <div class="bg-white p-5 shadow-lg centered-container mx-auto">
+        <div class="row">
+            <div class="col-md-6 left-column">
+                <h1 class="text-dark font-weight-bold mb-3">Verify Email</h1>
+                <p class="text-muted">We have sent you a verification email, please verify your email address.</p>
+                <p id="otp-timer-wrapper" class="text-muted mt-3">OTP expires in: <span id="otp-timer"></span></p>
+            </div>
+            <div class="col-md-6 right-column">
+                <form action="" method="post" id="verify-otp-form" class="form-container">
+                    {{ form.hidden_tag() }}
+                    <div class="form-content">
+                        <div class="form-group mb-3">
+                            {{ render_field(form.otp, class="form-control", placeholder="Enter the code") }}
+                            <a href="{{ url_for('admin_control_bp.send_otp', resend=True) }}" class="btn btn-link">Resend it</a>
+                        </div>
+                    </div>
+                    <div class="form-actions mt-3 d-flex justify-content-between">
+                        <a href="{{ url_for('admin_control_bp.verify_email', action='back') }}" class="btn btn-light btn-outline-primary rounded-pill">Back</a>
+                        <button type="submit" name="action" value="next" class="btn btn-primary rounded-pill submit-disabler">Next</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script nonce="{{ nonce }}">
+    document.addEventListener('DOMContentLoaded', function () {
+        var otpExpiry = new Date("{{ otp_expiry }}");
+        var otpTimerElement = document.getElementById('otp-timer');
+        var otpTimerWrapper = document.getElementById('otp-timer-wrapper');
+
+        function updateOtpTimer() {
+            var now = new Date();
+            var timeLeft = otpExpiry - now;
+
+            if (timeLeft <= 0) {
+                otpTimerWrapper.innerHTML = "<span class='otp-expired'>OTP expired. Request a new one!</span>";
+                clearInterval(timerInterval); // Stop the timer
+            } else {
+                var minutes = Math.floor(timeLeft / 60000);
+                var seconds = Math.floor((timeLeft % 60000) / 1000);
+                otpTimerElement.textContent = minutes + "m " + (seconds < 10 ? '0' : '') + seconds + "s";
+            }
+        }
+
+        var timerInterval = setInterval(updateOtpTimer, 1000);
+        updateOtpTimer(); // Initial call to set the timer immediately
+    });
+</script>
+{% endblock %}

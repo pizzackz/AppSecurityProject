@@ -19,7 +19,6 @@ from app.forms.forms import CreateFeedback
 
 member_feedback_bp = Blueprint("member_feedback_bp", __name__)
 
-
 @member_feedback_bp.route("/feedback", methods=["GET", "POST"])
 @login_required
 def feedback():
@@ -50,7 +49,11 @@ def feedback():
 
 
         # Storing in database
-        new_feedback = Feedback(name=name, category=category, rating=rating, comment=comment)
+        new_feedback = Feedback(
+            name=name, 
+            category=category, 
+            rating=rating, 
+            comment=comment)
         try:
             db.session.add(new_feedback)
             db.session.commit()

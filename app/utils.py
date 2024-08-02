@@ -9,14 +9,17 @@ import requests
 import uuid
 import smtplib
 
+from datetime import datetime, timezone
 from logging import Logger
+from functools import wraps
+from typing import Optional, List, Set, Dict
+
 from flask import Response, session, redirect, url_for, flash, make_response, current_app
 from flask_mail import Message
 from flask_login import current_user, logout_user
 from flask_jwt_extended import get_jwt, get_jwt_identity, unset_jwt_cookies
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
-from typing import Optional, List, Set, Dict
 
 from app import db, profile_pictures
 from app.config.config import Config
@@ -67,6 +70,19 @@ def send_email(to_email, subject, body):
 
     except Exception as e:
         logger.error(f"Failed to send email: {str(e)}")
+
+# Decorator to handle logout in routes that don't require login but user is logged in
+def logout_if_logged_in(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if current_user.is_authenticated:
+            flash("You have been successfully logged out!", "success")
+            logger.info(f"User '{current_user}' has been logged out successfully.")
+            current_user.login_details.logout()
+            logout_user()
+        return f(*args, **kwargs)
+    return decorated_function
+
 
 # Simple clean input function using bleach
 def clean_input(data: str, strip: bool = True) -> str:
@@ -137,6 +153,7 @@ def check_member(keys_to_keep: Optional[Set[str]] = None, fallback_endpoint: str
     if not current_user.is_authenticated or not current_user.type == "member":
         # Clear session and JWT data
         clear_unwanted_session_keys(extra_keys_to_keep=keys_to_keep)
+        current_user.login_details.logout()
         logout_user()
 
         # Unset JWT cookies
@@ -168,6 +185,7 @@ def check_admin(keys_to_keep: Optional[Set[str]] = None, fallback_endpoint: str 
     if not current_user.is_authenticated or not current_user.type == "admin":
         # Clear session and JWT data
         clear_unwanted_session_keys(extra_keys_to_keep=keys_to_keep)
+        current_user.login_details.logout()
         logout_user()
 
         # Unset JWT cookies
@@ -245,8 +263,39 @@ def check_auth_stage(
         unset_jwt_cookies(response)
         flash(flash_message, 'error')
         logger.error(f"{log_message}: '{auth_stage}' not in {allowed_stages}")
-        return make_response(response)
-    
+        return response
+    return None
+
+
+# Check expired session
+def check_expired_session(
+        key_to_check: str,
+        fallback_endpoint: str,
+        flash_message: str = "Your session has expired. Please re-authenticate with a valid master key.",
+        log_message: str = "Session has expired.",
+        keys_to_keep: Optional[Set[str]] = None
+) -> Optional[Response]:
+    """
+    Utility function to check if the session is expired based on 'key_to_check'.
+
+    Parameters:
+    - key_to_check (str): The key in session that contains the expiry information.
+    - fallback_endpoint (str): The endpoint to redirect to if the session data is not valid.
+    - flash_message (str, optional): The message to flash if the session is expired. Defaults to a generic message.
+    - log_message (str, optional): The message to log if the session is expired. Defaults to a generic message.
+
+    Returns:
+    - None if the session is expired.
+    - Redirect response if the session data is not valid.
+    """
+    expired_datetime = session.get(key_to_check)
+    if not expired_datetime or expired_datetime < datetime.now(timezone.utc):
+        clear_unwanted_session_keys(keys_to_keep)
+        response = make_response(redirect(url_for(fallback_endpoint)))
+        unset_jwt_cookies(response)
+        flash(flash_message, 'error')
+        logger.error(log_message)
+        return response
     return None
 
 

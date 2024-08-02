@@ -49,6 +49,62 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return f"<User(id='{self.id}', username='{self.username}', type='{self.type}')>"
     
+    # Properties that can be derived from existing attributes
+    @property
+    def days_since_last_login(self):
+        if self.login_details and self.login_details.last_login:
+            return (datetime.now(timezone.utc) - self.login_details.last_login).days
+        return None
+    
+    # Lock account based on certain reasons
+    @staticmethod
+    def lock_account(id_to_lock: int, locked_reason: str, locker_id: Optional[int] = None):
+        try:
+            user = User.query.get(id_to_lock)
+            if not user:
+                raise ValueError(f"User with id '{id_to_lock}' not found.")
+            
+            # Update account status to be locked
+            user.account_status.is_locked = True
+            user.account_status.reset_failed_logins() # Reset failed login attempts
+
+            locked_account = LockedAccount.create(id=id_to_lock, locked_reason=locked_reason, locker_id=locker_id)
+            if not locked_account:
+                raise Exception(f"Failed to create locked account record for user '{user.usernme}'.")
+            
+            db.session.commit()
+            logger.info(f"Account for user_id '{id_to_lock}' has been locked.")
+            return True
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error locking account for user id {id_to_lock}: {e}")
+            return False
+    
+    # Unlock account provided they are locked
+    @staticmethod
+    def unlock_account(user_id: int):
+        try:
+            user = User.query.get(user_id)
+            if not user:
+                raise ValueError(f"User with id {user_id} not found.")
+            
+            # Update account status to unlocked
+            user.account_status.is_locked = False
+            user.account_status.failed_login_attempts = 0  # Ensure failed login attempts are reset
+
+            # Remove locked account record
+            locked_account = LockedAccount.query.filter_by(id=user_id).first()
+            if locked_account:
+                db.session.delete(locked_account)
+                db.session.commit()
+
+            logger.info(f"Account for user_id {user_id} has been unlocked.")
+            return True
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error unlocking account for user_id {user_id}: {e}")
+            return False
+
 
 # Member model as subclass to 'User' and to store subscription plan (either standard by default or premium)
 class Member(User):
@@ -58,6 +114,7 @@ class Member(User):
     id = db.Column(Integer, ForeignKey("user.id"), primary_key=True)
     subscription_plan = db.Column(String(50), default="standard", nullable=False)
     subscription_end_date = db.Column(DateTime, nullable=True)
+
     orders = db.relationship('Order', backref='member', lazy=True)
 
     # Joined Table Inheritance polymorphic properties
@@ -84,6 +141,10 @@ class Member(User):
             if not profile_image:
                 raise Exception("Failed to create profile image record for member")
 
+            login_details = LoginDetails.create(new_member.id)
+            if not login_details:
+                raise Exception("Failed to create login details record for member")
+
             db.session.commit()
 
             return new_member
@@ -108,6 +169,10 @@ class Member(User):
             profile_image = ProfileImage.create_by_google(id=new_member.id, google_url=google_image_url)
             if not profile_image:
                 raise Exception("Failed to create profile image record for member")
+
+            login_details = LoginDetails.create(new_member.id)
+            if not login_details:
+                raise Exception("Failed to create login details record for member")
 
             db.session.commit()
 
@@ -152,6 +217,10 @@ class Admin(User):
             if not profile_image:
                 raise Exception("Failed to create profile image record for admin")
 
+            login_details = LoginDetails.create(new_admin.id)
+            if not login_details:
+                raise Exception("Failed to create login details record for admin")
+
             admin_key = new_admin.generate_admin_key()
             if not admin_key:
                 raise Exception("Failed to generate an admin key for admin")
@@ -179,6 +248,10 @@ class Admin(User):
             profile_image = ProfileImage.create_by_google(id=new_admin.id, google_url=google_image_url)
             if not profile_image:
                 raise Exception("Failed to create profile image record for admin")
+
+            login_details = LoginDetails.create(new_admin.id)
+            if not login_details:
+                raise Exception("Failed to create login details record for admin")
             
             admin_key = new_admin.generate_admin_key()
             if not admin_key:
@@ -191,6 +264,20 @@ class Admin(User):
             db.session.rollback()
             logger.error(f"An error occurred while creating admin: {e}")
             return None
+    
+    # To delete admin
+    @staticmethod
+    def delete(id: Column[int]):
+        try:
+            admin = Admin.query.get(id)
+            db.session.delete(admin)
+            db.session.commit()
+            return admin
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"An error occurred while deleting admin with id '{id}'")
+            return None
+
 
     # Generate dynamic one-time use admin key
     def generate_admin_key(self):
@@ -214,7 +301,6 @@ class AccountStatus(db.Model):
     # ForeignKey reference to 'user.id' and primary key for 'account_status'
     id = Column(Integer, ForeignKey("user.id"), primary_key=True, nullable=False)
     is_locked = Column(Boolean, default=False, nullable=False)
-    lockout_time = Column(DateTime, nullable=True)
     failed_login_attempts = Column(Integer, default=0, nullable=False)
     last_failed_login_attempt = Column(DateTime, nullable=True)
 
@@ -238,6 +324,17 @@ class AccountStatus(db.Model):
             print(f"Error occurred when creating new account status: {e}")
             return None
 
+    # Handles failed login_attempts
+    def increment_failed_logins(self):
+        self.failed_login_attempts += 1
+        self.last_failed_login_attempt = func.current_timestamp()
+        print(f"Incremented failed login from {self.failed_login_attempts-1} -> {self.failed_login_attempts}")
+        db.session.commit()
+    
+    # Reset counter for failed_login_attempts
+    def reset_failed_logins(self):
+        self.failed_login_attempts = 0
+        db.session.commit()
 
 # ProfileImage model to store profile images about user accounts
 class ProfileImage(db.Model):
@@ -301,7 +398,7 @@ class MasterKey(db.Model):
     @staticmethod
     def generate_master_key():
         new_key = os.urandom(32).hex()
-        expires_at = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
+        expires_at = (datetime.now(timezone.utc) + timedelta(days=1)).isoformat()
         return MasterKey(value=new_key, expires_at=expires_at)
 
     # Retrieve any of the valid keys
@@ -320,12 +417,13 @@ class LoginDetails(db.Model):
     last_login = Column(DateTime, nullable=True)
     last_logout = Column(DateTime, nullable=True)
     is_active = Column(Boolean, default=False, nullable=False)
+    login_count = Column(Integer, default=0, nullable=False)
 
     # Relationship back to 'User'
     user = db.relationship("User", back_populates="login_details")
 
     def __repr__(self):
-        return f"<LoginDetails(id='{self.id}', username='{self.user.username}', last_login='{self.last_login}', last_logout='{self.last_logout}')>"
+        return f"<LoginDetails(id='{self.id}', username='{self.user.username}', last_login='{self.last_login}', last_logout='{self.last_logout}', login_count='{self.login_count}')>"
     
     # Static methods for CRUD functionalities
     # Create
@@ -341,6 +439,19 @@ class LoginDetails(db.Model):
             print(f"Error occurred when creating new locked account record: {e}")
             return None
 
+    # Update login whenever there is a login (updates login count & last login date)
+    def update_login(self):
+        self.login_count += 1
+        self.last_login = func.current_timestamp()
+        self.is_active = True
+        db.session.commit()
+
+    # Logout the user
+    def logout(self):
+        self.last_logout = func.current_timestamp()
+        self.is_active = False
+        db.session.commit()
+
 
 # LockedAccount model to store locking related information about all locked accounts, including admin accounts
 class LockedAccount(db.Model):
@@ -348,9 +459,10 @@ class LockedAccount(db.Model):
 
     # ForeignKey references to 'user.id' and 'admin.id', and primary keys for 'locked_accounts'
     id = Column(Integer, ForeignKey("user.id"), primary_key=True, nullable=False)
-    locker_id = Column(Integer, ForeignKey("admin.id"), primary_key=True, nullable=True)
+    locker_id = Column(Integer, ForeignKey("admin.id"), nullable=True)
     locked_reason = Column(Text, nullable=False)
     locked_time = Column(DateTime, default=func.current_timestamp(), nullable=False)
+    unlock_request = Column(Boolean, default=False, nullable=False)
 
     # Relationship 'id' back to 'User', 'locker' back to 'Admin'
     user = db.relationship("User", back_populates="locked_accounts")
@@ -474,8 +586,8 @@ class Feedback(db.Model):
 # Payment model to store payment related information
 class Payment(db.Model):
     __tablename__ = "payments"
-    id = db.Column(db.Integer, primary_key=True)
-    stripe_payment_id = db.Column(db.String(255), unique=True, nullable=False)
+    user_id = db.Column(db.Integer,nullable=False)
+    stripe_payment_id = db.Column(db.String(255), unique=True, nullable=False, primary_key=True)
     amount = db.Column(db.Integer, nullable=False)
     currency = db.Column(db.String(10), nullable=False)
     status = db.Column(db.String(50), nullable=False)
@@ -540,5 +652,32 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     reddit_id = db.Column(db.String(128), nullable=False)
     title = db.Column(db.String(512), nullable=False)
-    description = db.Column(db.Text, nullable=True)
-    created_utc = db.Column(db.DateTime, nullable=False)
+    body = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp(), nullable=False)
+
+
+class Log_general(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    log_datetime = db.Column(db.DateTime, default=db.func.current_timestamp())
+    priority_level = db.Column(db.String(20), nullable=False)
+    user_id = db.Column(db.Integer, nullable=False)
+    file_subdir = db.Column(db.String(255), nullable=False)
+    log_info = db.Column(db.String(255), nullable=False)
+
+
+class Log_account(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    log_datetime = db.Column(db.DateTime, default=db.func.current_timestamp())
+    priority_level = db.Column(db.String(20), nullable=False)
+    user_id = db.Column(db.Integer, nullable=False)
+    file_subdir = db.Column(db.String(255), nullable=False)
+    log_info = db.Column(db.String(255), nullable=False)
+
+
+class Log_transaction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    log_datetime = db.Column(db.DateTime, default=db.func.current_timestamp())
+    priority_level = db.Column(db.String(20), nullable=False)
+    user_id = db.Column(db.Integer, nullable=False)
+    file_subdir = db.Column(db.String(255), nullable=False)
+    log_info = db.Column(db.String(255), nullable=False)

@@ -4,10 +4,8 @@ General:
     Allow messages to be displayed when accessing pages that user is not allowed to
 
 Models:
-    Implement daily generation of admin master key
-    Add new column for ending date for premium members
-    Write sql scripts for seeding of database
-    Write a function to generate new user id
+    Implement daily generation of master key
+    Write a function to generate unique new user id
 
 Signup:
     Implement rate limiting for OTP requests
@@ -18,8 +16,6 @@ Recovery:
 
 Login:
     Implement rate limiting for login requests
-    Track login attempts, check for locked accounts
-    Update login details wherever necessary
 
 Password forms:
     Fix password reset/ set buttons not being able to be disabled on frontend
@@ -31,39 +27,12 @@ Member Profile:
 Admin Profile:
     Implement log out for active account using same username after successful reset of password
 
-Admin Account Management Flow Summary:
-    Secure Interface Access:
-        All routes require validation of a valid master key and session duration.
+Admin Account Management:
+    Implement log out for active account using same username after successful reset of password
+    Frontend nonsense
+    Make sure to link to Jacen's route for viewing activities
 
-    Admin Account Creation:
-        User inputs: username, email, password, confirm password.
-        Validations: Check master key, session, and input data.
-        JWT issued with identity (username, email), creation_stage set to send_otp.
-        send_otp route validates JWT and sends OTP email; sets stage to verify_email.
-        verify_email route checks OTP, JWT claims, and finalizes account creation.
-
-    Two-Factor Authentication (2FA):
-        OTP generated, hashed, stored in JWT; expires in 5 minutes.
-        On successful OTP verification, admin account is created.
-
-    Admin Account Deletion:
-        Admin accounts can be deleted after master key validation.
-        No updates allowed through the management interface, only via profile pages.
-
-    Session Handling:
-        On any check failure (master key, session expiry), the session is cleared and redirected to authentication.
-
-    Read-Only Interface:
-        The interface allows viewing admin accounts, with actions limited to creation and deletion.
-
-    Logging and Monitoring:
-        Every action is logged for security and auditing purposes.
-        
-    Rate Limiting:
-        Rate limiting is implemented on authentication and sensitive actions to prevent brute force attacks.
-    
-    JWT Encryption:
-        JWTs are encrypted to protect sensitive information in transit and at rest, ensuring secure handling of sensitive data like OTPs and user identity information.
-    
-    Flask-JWT-Extended Integration:
-        Used for handling JWT creation, validation, and management, with additional encryption of sensitive data using the cryptography library.
+Member Account Management:
+    Pretty much the same as Admin Account Management
+    Make sure to link to Ervyn's route for viewing order history
+    Make sure to link to Jacen's route for viewing activities

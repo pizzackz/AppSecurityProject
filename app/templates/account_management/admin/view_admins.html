@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+{% extends "account_management/base.html" %}
+
+{% block title %}View Admins{% endblock %}
+
+{% block navbar %}
+{% include "includes/_admin_control_navbar.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto mt-8">
+    <h1 class="text-2xl font-bold mb-6">Admins List</h1>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white">
+            <thead>
+                <tr>
+                    <th class="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">Image</th>
+                    <th class="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">Username</th>
+                    <th class="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">Email</th>
+                    <th class="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">Joined</th>
+                    <th class="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">Last Login</th>
+                    <th class="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">Account Status</th>
+                    <th class="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-gray-600 tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for admin in admin_data %}
+                <tr>
+                    <td class="px-6 py-4 border-b border-gray-300">
+                        <img class="w-10 h-10 rounded-full" src="{{ admin.image }}" alt="{{ admin.username }}">
+                    </td>
+                    <td class="px-6 py-4 border-b border-gray-300">{{ admin.username }}</td>
+                    <td class="px-6 py-4 border-b border-gray-300">{{ admin.email }}</td>
+                    <td class="px-6 py-4 border-b border-gray-300">{{ admin.created_at.strftime('%B %d, %Y') }}</td>
+                    <td class="px-6 py-4 border-b border-gray-300">{{ admin.last_login.strftime('%B %d, %Y %I:%M %p') if admin.last_login else 'Never' }}</td>
+                    <td class="px-6 py-4 border-b border-gray-300">
+                        {% if admin.account_locked %}
+                            <span class="text-red-500">Locked</span>
+                            {% if admin.unlock_request %}
+                                <span class="text-yellow-500">(Unlock Requested)</span>
+                            {% endif %}
+                        {% else %}
+                            {% if admin.is_online %}
+                                <span class="text-green-500">Online</span>
+                            {% else %}
+                                <span class="text-gray-500">Offline</span>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 border-b border-gray-300">
+                        <form method="POST" action="{{ url_for('admin_control_bp.view_admins') }}">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="admin_id" value="{{ admin.id }}">
+                            <button type="submit" class="text-blue-500 hover:underline">View Details</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

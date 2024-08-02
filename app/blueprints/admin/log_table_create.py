@@ -16,7 +16,7 @@ def connect_to_JacenDB():
         return connection
     except Error as e:
         print(f"Error: {e}")
-        return none
+        return 'none'
 
 def create_INFO(connection):
     try:

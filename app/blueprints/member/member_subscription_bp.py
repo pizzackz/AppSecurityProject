@@ -3,12 +3,11 @@ import os
 import stripe
 
 from dotenv import load_dotenv
-from flask import Blueprint, request, redirect, url_for, render_template, jsonify, session, current_app
+from flask import Blueprint, request, redirect, url_for, render_template, jsonify, session
 from app import db, csrf
 from sqlalchemy.sql import func
 from app.models import Payment, Member
 from datetime import datetime, timedelta,timezone
-from app.utils import send_email
 
 from flask_login import login_required, current_user
 
@@ -55,7 +54,8 @@ def create_checkout_session():
                 'quantity': 1,
             }],
             mode='subscription',
-            success_url=url_for('member_subscription_bp.success', _external=True, action=action, user_id=user_id),
+            success_url=url_for('member_subscription_bp.success', _external=True) +
+                        f"?user_id={user_id}&action={action}&session_id={{CHECKOUT_SESSION_ID}}",
             cancel_url=url_for('member_subscription_bp.cancel', _external=True),
             metadata={
                 'user_id': str(user_id),
@@ -70,82 +70,6 @@ def create_checkout_session():
     except Exception as e:
         logger.error(f"Error: {str(e)}")
         return jsonify(error=str(e)), 403
-
-
-@member_subscription_bp.route('/webhook', methods=['POST'])
-@csrf.exempt
-def stripe_webhook():
-    payload = request.get_data(as_text=True)
-    sig_header = request.headers.get('Stripe-Signature')
-
-    try:
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, endpoint_secret
-        )
-    except ValueError as e:
-        # Invalid payload
-        logger.error(f"Webhook error: {e}")
-        return jsonify({'error': str(e)}), 400
-    except stripe.error.SignatureVerificationError as e:
-        # Invalid signature
-        logger.error(f"Webhook signature verification error: {e}")
-        return jsonify({'error': str(e)}), 400
-
-    logger.info(f"Webhook event")
-    if event['type'] == 'payment_intent.succeeded':
-        logger.info(f"Payment intent succeeded")
-        payment_intent = event['data']['object']
-        logger.info("Payment intent succeeded")
-        metadata = payment_intent.get('metadata', {})
-        user_id = metadata.get('user_id')
-        action = metadata.get('action')
-
-        print(f"Request = {request}")
-        print(request.form)
-        logger.info(f"User ID from metadata: {user_id}")
-        logger.info(f"Action from metadata: {action}")
-
-        if not user_id:
-            logger.error("User ID is missing in the metadata.")
-            return jsonify({'error': 'User ID is missing in the metadata.'}), 400
-
-        user = Member.query.get(user_id)
-        if user is None:
-            logger.error(f"No user found with ID {user_id}")
-            return jsonify({'error': 'User not found'}), 404
-
-        # Update subscription end date based on action
-        if action == 'upgrade':
-            user.subscription_plan = "Premium"
-            user.subscription_end_date = datetime.now(timezone.utc) + timedelta(days=30)
-            logger.info(f"User subscription end date upgrade: {user.subscription_end_date}")
-        elif action == 'renew':
-            if user.subscription_end_date and user.subscription_end_date > datetime.now(timezone.utc):
-                user.subscription_plan = "Premium"
-                user.subscription_end_date += timedelta(days=30)
-                logger.info(f"User subscription end date renew: {user.subscription_end_date}")
-        else:
-            user.subscription_plan = "Premium"
-            user.subscription_end_date = datetime.now(timezone.utc) + timedelta(days=30)
-            logger.info(f"User subscription end date blank: {user.subscription_end_date}")
-
-
-
-        new_payment = Payment(
-            id=user.id,
-            stripe_payment_id=payment_intent['id'],
-            amount=payment_intent['amount'],
-            currency=payment_intent['currency'],
-            status=payment_intent['status'],
-            created_at=func.now()
-        )
-
-        db.session.add(new_payment)
-        db.session.commit()
-
-        logger.info(f"Payment stored: {new_payment}")
-
-    return jsonify({'status': 'success'}), 200
 
 
 @member_subscription_bp.route('/success', methods=['POST', 'GET'])
@@ -191,13 +115,8 @@ def success():
                 user.subscription_plan = "premium"
                 user.subscription_end_date = datetime.now(timezone.utc) + timedelta(days=30)
 
-            db.session.commit()
 
-            # Email notification
-            subject = "Subscription Successful"
-            body = f"Dear {user.username},\n\nYour transaction was successful. You are now a premium member.\n\nThank you for your subscription!"
-            with current_app.app_context():
-                send_email(user.email, subject, body)
+            db.session.commit()
         else:
             logger.error(f"No user found with ID {user_id}")
             return jsonify({'error': 'User not found'}), 404
@@ -238,6 +157,7 @@ def success():
         return jsonify({'error': f'Error retrieving Stripe session: {str(e)}'}), 500
 
     return render_template('member/transaction-processing/success.html')
+
 
 
 @member_subscription_bp.route('/cancel', methods=['POST', 'GET'])

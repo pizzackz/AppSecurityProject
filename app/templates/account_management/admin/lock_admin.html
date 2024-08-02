@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+{% extends "account_management/base.html" %}
+
+{% block title %}Lock Admin Account{% endblock %}
+{% from "includes/_form_helper.html" import render_field %}
+
+{% block navbar %}
+{% include "includes/_admin_control_navbar.html" %}
+{% endblock %}
+
+{% block css %}
+{{ super() }}
+<style nonce="{{ nonce }}">
+    #main-wrapper {
+        margin-top: 7rem;
+        background-color: #f0f2f5;
+    }
+    .centered-container {
+        width: 70%;
+        max-width: 50vw; /* Reduced max-width for a more compact layout */
+        border-radius: 3rem; /* Rounded edges */
+        min-height: 50vh;
+        align-content: center;
+    }
+    .form-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    .form-content {
+        flex-grow: 1;
+    }
+    .form-actions {
+        text-align: center;
+        gap: 1rem; /* Added gap between buttons */
+    }
+    .left-column {
+        padding-right: 1.25rem; /* Add space between columns */
+    }
+    .right-column {
+        padding-left: 1.25rem; /* Add space between columns */
+    }
+    textarea {
+        resize: vertical;
+        max-height: 5rem;
+        overflow: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-center" id="main-wrapper">
+    <div class="bg-white p-5 shadow-lg centered-container mx-auto">
+        <div class="row">
+            <!-- Left Section: Description and Disclaimer -->
+            <div class="col-md-6 left-column">
+                <h2 class="text-danger">Lock Admin Account</h2>
+                <p class="text-muted">Please provide a reason for locking the account.</p>
+                <p class="text-danger">Are you sure you want to lock this account? This action cannot be undone.</p>
+            </div>
+            
+            <!-- Right Section: Form -->
+            <div class="col-md-6 right-column">
+                <form action="" method="post" class="form-container">
+                    {{ form.hidden_tag() }}
+                    <div class="form-content">
+                        <div class="mb-3">
+                            {{ render_field(form.reason, class="form-control", rows=5, placeholder="Enter reason", wrap="soft") }}
+                        </div>
+                        <div class="form-group mb-3">
+                            {{ form.recaptcha.label }} {{ form.recaptcha() }}
+                        </div>
+                    </div>
+                    <div class="form-actions mt-3 d-flex justify-content-between">
+                        <a href="{{ url_for('admin_control_bp.lock_admin', action='back') }}" class="btn btn-secondary rounded-pill">Cancel</a>
+                        <button type="submit" name="action" value="lock" class="btn btn-danger ml-2 rounded-pill">Lock</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

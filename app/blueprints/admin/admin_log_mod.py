@@ -40,15 +40,14 @@ def log_trans(priority_level, category, user_id, action, info):
     root_directory = '/path/to/your/directory'
     if subdirectory.startswith(root_directory):
         subdirectory = subdirectory[len(root_directory):].lstrip(os.path.sep)
-    if priority_level=='info':
-        if category=='general':
-            new_log=General(priority_level=priority_level, category=category, user=user_id, action=action, message_info=info)
-        elif category=='transaction':
-            self.transaction_log_setter()
-            logging.info(f"Info||Transaction||{username}||{subdirectory}\\{file_name}||{action}||{info}")
-        elif category=='account':
-            self.account_log_setter()
-            logging.info(f"Info||Account||{username}||{subdirectory}\\{file_name}||{action}||{info}")
+    if category=='general':
+        new_log=General(priority_level=priority_level, category=category, user=user_id, action=action, message_info=info)
+    elif category=='transaction':
+        new_log=Transaction(priority_level=priority_level, category=category, user=user_id, action=action, message_info=info)
+    elif category=='account':
+        new_log=Account(priority_level=priority_level, category=category, user=user_id, action=action, message_info=info)
+    else:
+        print("Error! category can only be: \'general\', \'transactions\' or \'account\'")
     
     try:
         db.session.add(new_log)

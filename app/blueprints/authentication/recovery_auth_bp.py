@@ -8,9 +8,9 @@ from flask_jwt_extended import create_access_token, set_access_cookies, unset_jw
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from app import db
-from app.models import User, PasswordResetToken
+from app.models import User, LockedAccount, PasswordResetToken
 from app.forms.auth_forms import EmailForm, OtpForm, RecoverOptionsForm, ResetPasswordForm
-from app.utils import clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_auth_stage, check_jwt_values
+from app.utils import logout_if_logged_in, clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_auth_stage, check_jwt_values
 
 
 # Initialise flask blueprint - 'login_aut_bp'
@@ -21,6 +21,7 @@ TEMPLATE_FOLDER = "authentication/recovery"
 
 # Recovery route - Phase 1
 @recovery_auth_bp.route("/", methods=['GET', 'POST'])
+@logout_if_logged_in
 def recovery():
     """
     Recovery route to initiate the account recovery process.
@@ -44,6 +45,23 @@ def recovery():
     if request.method == "POST" and form.validate_on_submit():
         # Clean input
         email = clean_input(form.email.data)
+
+        # Check if account exists
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            flash("No account exists with this email.", "error")
+            logger.warning(f"Recovery attempt with non-existent email: {email}")
+            return redirect(url_for("recovery_auth_bp.recovery"))
+        
+        # Check if account is locked
+        if user.account_status.is_locked:
+            locked_account = LockedAccount.query.filter_by(id=user.id).first()
+            if locked_account:
+                locked_account.unlock_request = True
+                db.session.commit()
+                flash("Your account is currently locked. A request to unlock your account has been sent to support. Please wait for further instructions.", "info")
+                logger.info(f"Unlock request sent for locked account with email: {email}")
+                return redirect(url_for('login_auth_bp.login'))
 
         # Create JWT token for sensitive data
         response = redirect(url_for('recovery_auth_bp.send_otp'))

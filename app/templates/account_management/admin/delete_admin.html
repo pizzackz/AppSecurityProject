@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+{% extends "account_management/base.html" %}
+
+{% block title %}Delete Admin Account{% endblock %}
+{% from "includes/_form_helper.html" import render_field %}
+
+{% block css %}
+{{ super() }}
+<style nonce="{{ nonce }}">
+    #main-wrapper {
+        margin-top: 7rem;
+        background-color: #f0f2f5;
+    }
+    .centered-container {
+        width: 70%;
+        max-width: 50vw;
+        border-radius: 3rem;
+        min-height: 50vh;
+        align-content: center;
+    }
+    .form-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    .form-content {
+        flex-grow: 1;
+    }
+    .form-actions {
+        text-align: center;
+        gap: 1rem;
+    }
+    .left-column {
+        padding-left: 1.25rem;
+    }
+    .right-column {
+        padding-right: 1.25rem;
+    }
+    .warning-text {
+        color: #d9534f; /* Bootstrap's danger color */
+        font-weight: bold;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block navbar %}
+{% include "includes/_admin_control_navbar.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-center" id="main-wrapper">
+    <div class="bg-white p-5 shadow-lg centered-container mx-auto">
+        <div class="row">
+            <div class="col-md-6 left-column">
+                <h1 class="text-dark font-weight-bold mb-3">Delete Admin Account</h1>
+                <p class="warning-text">Warning: This action is irreversible and will permanently delete the admin account and all associated data.</p>
+                <p class="text-muted">Please confirm by entering the master key and completing the reCAPTCHA challenge.</p>
+            </div>
+            <div class="col-md-6 right-column">
+                <form action="" method="post" id="delete-admin-form" class="form-container">
+                    {{ form.hidden_tag() }}
+                    <div class="form-content">
+                        <div class="form-group mb-3">
+                            {{ render_field(form.master_key, class="form-control", placeholder="Enter the master key") }}
+                        </div>
+                        <div class="form-group mb-3">
+                            {{ form.recaptcha.label }} {{ form.recaptcha() }}
+                        </div>
+                    </div>
+                    <div class="form-actions mt-3 d-flex justify-content-center">
+                        <a href="{{ url_for('admin_control_bp.delete_admin', action='back') }}" class="btn btn-light btn-outline-primary rounded-pill">Cancel</a>
+                        <button type="submit" name="action" value="delete" class="btn btn-danger rounded-pill">Delete</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script nonce="{{ nonce }}">
+    // Add any specific scripts if needed
+</script>
+{% endblock %}
