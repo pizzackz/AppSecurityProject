@@ -49,7 +49,11 @@ def feedback():
 
 
         # Storing in database
-        new_feedback = Feedback(name=name, category=category, rating=rating, comment=comment)
+        new_feedback = Feedback(
+            name=name, 
+            category=category, 
+            rating=rating, 
+            comment=comment)
         try:
             db.session.add(new_feedback)
             db.session.commit()

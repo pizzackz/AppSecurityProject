@@ -97,3 +97,9 @@ class LockAdminForm(FlaskForm):
 class DeleteAdminForm(FlaskForm):
     master_key = StringField("Re-enter Master Key", validators=[DataRequired()])
     recaptcha = RecaptchaField()
+
+
+# Create forum post
+class ForumPost(FlaskForm):
+    title = StringField('Title', validators=[DataRequired()])
+    body = TextAreaField('Body', validators=[DataRequired()])
