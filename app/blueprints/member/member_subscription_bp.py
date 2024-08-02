@@ -100,18 +100,18 @@ def success():
             else:
                 user.subscription_end_date = datetime.now(timezone.utc)  # Set a default value if None
 
-            if user.subscription_plan == "Premium":
-                action = 'renew'  # Override action to 'renew' if already Premium
+            if user.subscription_plan == "premium":
+                action = 'renew'  # Override action to 'renew' if already premium
 
                 # Handle subscription actions
                 if action in ['upgrade', 'renew']:
-                    user.subscription_plan = "Premium"
+                    user.subscription_plan = "premium"
                     if user.subscription_end_date and user.subscription_end_date > datetime.now(timezone.utc):
                         user.subscription_end_date += timedelta(days=30)
                     else:
                         user.subscription_end_date = datetime.now(timezone.utc) + timedelta(days=30)
             else:
-                user.subscription_plan = "Premium"
+                user.subscription_plan = "premium"
                 user.subscription_end_date = datetime.now(timezone.utc) + timedelta(days=30)
 
 

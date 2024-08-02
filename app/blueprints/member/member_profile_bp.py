@@ -83,7 +83,7 @@ def profile():
 
         return redirect(url_for("member_profile_bp.profile"))
 
-    # Redirect to handle subscrition plan actions (upgrade to premium, renew premium)
+    # Redirect to handle subscription plan actions (upgrade to premium, renew premium)
     if action in ("renew_plan", "upgrade_plan"):
         clear_unwanted_session_keys(ESSENTIAL_KEYS)
         endpoint = "member_subscription_bp.plan_select"
