@@ -578,8 +578,8 @@ class Feedback(db.Model):
 # Payment model to store payment related information
 class Payment(db.Model):
     __tablename__ = "payments"
-    user_id = db.Column(db.Integer, primary_key=True)
-    stripe_payment_id = db.Column(db.String(255), unique=True, nullable=False)
+    user_id = db.Column(db.Integer,nullable=False)
+    stripe_payment_id = db.Column(db.String(255), unique=True, nullable=False, primary_key=True)
     amount = db.Column(db.Integer, nullable=False)
     currency = db.Column(db.String(10), nullable=False)
     status = db.Column(db.String(50), nullable=False)
@@ -604,6 +604,7 @@ class MenuItem(db.Model):
 
 
 class Order(db.Model):
+    __tablename__ = "orders"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     customer_name = db.Column(db.String(50), nullable=False)
@@ -623,7 +624,7 @@ class Order(db.Model):
 
 class OrderItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
+    order_id = db.Column(db.Integer, db.ForeignKey('orders.id'), nullable=False)
     menu_item_id = db.Column(db.Integer, db.ForeignKey('menu_items.id'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False, default=1)
 
