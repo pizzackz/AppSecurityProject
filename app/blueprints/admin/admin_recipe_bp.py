@@ -1,4 +1,3 @@
-import flask
 from flask import (
     current_app,
     Blueprint,
@@ -292,6 +291,9 @@ def create_recipe():
             # If not pass regex, redirect
             regex = r'^[a-zA-Z ]+$'  # Regex pattern allowing only letters and spaces
             print(ingredients)
+            if len(ingredients) > 15:
+                flash('Maximum 15 ingredients allowed', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
             for i in range(len(ingredients)):
                 ingredients[i] = (ingredients[i]).strip()
                 if ingredients[i] == '':
@@ -323,11 +325,12 @@ def create_recipe():
                 return redirect(url_for('admin_recipe_bp.create_recipe'))
 
             picture2 = picture
-            scan_result = scan_file_with_virustotal(picture2, os.getenv('VIRUSTOTAL_API_KEY'))
-            if 'data' in scan_result and scan_result['data'].get('attributes', {}).get('last_analysis_stats', {}).get(
-                    'malicious', 0) > 0:
-                flash('The uploaded file is potentially malicious and has not been saved.', 'error')
-                return redirect(url_for('admin_recipe_bp.create_recipe'))
+            # To be fixed
+            # scan_result = scan_file_with_virustotal(picture2, os.getenv('VIRUSTOTAL_API_KEY'))
+            # if 'data' in scan_result and scan_result['data'].get('attributes', {}).get('last_analysis_stats', {}).get(
+            #         'malicious', 0) > 0:
+            #     flash('The uploaded file is potentially malicious and has not been saved.', 'error')
+            #     return redirect(url_for('admin_recipe_bp.create_recipe'))
             # if not is_square_image(picture):
             #     flash('Image size must be 1:1', 'error')
             #     return redirect(url_for('admin_recipe_bp.create_recipe'))
@@ -508,6 +511,9 @@ def update_recipe(recipe_id):
         if ingredients != []:
             # If not pass regex, redirect
             regex = r'^[a-zA-Z ]+$'  # Regex pattern allowing only letters and spaces
+            if len(ingredients) > 15:
+                flash('Maximum 15 ingredients allowed', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
             print(ingredients)
             for i in range(len(ingredients)):
                 ingredients[i] = (ingredients[i]).strip()

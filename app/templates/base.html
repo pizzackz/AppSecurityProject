@@ -26,11 +26,11 @@
 <body>
 <!-- Get the navbar from member/_member_navbar.html -->
     {% block navbar %}
-    {% if current_user.type == 'Admin' %}
+    {% if current_user.type == 'admin' %}
         {% include "includes/_admin_navbar.html" %}
-    {% elif current_user.type == 'Member' %}
+    {% elif current_user.type == 'member' %}
         {% include "includes/_member_navbar.html" %}
-    {% elif current_user.type == 'Premium' %}
+    {% elif current_user.type == 'premium' %}
         {% include "includes/_premium_navbar.html" %}
     {% else %}
         {% include "includes/_guest_navbar.html" %}

@@ -16,7 +16,6 @@ from ..models import User
 home_bp = Blueprint('home_bp', __name__)
 
 @home_bp.route('/')
-
 def home():
     user = current_user
     try:

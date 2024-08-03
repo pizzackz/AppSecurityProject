@@ -88,7 +88,7 @@
           <p class="card-text">
             {{ recipe.ingredients }}
           </p>
-          {% if current_user.type != 'Premium' %}
+          {% if current_user.type != 'premium' %}
             <a href="{{ url_for('member_subscription_bp.plan_select') }}" class="btn btn-warning m-2">Upgrade to Premium</a>
           {% else %}
             <a href="{{ url_for('member_recipe_bp.view_recipe', recipe_id=recipe.id) }}" class="btn btn-success m-2">View Recipe</a>
@@ -97,7 +97,7 @@
            </div>
       </div>
       {% endif %}
-      {% if recipe.type == 'Private' and recipe.user_created_id == user.id %}
+      {% if recipe.type == 'Private' and recipe.user_created_id == current_user.id %}
       <div class="card m-2 recipe_card" data-recipe-id="{{ recipe.id }}" data-recipe-name="{{ recipe.name }}">
         <img src="{{ url_for('static', filename='images_recipe/' + recipe.picture) }}" class="card-img-top" alt="{{ recipe.name }}">
         <div class="card-body">

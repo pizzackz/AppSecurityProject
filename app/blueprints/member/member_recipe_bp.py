@@ -13,22 +13,23 @@ from flask import (
 import re
 import imghdr
 import imageio
-import requests
-from app.models import Recipe, User
+from app.models import Recipe, User, RecipeConfig
 import os
 from sqlalchemy import or_, and_, case
 from flask_login import current_user, login_required
 from app import limiter
 from ...utils import scan_file_with_virustotal
-
-# import random
-# import sys
+from hashlib import sha256
 import html
-
 from app.forms.forms import CreateRecipeFormMember, RecipeSearch, AICreateRecipeForm
 from app import db
 from bs4 import BeautifulSoup
 import google.generativeai as genai
+
+# import random
+# import sys
+import requests
+
 
 member_recipe_bp = Blueprint("member_recipe_bp", __name__)
 
@@ -181,6 +182,21 @@ def recipe_database():
 def create_recipe():
     form = CreateRecipeFormMember()
     if request.method == "POST":
+        try:
+            # Try to fetch the row with name 'locked_recipes'
+            locked_recipes = RecipeConfig.query.filter_by(name='locked_recipes').first()
+        except:
+            locked_recipes = RecipeConfig(name='locked_recipes', status='False')
+            db.session.add(locked_recipes)
+            db.session.commit()
+        if not locked_recipes:
+            locked_recipes = RecipeConfig(name='locked_recipes', status='False')
+            db.session.add(locked_recipes)
+            db.session.commit()
+        if locked_recipes.status == 'True':
+            flash('Action cannot be done at the moment.', 'danger')
+            print(locked_recipes.status)
+            return redirect(url_for('admin_recipe_bp.recipe_database'))
         # Handles invalidated form
         if not form.validate_on_submit():
             print('failed')
@@ -269,6 +285,9 @@ def create_recipe():
                 flash('Ingredients are empty!', 'error')
                 return redirect(url_for('member_recipe_bp.create_recipe'))
                 # return redirect
+            if len(ingredients) > 15:
+                flash('Maximum 15 ingredients allowed', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
 
             # If not pass regex, redirect
             regex = r'^[a-zA-Z ]+$'  # Regex pattern allowing only letters and spaces
@@ -303,16 +322,20 @@ def create_recipe():
                 flash('Invalid image format', 'error')
                 return redirect(url_for('member_recipe_bp.create_recipe'))
             picture2 = picture
-            scan_result = scan_file_with_virustotal(picture2, os.getenv('VIRUSTOTAL_API_KEY'))
-            if 'data' in scan_result and scan_result['data'].get('attributes', {}).get('last_analysis_stats', {}).get(
-                    'malicious', 0) > 0:
-                flash('The uploaded file is potentially malicious and has not been saved.', 'error')
-                return redirect(url_for('admin_recipe_bp.create_recipe'))
+            # scan_result = scan_file_with_virustotal(picture, os.getenv('VIRUSTOTAL_API_KEY'))
+            # if 'data' in scan_result and scan_result['data'].get('attributes', {}).get('last_analysis_stats', {}).get(
+            #         'malicious', 0) > 0:
+            #     flash('The uploaded file is potentially malicious and has not been saved.', 'error')
+            #     return redirect(url_for('admin_recipe_bp.create_recipe'))
 
             # Save the image file
             picture_filename = picture.filename
             picture_filename = picture_filename.split('.')
-            picture_filename = name + '.' + picture_filename[1]
+            if len(picture_filename) != 2:
+                flash('Invalid image format', 'error')
+                return redirect(url_for('member_recipe_bp.create_recipe'))
+            picture_name = sha256(picture_filename[0].encode()).hexdigest()
+            picture_filename = picture_name + '.' + picture_filename[1]
 
             picture.save(os.path.join('app/static/images_recipe', picture_filename))
 
@@ -335,7 +358,7 @@ def create_recipe():
 @login_required
 def view_recipe(recipe_id):
     recipe = Recipe.query.filter_by(id=recipe_id).first()
-    if recipe.type == 'Private' and recipe.user_created != current_user.username:
+    if recipe.type == 'Private' and recipe.user_created_id != current_user.id:
         flash('Action cannot be done', 'error')
         return redirect(url_for('member_recipe_bp.recipe_database'))
     if recipe.type == 'Premium' and current_user.type != 'premium':
@@ -360,8 +383,23 @@ def view_recipe(recipe_id):
 @member_recipe_bp.route('/delete_recipe/<recipe_id>', methods=['GET', 'POST'])
 @login_required
 def delete_recipe(recipe_id):
+    try:
+        # Try to fetch the row with name 'locked_recipes'
+        locked_recipes = RecipeConfig.query.filter_by(name='locked_recipes').first()
+    except:
+        locked_recipes = RecipeConfig(name='locked_recipes', status='False')
+        db.session.add(locked_recipes)
+        db.session.commit()
+    if not locked_recipes:
+        locked_recipes = RecipeConfig(name='locked_recipes', status='False')
+        db.session.add(locked_recipes)
+        db.session.commit()
+    if locked_recipes.status == 'True':
+        flash('Action cannot be done at the moment.', 'danger')
+        print(locked_recipes.status)
+        return redirect(url_for('admin_recipe_bp.recipe_database'))
     recipe = Recipe.query.filter_by(id=recipe_id).first()
-    if recipe.type == 'Private' and recipe.user_created != current_user.username:
+    if recipe.type == 'Private' and recipe.user_created_id != current_user.id:
         flash('Action cannot be done', 'error')
         return redirect(url_for('member_recipe_bp.recipe_database'))
     if recipe.type == 'Premium':
@@ -377,7 +415,7 @@ def delete_recipe(recipe_id):
 @login_required
 def update_recipe(recipe_id):
     recipe = Recipe.query.filter_by(id=recipe_id).first()
-    if recipe.type == 'Private' and recipe.user_created != current_user.username:
+    if recipe.type == 'Private' and recipe.user_created_id != current_user.id:
         flash('Action cannot be done', 'error')
         return redirect(url_for('member_recipe_bp.recipe_database'))
     if recipe.type == 'Premium':
@@ -385,6 +423,21 @@ def update_recipe(recipe_id):
         return redirect(url_for('member_recipe_bp.recipe_database'))
     form = CreateRecipeFormMember()
     if request.method == 'POST':
+        try:
+            # Try to fetch the row with name 'locked_recipes'
+            locked_recipes = RecipeConfig.query.filter_by(name='locked_recipes').first()
+        except:
+            locked_recipes = RecipeConfig(name='locked_recipes', status='False')
+            db.session.add(locked_recipes)
+            db.session.commit()
+        if not locked_recipes:
+            locked_recipes = RecipeConfig(name='locked_recipes', status='False')
+            db.session.add(locked_recipes)
+            db.session.commit()
+        if locked_recipes.status == 'True':
+            flash('Action cannot be done at the moment.', 'danger')
+            print(locked_recipes.status)
+            return redirect(url_for('admin_recipe_bp.recipe_database'))
         name = form.name.data
         ingredients = form.ingredients.data
         instructions = form.instructions.data
@@ -455,6 +508,9 @@ def update_recipe(recipe_id):
 
         # Clean data
         if ingredients != []:
+            if len(ingredients) > 15:
+                flash('Maximum 15 ingredients allowed', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
             # If not pass regex, redirect
             regex = r'^[a-zA-Z ]+$'  # Regex pattern allowing only letters and spaces
             print(ingredients)
