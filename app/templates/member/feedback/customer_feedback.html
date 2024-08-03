@@ -20,7 +20,7 @@
 
 {% block content %}
   <form method="POST" action="">
-    {{ form.csrf_token }}
+    {{ form.hidden_tag() }}
       <h3 class="card-title">Feedback</h3>
 
             <div class="form-group">

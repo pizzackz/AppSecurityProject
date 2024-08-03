@@ -14,6 +14,7 @@ import praw
 import logging
 import sqlite3
 import os
+from bleach import clean
 
 from app import db
 from app.models import Token, Post
@@ -28,6 +29,7 @@ REDDIT_CLIENT_ID = os.environ.get('REDDIT_CLIENT_ID')
 REDDIT_CLIENT_SECRET = os.environ.get('REDDIT_CLIENT_SECRET')
 REDDIT_USER_AGENT = os.environ.get('REDDIT_USER_AGENT')
 
+
 # Initialize PRAW
 reddit = praw.Reddit(
     client_id=REDDIT_CLIENT_ID,
@@ -36,13 +38,16 @@ reddit = praw.Reddit(
     redirect_uri='http://localhost:5000/authorize_callback'
 )
 
+
 # Assuming 'read' and 'identity' scopes are needed for your task
-scopes = ['read', 'identity']
+scopes = ['read', 'identity', 'submit'] 
+
 
 def store_refresh_token(token):
     new_token = Token(refresh_token=token)
     db.session.add(new_token)
     db.session.commit()
+
 
 def get_refresh_token():
     token = Token.query.order_by(Token.id.desc()).first()
@@ -93,10 +98,10 @@ def get_reddit_instance():
 def subreddit():
     reddit_user = get_reddit_instance()
     if not reddit_user:
-        return redirect(url_for('authorize'))
+        return redirect(url_for('member_forum_bp.authorize'))
 
     try:
-        subreddit = reddit_user.subreddit('food')
+        subreddit = reddit_user.subreddit('tastefullyfood')
         posts = [post.title for post in subreddit.hot(limit=5)]
         return render_template('member/forum/customer_forum.html', posts=posts)
     except praw.exceptions.PRAWException as e:
@@ -111,26 +116,28 @@ def subreddit():
 def create_post():
     reddit_user = get_reddit_instance()
     if not reddit_user:
-        return redirect(url_for('authorize'))
+        return redirect(url_for('member_forum_bp.authorize'))
 
-    forum = ForumPost
+    forum = ForumPost()
     if request.method == 'POST' and forum.validate_on_submit():
-        title = forum.title.data
-        body = forum.body.data
+        title = clean(forum.title.data)
+        body = clean(forum.body.data)
         try:
-            submission = reddit_user.subreddit('food').submit(title, selftext=body)
-            
-            # Store post information in the database
+            submission = reddit_user.subreddit('tastefullyfood').submit(title, selftext=body)
+            print(f"submission = {submission}")
+            # Store post information in the database 
             new_post = Post(
                 reddit_id=submission.id,
-                title=submission.title,
-                body=submission.body,
+                title=title,
+                body=body,
                 created_at=submission.created_at
             )
             db.session.add(new_post)
             db.session.commit()
             
-            return jsonify({'message': 'Post created successfully!', 'post_id': submission.id}), 201
+            flash('Post created successfully!', 'success')
+            return redirect(url_for('member_forum_bp.subreddit'))
         except Exception as e:
             logging.error(f"Error creating post: {e}")
+            flash(f"Error creating post: {e}", 'danger')
     return render_template("member/forum/create_post.html", form=forum)

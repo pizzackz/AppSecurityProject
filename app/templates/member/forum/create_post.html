@@ -1,23 +1,20 @@
 {% extends "base.html" %} <!-- Used to be customer_base.html -->
-{% block title %}Forum{% endblock %}
+{% block title %}Create Post{% endblock %}
 
 {% block css %}
   {{ super() }}
 {% endblock %}
 
-{% block scripts %}
-  {{ super() }}
-{% endblock %}
-
 {% block content %}
+<h3>Create Reddit Post</h3>
+
+  {% from "includes/_form_helper.html" import render_field %}
   <form method="post" action="">
-    {{ form.csrf_token }}
-    <h3 class="card-title">Create a post</h3>
-      <p>
-        {{ form.title.label }}<br>
-      </p>
-      <p>
-        {{ form.body.label }}<br>
-      </p>
-    </form>
+    {{ form.hidden_tag() }}
+    <div class="form-group">{{ render_field(form.title, class="form-control", size=80) }}</div>
+
+    <div class="form-group">{{ render_field(form.body, class="form-control", cols=80, rows=10) }}</div><br>
+         
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
 {% endblock %}
