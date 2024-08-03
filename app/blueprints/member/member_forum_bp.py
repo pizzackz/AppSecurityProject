@@ -69,7 +69,7 @@ def authorize_callback():
 
         # Store the refresh token securely
         store_refresh_token(refresh_token)
-        return redirect(url_for('home_bp.home'))
+        return redirect(url_for('general_bp.home'))
     except Exception as e:
         logging.error(f"Error during authorization: {e}")
         return f"Error during authorization: {e}", 500

@@ -1,7 +1,7 @@
 <nav class="navbar navbar-expand-lg navbar-light shadow shadow-sm">
     <div class="container-fluid">
         <!-- Logo image -->
-        <a class="navbar-brand" href="{{ url_for('home_bp.home', id=id) }}">
+        <a class="navbar-brand" href="{{ url_for('general_bp.home', id=id) }}">
             <img class="logo" src="{{ url_for('static', filename='images/logo/logo.png') }}"/>
         </a>
         <button class="navbar-toggler bypass-disable" type="button" data-bs-toggle="collapse"
@@ -14,7 +14,7 @@
             <ul class="navbar-nav ms-auto nav-middle">
                 <!-- Home -->
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('home_bp.home', id=id) }}">Home</a>
+                    <a class="nav-link" href="{{ url_for('general_bp.home', id=id) }}">Home</a>
                 </li>
                 <!-- Dropdown for Orders -->
 <!--                <li class="nav-item active dropdown">-->
@@ -44,6 +44,9 @@
                             <a class="dropdown-item" href="#">##</a>
                         </li>
                     </ul>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('general_bp.about', id=id) }}">About</a>
                 </li>
             </ul>
 

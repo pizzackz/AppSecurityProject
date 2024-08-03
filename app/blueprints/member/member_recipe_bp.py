@@ -25,6 +25,7 @@ from app.forms.forms import CreateRecipeFormMember, RecipeSearch, AICreateRecipe
 from app import db
 from bs4 import BeautifulSoup
 import google.generativeai as genai
+from datetime import datetime
 
 # import random
 # import sys
@@ -547,17 +548,25 @@ def update_recipe(recipe_id):
 
         if name != '':
             recipe.name = name
+            recipe.date_created = datetime.utcnow()
         if ingredients != []:
             recipe.ingredients = ingredient_cleaned
+            recipe.date_created = datetime.utcnow()
         if instructions != '':
             recipe.instructions = soup.prettify()
+            recipe.date_created = datetime.utcnow()
         if picture.filename != '':
             recipe.picture = picture_filename
+            recipe.date_created = datetime.utcnow()
         if calories != '':
             recipe.calories = calories
+            recipe.date_created = datetime.utcnow()
         if prep_time != '':
             recipe.prep_time = prep_time
-        recipe.type = recipe_type
+            recipe.date_created = datetime.utcnow()
+        if recipe.type != recipe_type:
+            recipe.type = recipe_type
+            recipe.date_created = datetime.utcnow()
 
         db.session.commit()
         flash(f'{recipe.name} updated', 'info')
@@ -584,6 +593,8 @@ def ai_recipe_creator():
 @limiter.limit('10 per minute')
 @limiter.limit('100 per hour')
 def recipe_creator_ai():
+    if request.endpoint != 'recipe-creator-ai':
+        return jsonify({"content": "Invalid request"})
     # Get user inputs from json data
     print('AI Recipe Creator Activating')
     cuisine = request.json.get('cuisine')

@@ -15,6 +15,7 @@ Recovery:
 
 Login:
     Implement rate limiting for login requests
+    Backend for logout button on navbars
 
 Password forms:
     Fix password reset/ set buttons not being able to be disabled on frontend

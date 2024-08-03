@@ -1,7 +1,7 @@
 <nav class="navbar navbar-expand-lg navbar-light shadow shadow-sm">
     <div class="container-fluid">
         <!-- Logo image -->
-        <a class="navbar-brand" href="{{ url_for('home_bp.home', id=id) }}">
+        <a class="navbar-brand" href="{{ url_for('general_bp.home', id=id) }}">
             <img class="logo" src="{{ url_for('static', filename='images/logo/logo.png') }}"/>
         </a>
         <button class="navbar-toggler bypass-disable" type="button" data-bs-toggle="collapse"
@@ -14,7 +14,7 @@
             <ul class="navbar-nav ms-auto nav-middle">
                 <!-- Home -->
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('home_bp.home', id=id) }}">Home</a>
+                    <a class="nav-link" href="{{ url_for('general_bp.home', id=id) }}">Home</a>
                 </li>
                 <!-- Dropdown for Orders -->
 <!--                <li class="nav-item active dropdown">-->
@@ -22,10 +22,16 @@
 
                 <!-- Dropdown for Recipes -->
                 <li class="nav-item active dropdown">
-                    <a class="nav-link" href="{{ url_for('member_recipe_bp.recipe_database') }}" role="button" data-bs-toggle="dropdown" aria-expanded="false">Recipes</a>
+                    <a class="nav-link" href="{{ url_for('admin_recipe_bp.recipe_database') }}" role="button" data-bs-toggle="dropdown" aria-expanded="false">Recipes</a>
                     <ul class="dropdown-menu">
                         <li>
-                            <a class="dropdown-item" href="{{ url_for('member_recipe_bp.create_recipe') }}">Create Recipe</a>
+                            <a class="dropdown-item" href="{{ url_for('admin_recipe_bp.recipe_database') }}">Recipe Database</a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('admin_recipe_bp.create_recipe') }}">Create Recipe</a>
+                        </li>
+                                                <li>
+                            <a class="dropdown-item" href="{{ url_for('admin_recipe_bp.recipe_dashboard') }}">Recipe Dashboard</a>
                         </li>
                     </ul>
                 </li>
@@ -41,6 +47,9 @@
                             <a class="dropdown-item" href="#">##</a>
                         </li>
                     </ul>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('general_bp.about', id=id) }}">About</a>
                 </li>
             </ul>
 
@@ -63,7 +72,7 @@
                     </a>
 
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{{ url_for('member_profile_bp.profile') }}">Edit
+                        <li><a class="dropdown-item" href="{{ url_for('admin_profile_bp.profile') }}">Edit
                                 Profile</a>
                         </li>
                         <li><a class="dropdown-item nav-btn btn btn-danger" href="#" data-bs-toggle="modal"

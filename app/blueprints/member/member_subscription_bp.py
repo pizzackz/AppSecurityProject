@@ -77,7 +77,7 @@ def create_checkout_session():
 def success():
     if request.method == "POST":
         if request.form.get('return') == 'True':
-            return redirect(url_for('home_bp.home'))
+            return redirect(url_for('general_bp.home'))
 
     user_id = request.args.get('user_id')
     action = request.args.get('action')

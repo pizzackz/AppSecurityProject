@@ -95,7 +95,7 @@ def handle_ideal_case1(email: str, username: str, google_id: str, profile_pictur
 # Handle ideal case 2: Existing account with matching google id for user_by_email & user_by_username
 def handle_ideal_case2(user_by_email: User, username: str, email: str, profile_picture: str):
     # Get correct endpoint based on user type
-    endpoint = "home_bp.home"
+    endpoint = "general_bp.home"
 
     # Update to use google provided profile picture
     try:
@@ -401,7 +401,7 @@ def verify_email():
 
         # Get correct endpoint based on user type
         user = User.query.filter_by(username=identity['username'], email=identity['email']).first()
-        endpoint = "home_bp.home"
+        endpoint = "general_bp.home"
 
         # Clear any jwt & session data
         session.clear()
@@ -562,7 +562,7 @@ def confirm_new_member_account():
                 logger.error(f"Failed to create new member account for {email}.")
                 return redirect(url_for('login_auth_bp.login'))
 
-            endpoint = "home_bp.home"
+            endpoint = "general_bp.home"
 
             # Clear any jwt & session data
             session.clear()
@@ -645,7 +645,7 @@ def link_google():
                 db.session.commit()
 
                 # Get correct endpoint based on user type
-                endpoint = "home_bp.home"
+                endpoint = "general_bp.home"
 
                 # Clear any jwt & session data
                 session.clear()
