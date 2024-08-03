@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 {% extends 'base.html' %}
-{% block title %}tastefully |  }}{% endblock %}
+{% block title %}tastefully | {{ recipe.name }}{% endblock %}
 
 {% block css %}
 {{ super() }}
@@ -67,7 +67,7 @@
                 </div>
             </div>
         </div>
-       <a href="url_for('admin_recipe_bp.recipe_database')" class="btn btn-secondary mt-3 mb-4">Back to Home</a>
+       <a href="url_for('admin_recipe_bp.recipe_database')" class="btn btn-secondary mt-3 mb-4">Back to Recipes</a>
    </div>
 
 {% endblock %}

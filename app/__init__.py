@@ -228,8 +228,8 @@ def register_account_control_bp(app: Flask):
 # Register all blueprints
 def register_all_bp(app: Flask):
     # Home blueprint
-    from app.blueprints.home_bp import home_bp
-    app.register_blueprint(home_bp)
+    from app.blueprints.general_bp import general_bp
+    app.register_blueprint(general_bp)
 
     register_auth_bp(app)
     register_member_bp(app)

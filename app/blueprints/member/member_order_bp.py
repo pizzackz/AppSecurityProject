@@ -230,7 +230,7 @@ def success():
     clear_session_data(['selected_items', 'delivery_date', 'delivery_time'])
     if request.method == "POST":
         if request.form.get('return') == 'True':
-            return redirect(url_for('home_bp.home'))
+            return redirect(url_for('general_bp.home'))
     return render_template('member/order/success.html')
 
 
