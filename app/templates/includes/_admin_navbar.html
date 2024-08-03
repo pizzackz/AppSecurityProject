@@ -75,7 +75,7 @@
                         <li><a class="dropdown-item" href="{{ url_for('admin_profile_bp.profile') }}">Edit
                                 Profile</a>
                         </li>
-                        <li><a class="dropdown-item nav-btn btn btn-danger" href="#" data-bs-toggle="modal"
+                        <li><a class="dropdown-item nav-btn btn btn-danger" href="{{ url_for('general_bp.logout', type='admin') }}" data-bs-toggle="modal"
                                 data-bs-target="#confirm-logout">Logout</a>
                         </li>
                     </ul>

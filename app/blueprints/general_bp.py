@@ -1,20 +1,16 @@
-from flask import (
-    current_app,
-    Blueprint,
-    render_template,
-    request,
-    redirect,
-    flash,
-    url_for,
-    jsonify
-)
-from flask_login import login_required, current_user
-from app import db
 import requests
-from ..models import User
+import logging
+from flask import Blueprint, render_template, request, session, redirect, flash, url_for, jsonify
+from flask_login import login_required, current_user, logout_user
+from flask_jwt_extended import unset_jwt_cookies
 from flask_limiter.errors import RateLimitExceeded
+from app import db
+from app.models import User
 
+# Initialise variables
 general_bp = Blueprint('general_bp', __name__)
+logger = logging.getLogger("tastefully")
+
 
 @general_bp.route('/')
 def home():
@@ -28,10 +24,28 @@ def home():
     except AttributeError:
         return redirect(url_for('login_auth_bp.login'))
 
+
+# Logout route
+@general_bp.route("/logout")
+def logout():
+    # Display logout messages    
+    flash("You have been successfully logged out!", "success")
+    logger.info(f"User '{current_user.username}' has been logged out successfully.")
+
+    # Log user out
+    current_user.login_details.logout()
+    logout_user()
+
+    # Remove any jwt cookies stored
+    response = redirect(url_for("general_bp.home"))
+    unset_jwt_cookies(response)
+
+    return response
+
+
 @general_bp.route('/about')
 def about():
     return render_template('about.html')
-
 
 
 # Page not Found
@@ -39,20 +53,24 @@ def about():
 def page_not_found(e):
     return render_template('error/error_404.html'), 404
 
+
 # Internal Server Error
 @general_bp.errorhandler(500)
 def internal_server_error(e):
     return render_template('error/error_500.html'), 500
+
 
 # Unauthorized
 @general_bp.errorhandler(401)
 def unauthorized(e):
     return render_template('error/error_401.html'), 401
 
+
 # Forbidden
 @general_bp.errorhandler(403)
 def forbidden(e):
     return render_template('error/error_403.html'), 403
+
 
 @general_bp.errorhandler(RateLimitExceeded)
 def rate_limit_exceeded(e):

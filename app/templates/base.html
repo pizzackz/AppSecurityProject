@@ -28,9 +28,9 @@
     {% block navbar %}
     {% if current_user.type == 'admin' %}
         {% include "includes/_admin_navbar.html" %}
-    {% elif current_user.type == 'member' %}
+    {% elif current_user.type == 'member' and current_user.subscription_plan == 'standard' %}
         {% include "includes/_member_navbar.html" %}
-    {% elif current_user.type == 'premium' %}
+    {% elif current_user.type == 'member' and current_user.subscription_plan == 'premium' %}
         {% include "includes/_premium_navbar.html" %}
     {% else %}
         {% include "includes/_guest_navbar.html" %}

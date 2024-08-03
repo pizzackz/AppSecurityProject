@@ -2,9 +2,9 @@
 {% extends "base.html" %}
 
 {% block title %}Login{% endblock %}
+{% from "includes/_form_helper.html" import render_field %}
 
 {% block content %}
-{% from "includes/_form_helper.html" import render_field %}
 <h1>Sign In</h1>
 
 <!-- Link to guest recipes page -->

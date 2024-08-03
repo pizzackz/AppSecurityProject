@@ -1,4 +1,5 @@
 General:
+    Replace logging mechanisms to use logger provided by Jacen
     Write handlers for possible status codes (401, 404, 421, 429, 500)
     Review & enhance session handling mechanisms
     Allow messages to be displayed when accessing pages that user is not allowed to
@@ -14,8 +15,8 @@ Recovery:
     Implement rate limiting for OTP requests, recovery requests
 
 Login:
+    Fix navbar buttons not linking properly
     Implement rate limiting for login requests
-    Backend for logout button on navbars
 
 Password forms:
     Fix password reset/ set buttons not being able to be disabled on frontend

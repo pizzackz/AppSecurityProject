@@ -86,10 +86,7 @@ def logout_if_logged_in(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if current_user.is_authenticated:
-            flash("You have been successfully logged out!", "success")
-            logger.info(f"User '{current_user.username}' has been logged out successfully.")
-            current_user.login_details.logout()
-            logout_user()
+            return redirect(url_for("general_bp.logout"))
         return f(*args, **kwargs)
     return decorated_function
 

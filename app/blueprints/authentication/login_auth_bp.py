@@ -674,3 +674,4 @@ def link_google():
 
     # Render the confirm Google account linking template
     return render_template(f"{TEMPLATE_FOLDER}/confirm_google_link.html", form=form)
+
