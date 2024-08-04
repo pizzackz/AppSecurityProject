@@ -2,13 +2,14 @@ import logging
 import os
 import json
 import atexit
+import pendulum
 from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file, abort
 from flask_login import login_required, current_user
 from sqlalchemy.exc import SQLAlchemyError
 from app.models import MenuItem, Order, OrderItem
 from app.forms.forms import OrderForm, MenuForm
 from app import db, csrf, limiter
-from app.utils import clean_input, get_session_data, set_session_data, clear_session_data
+from app.utils import clean_input, get_session_data, set_session_data, clear_session_data, check_admin
 from datetime import datetime, timedelta
 from io import BytesIO
 from flask_limiter import Limiter
@@ -262,6 +263,24 @@ def order_history():
     for order in orders:
         item_ids = order.selected_items
         order.items_details = MenuItem.query.filter(MenuItem.id.in_(item_ids)).all()
-        order.formatted_date = order.created_at.strftime("%b %d, %I:%M %p")
+        order.formatted_created_at = pendulum.instance(order.created_at).format("D MMMM YYYY, h:mm A")
 
     return render_template('member/order/order_history.html', orders=orders)
+
+
+# Admin viewing of order history
+# @member_order_bp.route('/admin/members/view/order_history', methods=['GET'])
+# @login_required
+# @check_admin
+# def order_history():
+#     # Fetch orders for the current user
+#     user_id = current_user.id  # Assuming the user is logged in and `current_user` is set
+#     orders = Order.query.filter_by(user_id=user_id).all()
+#
+#     # Fetch menu item details for each order
+#     for order in orders:
+#         item_ids = order.selected_items
+#         order.items_details = MenuItem.query.filter(MenuItem.id.in_(item_ids)).all()
+#         order.formatted_created_at = pendulum.instance(order.created_at).format("D MMMM YYYY, h:mm A")
+#
+#     return render_template('member/order/order_history.html', orders=orders)

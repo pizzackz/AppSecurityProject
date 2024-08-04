@@ -627,7 +627,8 @@ class Order(db.Model):
     items = db.relationship("OrderItem", backref="order", lazy=True)
 
     def __repr__(self):
-        return f"<Order {self.id}>"
+        formatted_created_at = self.created_at.strftime("%d %B %Y, %I:%M %p")
+        return f"<Order {self.id}, created_at: {formatted_created_at}>"
 
 
 class OrderItem(db.Model):
