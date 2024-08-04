@@ -269,18 +269,20 @@ def order_history():
 
 
 # Admin viewing of order history
-# @member_order_bp.route('/admin/members/view/order_history', methods=['GET'])
-# @login_required
-# @check_admin
-# def order_history():
-#     # Fetch orders for the current user
-#     user_id = current_user.id  # Assuming the user is logged in and `current_user` is set
-#     orders = Order.query.filter_by(user_id=user_id).all()
-#
-#     # Fetch menu item details for each order
-#     for order in orders:
-#         item_ids = order.selected_items
-#         order.items_details = MenuItem.query.filter(MenuItem.id.in_(item_ids)).all()
-#         order.formatted_created_at = pendulum.instance(order.created_at).format("D MMMM YYYY, h:mm A")
-#
-#     return render_template('member/order/order_history.html', orders=orders)
+@member_order_bp.route('/admin/members/view/order_history/<int:user_id>', methods=['GET'])
+@login_required
+def admin_order_history(user_id):
+    check = check_admin(fallback_endpoint='login_auth_bp.login')
+    if check:
+        return check
+
+        # Fetch orders for the specified user
+    orders = Order.query.filter_by(user_id=user_id).all()
+
+    # Fetch menu item details for each order
+    for order in orders:
+        item_ids = order.selected_items
+        order.items_details = MenuItem.query.filter(MenuItem.id.in_(item_ids)).all()
+        order.formatted_created_at = pendulum.instance(order.created_at).format("D MMMM YYYY, h:mm A")
+
+    return render_template('member/order/order_history.html', orders=orders)

@@ -157,7 +157,7 @@ def view_member_details():
             return redirect(url_for("member_control_bp.send_password_link"))
 
         if action == "view_order_history":
-            return redirect(url_for("member_order_bp.order_history"))
+            return redirect(url_for("member_order_bp.admin_order_history", user_id=member_id))
 
         if action == "view_activities":
             # TODO: Redirect to Jacen's route to display all member activities
