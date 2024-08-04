@@ -645,7 +645,9 @@ class OrderItem(db.Model):
 
 class Token(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     refresh_token = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp(), nullable=False)
 
 
 class Post(db.Model):
@@ -681,3 +683,10 @@ class Log_transaction(db.Model):
     user_id = db.Column(db.Integer, nullable=False)
     file_subdir = db.Column(db.String(255), nullable=False)
     log_info = db.Column(db.String(255), nullable=False)
+
+
+class Post_comments(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+    comment = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp(), nullable=False)
