@@ -222,7 +222,9 @@ def register_admin_bp(app: Flask):
 def register_account_control_bp(app: Flask):
     with app.app_context():
         from app.blueprints.account_management.admin_control_bp import admin_control_bp
+        from app.blueprints.account_management.member_control_bp import member_control_bp
         app.register_blueprint(admin_control_bp)
+        app.register_blueprint(member_control_bp)
 
 
 # Register all blueprints
@@ -269,8 +271,10 @@ def create_app() -> Flask:
 
    
     with app.app_context():
+        from app.models import MasterKey
         db.create_all()  # Create all database tables
-        generate_new_master_keys()  # Generate 3 master keys initially
+        if len(MasterKey.query.all()) == 0:
+            generate_new_master_keys()  # Generate 3 master keys initially if no master keys
 
     # Register CLI commands
     register_commands(app)

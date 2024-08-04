@@ -152,6 +152,10 @@ def view_admins():
     if check_result:
         return check_result
     
+    # Redirect to create admin when clicked on create admin
+    if request.args.get("action") == "create":
+        return redirect(url_for("admin_control_bp.create_admin"))
+
     # Redirect to admin details when clicked on any entry provided there is an admin id
     if request.method == "POST":
         # Check whether have admin id in form
@@ -186,7 +190,7 @@ def view_admins():
     } for admin in admins]
 
     # Render the view admins template with fetched data
-    return render_template(f"{TEMPLATE_FOLDER}/view_admins.html", admin_data=admin_list_data)
+    return render_template(f"{TEMPLATE_FOLDER}/view_admins.html", admin_data=admin_list_data, count=len(admin_list_data))
 
 
 # Specific admin account view route
@@ -214,7 +218,7 @@ def view_admin_details():
     if not admin:
         clear_unwanted_session_keys(ESSENTIAL_KEYS)
         flash("Admin account not found.", "error")
-        logger.warning(f"Admin account with ID {admin_id} not found.")
+        logger.warning(f"Admin account with ID '{admin_id}' not found.")
         return redirect(url_for("admin_control_bp.view_admins"))
 
     # Properly handle different actions
@@ -234,7 +238,7 @@ def view_admin_details():
             return redirect(url_for("admin_control_bp.unlock_admin"))
 
         if action == "delete":
-            flash(f"Please re-enter to confirm that you want to delete the account.", "info")
+            flash(f"Please re-enter the master key to confirm that you want to delete the account.", "info")
             logger.info(f"Attempting to delete admin account '{admin.username}'.")
             return redirect(url_for("admin_control_bp.delete_admin"))
 
@@ -270,6 +274,11 @@ def view_admin_details():
         "login_count": admin.login_details.login_count,
         "unlock_request": (
             LockedAccount.query.filter_by(id=admin.id).first().unlock_request
+            if admin.account_status.is_locked and LockedAccount.query.filter_by(id=admin.id).first()
+            else False
+        ),
+        "locked_reason": (
+            LockedAccount.query.filter_by(id=admin.id).first().locked_reason
             if admin.account_status.is_locked and LockedAccount.query.filter_by(id=admin.id).first()
             else False
         )
@@ -331,7 +340,7 @@ def lock_admin():
         reason = clean_input(form.reason.data)
 
         # Try sending email using utility send_email function
-        email_body = "Your account has been locked."
+        email_body = f"Your account has been locked. The reason is:\n{reason}"
         if send_email(admin.email, "Account Locked", email_body):
             if Admin.lock_account(id_to_lock=admin_id, locked_reason=reason):
                 clear_unwanted_session_keys(ADMIN_SPECIFIC_ESSENTIAL_KEYS)

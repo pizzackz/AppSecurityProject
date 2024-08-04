@@ -59,7 +59,7 @@ class Config:
     }
 
     # Rate Limiting
-    RATELIMIT_DEFAULT = ["200 per day", "20 per hour"]
+    RATELIMIT_DEFAULT = ["20000 per day", "2000 per hour"]
     RATELIMIT_STORAGE_URL = "memory://"  # Store rate limit counters in memory
 
     # Secure headers

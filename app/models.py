@@ -189,7 +189,7 @@ class Admin(User):
 
     # ForeignKey reference to 'user.id' and primary key for 'admin'
     id = db.Column(Integer, ForeignKey("user.id"), primary_key=True)
-    admin_key = db.Column(String(255), nullable=True)
+    admin_key = db.Column(String(64), nullable=True)
     admin_key_expires_at = db.Column(DateTime, nullable=True)
 
     # Joined Table Inheritance polymorphic properties
@@ -287,7 +287,7 @@ class Admin(User):
 
         data = f"{master_key}{self.id}{self.username}{self.email}"
         self.admin_key = hashlib.sha256(data.encode()).hexdigest()
-        self.admin_key_expires_at = datetime.now() + timedelta(days=1)
+        self.admin_key_expires_at = func.current_timestamp() + timedelta(days=1)
         db.session.commit()
 
         return data
@@ -398,8 +398,16 @@ class MasterKey(db.Model):
     @staticmethod
     def generate_master_key():
         new_key = os.urandom(32).hex()
-        expires_at = (datetime.now(timezone.utc) + timedelta(days=1)).isoformat()
-        return MasterKey(value=new_key, expires_at=expires_at)
+        expires_at = func.current_timestamp() + timedelta(days=1)
+        master_key = MasterKey(value=new_key, expires_at=expires_at)
+
+        admins = Admin.query.all()
+        for admin in admins:
+            admin.generate_admin_key()
+
+        db.session.commit()
+
+        return MasterKey
 
     # Retrieve any of the valid keys
     @staticmethod

@@ -38,7 +38,6 @@ def profile():
         return check
     
     action = request.form.get("action", None) or request.args.get("action", None)
-    print(f"action = {action}")
 
     # Fetch complete user data from the database
     user = Admin.query.filter_by(id=current_user.id).first()

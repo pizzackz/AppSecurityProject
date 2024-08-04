@@ -1,0 +1,132 @@
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+}
+
+#container {
+    display: flex;
+    flex: 1;
+}
+
+#container button {
+    font-size: 1.2rem;
+}
+
+#left, #right {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+#left {
+    flex: 0 0 30%;
+}
+
+#profile-img-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.8rem;
+    position: relative;
+}
+
+.profile-img {
+    position: relative;
+    display: inline-block;
+}
+
+.profile-img img {
+    display: block;
+    height: 12rem;
+    width: 12rem;
+    border-radius: 50%;
+}
+
+#content {
+    margin-top: 1.8rem;
+    margin-left: 1.2rem;
+    width: 100%;
+}
+
+#content h1 {
+    margin: 0;
+    padding-right: 0;
+}
+
+.form-group {
+    margin: 0;
+    margin-top: 1.2rem;
+    font-size: 1.5rem;
+}
+
+.form-group .col {
+    padding-left: 0;
+    padding-right: 1rem;
+}
+
+.form-group input {
+    margin-top: 0.5rem;
+    font-size: 1.2rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+#extra-details {
+    margin-top: 1.8rem;
+}
+
+#extra-details p {
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+#buttons {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.8rem;
+}
+
+#buttons .col {
+    padding-left: 0;
+    padding-right: 1rem;
+}
+
+#buttons button {
+    padding: 0.6rem 1.5rem;
+}
+
+#revert-button {
+    display: flex;
+    justify-content: end;
+}
+
+#myModal .modal-dialog-centered {
+    min-height: 85vh;
+}
+
+#myModal .modal-body {
+    margin: 0;
+    padding-top: 0;
+}
+
+#myModal .modal-body .alert {
+    margin-top: 1.2rem;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+}
+
+#myModal .modal-body .form-group {
+    font-size: 1.2rem;
+}
+
+#myModal .modal-body p {
+    margin-bottom: 0;
+}
+
+#admin_details {
+    margin-right: 4rem;
+}

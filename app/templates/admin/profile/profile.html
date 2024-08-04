@@ -6,117 +6,116 @@
 
 {% block css %}
 {{ super() }}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/edit_profile.css') }}" />
 <style nonce="{{ nonce }}">
-    .img-thumbnail {
-        max-width: 150px;
-        max-height: 150px;
-        object-fit: cover;
+    #content-header p {
+        margin-top: 0.5rem;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container my-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <form action="" method="POST" id="profile-update-form" enctype="multipart/form-data">
-                {{ form.hidden_tag() }}
-
-                <h2 class="mb-4">Update Profile</h2>
-
-                <!-- Profile Picture Section -->
-                <div class="mb-3">
-                    <img src="{{ image }}" alt="Current profile picture" class="img-thumbnail rounded-circle" />
-
-                    <!-- Only allow changing if user is not linked to google -->
-                    {% if not user.google_id %}
-                        <div id="image">
-                            {{ render_field(form.profile_picture, class="form-control") }}
-                            <br>
-                            <button type="submit" name="action" value="reset_profile_picture" class="btn btn-danger">Reset</button>
-                            <button type="submit" name="action" value="upload_profile_picture" class="btn btn-primary">Edit</button>
-                        </div>
-                    {% else %}
-                        <p>Since you are linked to Google, we will use your Google profile picture here and you are not allowed to directly change it here.</p>
-                    {% endif %}
+<form action="" method="post" id="profile-update-form" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    <div class="container-fluid row g-0" id="container">
+        <!-- Left side -->
+        <div class="col-3" id="left">
+            <!-- Profile image section -->
+            <div id="profile-img-wrapper">
+                <div class="profile-img">
+                    <img src="{{ image }}" alt="{{ user.username }}'s Profile Picture" class="profile-img">
                 </div>
-
-                <!-- Button to send admin key to admin's email -->
-                <div class="send-admin-key-button">
-                    <button type="submit" name="action" value="send_admin_key" class="btn btn-warning rounded-pill">Send admin key</button>
+            </div>
+            <!-- Only allow changing if user not linked to google -->
+            {% if not user.google_id %}
+                <div id="image" class="text-center mt-4">
+                    {{ render_field(form.profile_picture, class="form-control") }}
+                    <br>
+                    <button type="submit" name="action" value="reset_profile_picture" class="btn btn-danger rounded-pill mr-2">Reset</button>
+                    <button type="submit" name="action" value="upload_profile_picture" class="btn btn-primary rounded-pill ml-2">Edit</button>
                 </div>
+            {% endif %}
+            <div class="text-center mt-4">
+                <!-- Send user key link -->
+                <a href="{{ url_for('admin_profile_bp.profile', action='send_admin_key') }}">Send admin key</a>
+            </div>
+        </div>
 
-                <br>
-
-                <!-- Link/ unlink google account message -->
-                <div class="mb-3">
-                    <p>Do note that you are not allowed to change your username here if your account has been linked to your google account.</p>
-                    
+        <!-- Right side (displays account information) -->
+        <div class="col-9" id="right">
+            <div id="content">
+                <div id="content-header" class="text-center mb-4">
+                    <h2 class="mb-4">Account Details</h2>
                     {% if user.google_id %}
-                        <p>If you want to unlink your google account, click <a href="{{ url_for('admin_profile_bp.profile', action='unlink_account') }}">here</a>.</p>
+                        <p>If you want to change your profile picture here, you will need to <a href="{{ url_for('admin_profile_bp.profile', action='unlink_account') }}">unlink</a> from Google.</p>
                     {% else %}
-                        <p>If you wish to link to your Google account, choose to Sign-in with Google in the future.</p>
+                        <p>If you want to link to Google, choose to Sign-in with Google in the future.</p>
                     {% endif %}
                 </div>
 
-                <div class="mb-3">
-                    {% if user.google_id %}
-                        {{ render_field(form.username, class='form-control', value=user.username, disabled=True) }}
-                    {% else %}
-                        {{ render_field(form.username, class='form-control', value=user.username) }}
-                    {% endif %}
+                <!-- Username, email -->
+                <div class="form-group row">
+                    <div class="col">
+                        {% if user.google_id %}
+                            {{ render_field(form.username, class='form-control', value=user.username, disabled=True) }}
+                        {% else %}
+                            {{ render_field(form.username, class='form-control', value=user.username) }}
+                        {% endif %}
+                    </div>
+                    <div class="col">
+                        {{ render_field(form.email, class='form-control', value=user.email, disabled=True) }}
+                    </div>
                 </div>
 
-                <div class="mb-3">
-                    {{ render_field(form.email, class='form-control', value=user.email, disabled=True) }}
+                <!-- Address, Postal code -->
+                <div class="form-group row">
+                    <div class="col">
+                        {% if user.address %}
+                            {{ render_field(form.address, class='form-control', value=user.address) }}
+                        {% else %}
+                            {{ render_field(form.address, class='form-control', placeholder="Enter your address") }}
+                        {% endif %}
+                    </div>
+                    <div class="col">
+                        {% if user.postal_code %}
+                            {{ render_field(form.postal_code, class='form-control', value=user.postal_code) }}
+                        {% else %}
+                            {{ render_field(form.postal_code, class='form-control', placeholder="Enter your postal code") }}
+                        {% endif %}
+                    </div>
                 </div>
 
-                <div class="mb-3">
-                    {% if user.phone_number %}
-                        {{ render_field(form.phone_number, class='form-control', value=user.phone_number) }}
-                    {% else %}
-                        {{ render_field(form.phone_number, class='form-control', placeholder="Enter your phone number") }}
-                    {% endif %}
+                <!-- Phone number -->
+                <div class="form-group row">
+                    <div class="col">
+                        {% if user.phone_number %}
+                            {{ render_field(form.phone_number, class='form-control', value=user.phone_number) }}
+                        {% else %}
+                            {{ render_field(form.phone_number, class='form-control', placeholder="Enter your phone number") }}
+                        {% endif %}
+                    </div>
+                    <div class="col"></div>
                 </div>
                 
-                <div class="mb-3">
-                    {% if user.address %}
-                        {{ render_field(form.address, class='form-control', value=user.address) }}
-                    {% else %}
-                        {{ render_field(form.address, class='form-control', placeholder="Enter your address") }}
-                    {% endif %}
-                </div>
-                
-                <div class="mb-3">
-                    {% if user.postal_code %}
-                        {{ render_field(form.postal_code, class='form-control', value=user.postal_code) }}
-                    {% else %}
-                        {{ render_field(form.postal_code, class='form-control', placeholder="Enter your postal code") }}
-                    {% endif %}
-                </div>
-
                 <!-- Change password link only if user already has a password set -->
                 <!-- Allow setting of password if user has no password & is google linked -->
-                <div class="mb-3">
+                <div id="extra-details" class="text-center">
                     {% if user.password_hash %}
                         <p>Click <a href="{{ url_for('admin_profile_bp.profile', action='reset_password') }}">here</a> to change your password.</p>
                     {% elif user.google_id %}
                         <p>We highly recommend setting a password <a href="{{ url_for('admin_profile_bp.profile', action='set_password') }}">here</a> so you can also login through normal means without using your Google account.</p>
                     {% endif %}
+                    <p>To help keep your account safe, we want to make sure it's really you trying to update your profile.</p>
+                    <p>So we will send you a verification email after you click 'Next'.</p>
                 </div>
-
-                <!-- Message to display -->
-                <p>To help keep your account safe, we want to make sure it's really you trying to update your profile.</p>
-                <p>So we will send you a verification email after you click 'Next'.</p>
 
                 <!-- Submit buttons -->
-                <div class="d-flex justify-content-end">
-                    <button type="submit" class="btn btn-light btn-outline-primary rounded-pill" name="action" value="revert">Revert</button>
-                    <button type="submit" class="btn btn-primary rounded-pill" name="action" value="next">Next</button>
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-light btn-outline-primary rounded-pill mr-2" name="action" value="revert">Revert</button>
+                    <button type="submit" class="btn btn-primary rounded-pill ml-2" name="action" value="next">Next</button>
                 </div>
-
-            </form>
+            </div>
         </div>
     </div>
-</div>
+</form>
 {% endblock %}

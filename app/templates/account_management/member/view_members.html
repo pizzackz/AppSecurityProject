@@ -1,41 +1,40 @@
 <!DOCTYPE html>
 {% extends "account_management/base.html" %}
 
-{% block title %}View Admins{% endblock %}
+{% block title %}View Members{% endblock %}
+
+{% block navbar %}
+{% include "includes/_admin_navbar.html" %}
+{% endblock %}
 
 {% block css %}
 {{ super() }}
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/account_table.css') }}" />
 <style>
-    #no-admin-details {
+    #no-member-details {
         text-align: center;
     }
 
-    #no-admin-details h1 {
+    #no-member-details h1 {
         margin: 0;
     }
 
-    #no-admin-details button {
+    #no-member-details button {
         margin-top: 1.2rem;
     }
 </style>
 {% endblock %}
 
-{% block navbar %}
-{% include "includes/_admin_control_navbar.html" %}
-{% endblock %}
-
 {% block content %}
 <div class="container-fluid" id="content">
-    {% if not admin_data %}
-    <section id="no-admin-details">
-        <h1>There are currently no admins!</h1>
-        <a href="{{ url_for('admin_control_bp.view_admins', action='create') }}">Create Admin</a>
+    {% if not member_data %}
+    <section id="no-member-details">
+        <h1>There are currently no members!</h1>
     </section>
     {% else %}
     <main id="table">
         <section id="table-header">
-            <h3>Admins List</h3>
+            <h3>Members List</h3>
             <p>Total: {{ count }}</p>
         </section>
 
@@ -48,38 +47,40 @@
                         <th>Created</th>
                         <th>Last Login</th>
                         <th>Account Status</th>
+                        <th>Subscription Plan</th>
                         <th>View Details</th>
                     </tr>
                 </thead>
 
                 <tbody>
-                    {% for admin in admin_data %}
+                    {% for member in member_data %}
                         <tr>
                             <td colspan="2">
-                                <img src="{{ admin.image }}" alt="{{ admin.username }}'s Profile Picture" />
-                                {{ admin.username }}
+                                <img src="{{ member.image }}" alt="{{ member }}'s Profile Picture" />
+                                {{ member.username }}
                             </td>
-                            <td>{{ admin.email }}</td>
-                            <td>{{ admin.created_at.strftime('%B %d, %Y') }}</td>
-                            <td>{{ admin.last_login.strftime('%B %d, %Y %I:%M %p') if admin.last_login else ' Never' }}</td>
+                            <td>{{ member.email }}</td>
+                            <td>{{ member.created_at.strftime('%B %d, %Y') }}</td>
+                            <td>{{ member.last_login.strftime('%B %d, %Y %I:%M %p') if member.last_login else ' Never' }}</td>
                             <td>
-                                {% if admin.account_locked %}
+                                {% if member.account_locked %}
                                 <span class="text-red-500">Locked</span>
-                                    {% if admin.unlock_request %}
+                                    {% if member.unlock_request %}
                                         <span class="text-yellow-500">(Unlock Requested)</span>
                                     {% endif %}
                                 {% else %}
-                                    {% if admin.is_online %}
+                                    {% if member.is_online %}
                                         <span class="text-green-500">Online</span>
                                     {% else %}
                                         <span class="text-gray-500">Offline</span>
                                     {% endif %}
                                 {% endif %}
                             </td>
+                            <td>{{ member.subscription_plan }}</td>
                             <td>
-                                <form method="POST" action="{{ url_for('admin_control_bp.view_admins') }}">
+                                <form method="POST" action="{{ url_for('member_control_bp.view_members') }}">
                                     <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-                                    <input type="hidden" name="admin_id" value="{{ admin.id }}">
+                                    <input type="hidden" name="member_id" value="{{ member.id }}">
                                     <button type="submit" class="text-blue-500 hover:underline">View Details</button>
                                 </form>
                             </td>

@@ -6,7 +6,26 @@
 
 {% block css %}
 {{ super() }}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/edit_profile.css') }}" />
 <style nonce="{{ nonce }}">
+    #content {
+        margin-top: 0;
+    }
+    #content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    #content-header p {
+        margin-top: 0.5rem;
+    }
+    #content-header h2 {
+        margin-bottom: 0;
+    }
+    #plan-info {
+        margin-right: 1rem;
+        text-align: right;
+    }
     .modal-overlay {
         position: fixed;
         top: 0;
@@ -37,74 +56,70 @@
 {% block flash_messages %}{% endblock %}
 
 {% block content %}
-<div class="container my-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div>
-                <h2 class="mb-4">Update Profile</h2>
+{{ form.hidden_tag() }}
+<div class="container-fluid row g-0" id="container">
+    <!-- Left side -->
+    <div class="col-3" id="left">
+        <!-- Profile image section -->
+        <div id="profile-img-wrapper">
+            <div class="profile-img">
+                <img src="{{ image }}" alt="{{ user.username }}'s Profile Picture" class="profile-img">
+            </div>
+        </div>
+        <!-- Only allow changing if user not linked to google -->
+        {% if not user.google_id %}
+            <div id="image" class="text-center mt-4">
+                <input type="file" name="profile_picture" id="profile_picture" class="form-control" disabled />
+                <br>
+                <button type="button" name="action" value="reset_profile_picture" class="btn btn-danger rounded-pill mr-2">Reset</button>
+                <button type="button" name="action" value="upload_profile_picture" class="btn btn-primary rounded-pill ml-2">Edit</button>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Right side (displays account information) -->
+    <div class="col-9" id="right">
+        <div id="content">
+            <div id="content-header" class="text-center mb-4">
+                <h2>Account Details</h2>
 
                 <!-- Display current plan inforamtion -->
                 {% if user.subscription_plan == 'premium' %}
-                    <div>
-                        <p>Current Plan: <b><u>Premium</u></b></p>
-                        <button type="submit" class="btn btn-warning rounded-pill" disabled>Renew!</button>
-                    </div>
+                <div id="plan-info">
+                    <p>Current Plan: <u>Premium</u> &lpar;<span id="subscription-days-left"></span>d left&rpar;</p>
+                    <button type="button" name="action" value="renew_plan" class="btn btn-warning rounded-pill">Renew!</button>
+                </div>
                 {% elif user.subscription_plan == 'standard' %}
-                    <div>
-                        <p>Current Plan: <b><u>Standard</u></b></p>
-                        <button type="submit" class="btn btn-warning rounded-pill" disabled>Upgrade!</button>
-                    </div>
+                <div id="plan-info">
+                    <p>Current Plan: <u>Standard</u></p>
+                    <button type="button" name="action" value="upgrade_plan" class="btn btn-warning rounded-pill">Upgrade!</button>
+                </div>
                 {% endif %}
+            </div>
 
-                <br>
+            <div id="google-link-msg">
+                {% if user.google_id %}
+                    <p>If you want to change your profile picture here, you will need to <a href="{{ url_for('admin_profile_bp.profile', action='unlink_account') }}">unlink</a> from Google.</p>
+                {% else %}
+                    <p>If you want to link to Google, choose to Sign-in with Google in the future.</p>
+                {% endif %}
+            </div>
 
-                <!-- Profile Picture Section -->
-                <div class="mb-3 text-center">
-                    <img src="{{ image }}" alt="Current profile picture" class="img-thumbnail rounded-circle" />
-
-                    <!-- Only allow changing if user is not linked to google -->
-                    {% if not user.google_id %}
-                        <div id="image">
-                            <input type="file" name="profile_picture" id="profile_picture" class="form-control" disabled />
-                            <button type="submit" name="button" value="reset_profile_picture" class="btn btn-danger">Reset</button>
-                            <button type="submit" name="button" value="upload_profile_picture" class="btn btn-primary">Edit</button>
-                        </div>
-                    {% else %}
-                        <p>Since you are linked to Google, we will use your Google profile picture here and you are not allowed to directly change it here.</p>
-                    {% endif %}
-                </div>
-
-                <!-- Link/ unlink google account message -->
-                <div class="mb-3">
-                    <p>Do note that you are not allowed to change your username here if your account has been linked to your google account.</p>
-                    
-                    {% if user.google_id %}
-                        <p>If you want to unlink your google account, click <a href="">here</a>.</p>
-                    {% else %}
-                        <p>If you wish to link to your Google account, choose to Sign-in with Google in the future.</p>
-                    {% endif %}
-                </div>
-
-                <div class="mb-3">
+            <!-- Username, email -->
+            <div class="form-group row">
+                <div class="col">
                     <label for="username">Username</label>
                     <input type="text" name="username" id="username" class="form-control" value="{{ user.username }}" disabled />
                 </div>
-
-                <div class="mb-3">
+                <div class="col">
                     <label for="email">Email</label>
                     <input type="text" name="email" id="email" class="form-control" value="{{ user.email }}" disabled />
                 </div>
-                
-                <div class="mb-3">
-                    <label for="phone_number">Phone Number</label>
-                    {% if user.phone_number %}
-                        <input type="text" name="phone_number" id="phone_number" class="form-control" value="{{ user.phone_number }}" disabled />
-                    {% else %}
-                        <input type="text" name="phone_number" id="phone_number" class="form-control" value="" placeholder="Enter your phone number" disabled />
-                    {% endif %}
-                </div>
-                
-                <div class="mb-3">
+            </div>
+
+            <!-- Address, Postal code -->
+            <div class="form-group row">
+                <div class="col">
                     <label for="address">Address</label>
                     {% if user.address %}
                         <input type="text" name="address" id="address" class="form-control" value="{{ user.address }}" disabled />
@@ -112,8 +127,7 @@
                         <input type="text" name="address" id="address" class="form-control" value="" placeholder="Enter your address" disabled />
                     {% endif %}
                 </div>
-                
-                <div class="mb-3">
+                <div class="col">
                     <label for="postal_code">Postal Code</label>
                     {% if user.postal_code %}
                         <input type="text" name="postal_code" id="postal_code" class="form-control" value="{{ user.postal_code }}" disabled />
@@ -121,31 +135,37 @@
                         <input type="text" name="postal_code" id="postal_code" class="form-control" value="" placeholder="Enter your postal code" disabled />
                     {% endif %}
                 </div>
+            </div>
 
-                <!-- Change password link only if user already has a password set -->
-                <!-- Allow setting of password if user has no password & is google linked -->
-                <div class="mb-3">
-                    {% if user.password_hash %}
-                        <p>Click <a href="">here</a> to change your password.</p>
-                    {% elif user.google_id %}
-                        <p>We highly recommend setting a password <a href="">here</a> so you can also login through normal means without using your Google account.</p>
+            <!-- Phone number -->
+            <div class="form-group row">
+                <div class="col">
+                    <label for="phone_number">Phone Number</label>
+                    {% if user.phone_number %}
+                        <input type="text" name="phone_number" id="phone_number" class="form-control" value="{{ user.phone_number }}" disabled />
+                    {% else %}
+                        <input type="text" name="phone_number" id="phone_number" class="form-control" value="" placeholder="Enter your phone number" disabled />
                     {% endif %}
                 </div>
-
-                <!-- Message to display -->
+                <div class="col"></div>
+            </div>
+            
+            <!-- Change password link only if user already has a password set -->
+            <!-- Allow setting of password if user has no password & is google linked -->
+            <div id="extra-details" class="text-center">
+                {% if user.password_hash %}
+                    <p>Click <a href="{{ url_for('admin_profile_bp.profile', action='reset_password') }}">here</a> to change your password.</p>
+                {% elif user.google_id %}
+                    <p>We highly recommend setting a password <a href="{{ url_for('admin_profile_bp.profile', action='set_password') }}">here</a> so you can also login through normal means without using your Google account.</p>
+                {% endif %}
                 <p>To help keep your account safe, we want to make sure it's really you trying to update your profile.</p>
                 <p>So we will send you a verification email after you click 'Next'.</p>
+            </div>
 
-                <!-- Submit buttons -->
-                <div class="d-flex justify-content-end">
-                    <button type="button" class="btn btn-light btn-outline-primary rounded-pill" name="action" value="revert">Revert</button>
-                    <button type="button" class="btn btn-primary rounded-pill" name="action" value="next">Next</button>
-                </div>
-
-                <!-- Subscription cancel link -->
-                {% if user.subscription_plan == 'premium' %}
-                    <a href="">I want to cancel the subscription plan.</a>
-                {% endif %}
+            <!-- Submit buttons -->
+            <div class="text-center mt-4">
+                <button type="button" class="btn btn-light btn-outline-primary rounded-pill mr-2" name="action" value="revert">Revert</button>
+                <button type="button" class="btn btn-primary rounded-pill ml-2" name="action" value="next">Next</button>
             </div>
         </div>
     </div>
@@ -157,7 +177,7 @@
 <!-- Verify email popup-->
 {% block modal %}
 <form method="post" action="" id="verify-email-form">
-    <div class="modal fade show" id="myModal" data-bs-backdrop="false" data-bs-keyboard="false">
+    <div class="modal fade show" id="myModal" data-bs-backdrop="false" data-bs-keyboard="false" tabindex="-1" aria-labelledby="verifyEmailModal" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <!-- Modal Header -->
@@ -185,7 +205,7 @@
                     {% endblock %}
 
                     <!-- Basic message & resend link -->
-                    <div>
+                    <div class="mt-2">
                         <p>We have sent you a verification email, please verify your email address.</p>
                         <p class="mt-2"><a href="{{ url_for('member_profile_bp.send_otp', resend=True) }}">Resend it</a></p>
                     </div>
@@ -195,7 +215,6 @@
                         {{ render_field(form.otp, class="form-control", placeholder="Enter the code") }}
                     </div>
                 </div>
-
 
                 <!-- Modal Footer -->
                 <div class="modal-footer">
@@ -213,6 +232,20 @@
 {% block scripts %}
 {{ super() }}
 <script nonce="{{ nonce }}">
+    document.addEventListener('DOMContentLoaded', function() {
+        // Function to calculate the difference in days between two dates
+        function calculateDateDifference(dateString, elementId) {
+            var currentDate = new Date();  // Get the current date
+            var providedDate = new Date(dateString.replace(' ', 'T'));  // Ensure ISO format
+            var diffInTime = providedDate - currentDate;
+            var diffInDays = Math.ceil(diffInTime / (1000 * 3600 * 24));
+            document.getElementById(elementId).innerText = diffInDays;
+        }
+
+        // Use the user.subscription_end_date passed from the backend
+        calculateDateDifference('{{ user.subscription_end_date }}', 'subscription-days-left');
+    });
+
     const myModalElement = document.getElementById("myModal");
     const myModalInstance = new bootstrap.Modal(myModalElement, {});
     myModalInstance.show();

@@ -99,6 +99,13 @@ class DeleteAdminForm(FlaskForm):
     recaptcha = RecaptchaField()
 
 
+# Lock or Delete member form
+class LockDeleteMemberForm(FlaskForm):
+    reason = TextAreaField("Reason", validators=[DataRequired()])
+    admin_key = StringField("Enter Admin Key", validators=[DataRequired()])
+    recaptcha = RecaptchaField()
+
+
 # Create forum post
 class ForumPost(FlaskForm):
     title = StringField('Title', validators=[DataRequired()])

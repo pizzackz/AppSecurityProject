@@ -20,8 +20,6 @@
     <script href="{{ url_for('static', filename='js/order_popup.js') }}" nonce="{{ nonce }}"></script>
     <div id="popup"></div>
 
-    {% block navbar %} {% endblock %}
-
     {% block flash_messages %}
     <script src="{{ url_for('static', filename='js/flash_message.js') }}" nonce="{{ nonce }}"></script>
     <!-- Flash messages from __init__.py.  -->

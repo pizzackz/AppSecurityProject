@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 {% extends "account_management/base.html" %}
 
-{% block title %}View Admin Details{% endblock %}
+{% block title %}View Member Details{% endblock %}
 
 {% block css %}
 {{ super() }}
@@ -22,8 +22,13 @@
         justify-content: center;
         margin-top: 1.8rem;
     }
-    #buttons button {
+    #buttons button:not(#revoke-btn) {
         width: 8rem;
+        padding: 0.6rem;
+        margin: 0 0.5rem;
+    }
+    #buttons button#revoke-btn {
+        width: 12rem;
         padding: 0.6rem;
         margin: 0 0.5rem;
     }
@@ -58,7 +63,7 @@
 {% endblock %}
 
 {% block navbar %}
-{% include "includes/_admin_control_navbar.html" %}
+{% include "includes/_admin_navbar.html" %}
 {% endblock %}
 
 {% block content %}
@@ -68,76 +73,86 @@
         <!-- Profile image with status indicator -->
         <div id="profile-img-wrapper">
             <div class="profile-img">
-                <img src="{{ admin.image }}" alt="{{ admin.username }}'s profile picture" />
+                <img src="{{ member.image }}" alt="{{ member.username }}'s profile picture" />
             </div>
         </div>
 
         <!-- Username, email, phone number-->
         <div class="text-center mt-4 space-y-2">
-            <h2 class="text-2xl font-semibold">{{ admin.username }}</h2>
-            <p class="text-gray-600">{{ admin.email }}</p>
-            {% if admin.phone_number %}<p class="text-gray-600">Contact: {{ admin.phone_number }}</p>{% endif %}
+            <h2 class="text-2xl font-semibold">{{ member.username }}</h2>
+            <p class="text-gray-600">{{ member.email }}</p>
+            {% if member.phone_number %}<p class="text-gray-600">Contact: {{ member.phone_number }}</p>{% endif %}
+            <p class="text-black-500">
+                <u>{{ member.subscription_plan }}</u>
+            </p>
         </div>
 
         <!-- Action buttons (Unlock, Lock, Delete) -->
         <div id="buttons">
             <form action="" method="post">
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-                {% if admin.locked %}
-                    <button type="submit" name="action" value="unlock" class="btn btn-warning rounded-pill">Unlock</button>
-                {% else %}
-                    <button type="submit" name="action" value="lock" class="btn btn-danger rounded-pill">Lock</button>
+                <div class="row">
+                    {% if member.locked %}
+                        <button type="submit" name="action" value="unlock" class="btn btn-warning rounded-pill">Unlock</button>
+                    {% else %}
+                        <button type="submit" name="action" value="lock" class="btn btn-danger rounded-pill">Lock</button>
+                    {% endif %}
+                    <button type="submit" name="action" value="delete" class="btn btn-warning rounded-pill">Delete</button>
+                </div>
+                {% if member.subscription_plan == "Premium" %}
+                <div class="row justify-content-center mt-2">
+                    <button type="submit" name="action" value="revoke_plan" class="btn btn-danger rounded-pill" id="revoke-btn">Revoke Plan</button>
+                </div>
                 {% endif %}
-                <button type="submit" name="action" value="delete" class="btn btn-warning rounded-pill">Delete</button>
             </form>
         </div>
 
         <!-- Other links (reset password, generate key, view activities) -->
-        <div class="mt-2 space-y-2">
-            {% if not admin.locked %}
-                <a href="{{ url_for('admin_control_bp.view_admin_details', action='reset_password') }}" class="w-full text-center text-blue-500 hover:underline block">Reset Password</a>
-                <a href="{{ url_for('admin_control_bp.view_admin_details', action='generate_key') }}" class="w-full text-center text-blue-500 hover:underline block">Regenerate Key</a>
+        <div class="mt-4 space-y-2">
+            {% if not member.locked %}
+                <a href="{{ url_for('member_control_bp.view_member_details', action='reset_password') }}" class="w-full text-center text-blue-500 hover:underline block">Reset Password</a>
             {% endif %}
-            <a href="{{ url_for('admin_control_bp.view_admin_details', action='view_activities') }}" class="w-full text-center text-blue-500 hover:underline block">View Activities</a>
+            <a href="{{ url_for('member_control_bp.view_member_details', action='view_order_history') }}" class="w-full text-center text-blue-500 hover:underline block">View Order History</a>
+            <a href="{{ url_for('member_control_bp.view_member_details', action='view_activities') }}" class="w-full text-center text-blue-500 hover:underline block">View Activities</a>
         </div>
     </div>
 
-    <!-- Right side (admin account information) -->
+    <!-- Right side (member account information) -->
     <div class="col-9" id="right">
         <div id="content">
             <div class="content-header">
-                <!-- Back to Admin List Link -->
+                <!-- Back to Member List Link -->
                 <div id="back-link">
-                    <a href="{{ url_for('admin_control_bp.view_admin_details', action='back') }}" class="back-link text-blue-500 hover:underline flex items-center">
+                    <a href="{{ url_for('member_control_bp.view_member_details', action='back') }}" class="back-link text-blue-500 hover:underline flex items-center">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                        Back to admin list
+                        Back to member list
                     </a>
                 </div>
             </div>
             <div id="content-body">
-                <!-- Admin Info section -->
+                <!-- Member Info section -->
                 <div class="mb-4">
-                    <h3 class="info-header">Admin Information</h3>
+                    <h3 class="info-header">Member Information</h3>
                     <!-- Address, postal code -->
                     <div class="row">
                         <div class="col">
                             <label class="text-gray-600">Address</label>
-                            <p>{{ admin.address }}</p>
+                            <p>{{ member.address }}</p>
                         </div>
                         <div class="col">
                             <label class="text-gray-600">Postal Code</label>
-                            <p>{{ admin.postal_code }}</p>
+                            <p>{{ member.postal_code }}</p>
                         </div>
                     </div>
                     <!-- Created date, updated date -->
                     <div class="row">
                         <div class="col">
                             <label class="text-gray-600">Account Created</label>
-                            <p>{{ admin.created_at.strftime('%B %d, %Y') }}</p>
+                            <p>{{ member.created_at.strftime('%B %d, %Y') }}</p>
                         </div>
                         <div class="col">
                             <label class="text-gray-600">Last Updated</label>
-                            <p>{{ admin.updated_at.strftime('%B %d, %Y') }}</p>
+                            <p>{{ member.updated_at.strftime('%B %d, %Y') }}</p>
                         </div>
                     </div>
                 </div>
@@ -149,40 +164,40 @@
                     <div class="row">
                         <div class="col">
                             <label class="text-gray-600">Failed Login Attempts</label>
-                            <p>{{ admin.failed_login_attempts }}</p>
+                            <p>{{ member.failed_login_attempts }}</p>
                         </div>
                         <div class="col">
                             <label class="text-gray-600">Last Failed Login Attempt</label>
-                            <p>{{ admin.last_failed_login_attempt.strftime('%B %d, %Y %I:%M %p') if admin.last_failed_login_attempt else 'N/A' }}</p>
+                            <p>{{ member.last_failed_login_attempt.strftime('%B %d, %Y %I:%M %p') if member.last_failed_login_attempt else 'N/A' }}</p>
                         </div>
                     </div>
                     <!-- Last login & logout datetime -->
                     <div class="row">
                         <div class="col">
                             <label class="text-gray-600">Last Login</label>
-                            <p>{{ admin.last_login.strftime('%B %d, %Y %I:%M %p') if admin.last_login else 'Never' }}</p>
+                            <p>{{ member.last_login.strftime('%B %d, %Y %I:%M %p') if member.last_login else 'Never' }}</p>
                         </div>
                         <div class="col">
                             <label class="text-gray-600">Last Logout</label>
-                            <p>{{ admin.last_logout.strftime('%B %d, %Y %I:%M %p') if admin.last_logout else 'Never' }}</p>
+                            <p>{{ member.last_logout.strftime('%B %d, %Y %I:%M %p') if member.last_logout else 'Never' }}</p>
                         </div>
                     </div>
                     <!-- Login count & status (locked, online, offline) -->
                     <div class="row">
                         <div class="col">
                             <label class="text-gray-600">Login Count</label>
-                            <p>{{ admin.login_count }}</p>
+                            <p>{{ member.login_count }}</p>
                         </div>
                         <div class="col">
                             <label class="text-gray-600">Status</label>
-                            {% if admin.locked %}
+                            {% if member.locked %}
                             <p class="text-red-500">
                                 Locked
-                                {% if admin.unlock_request %}
+                                {% if member.unlock_request %}
                                     <span class="text-yellow-500">(Unlock Requested)</span>
                                 {% endif %}
                             </p>
-                            {% elif admin.status == "Online" %}
+                            {% elif member.status == "Online" %}
                             <p class="text-lime-500">Online</p>
                             {% else %}
                             <p class="text-gray-500">Offline</p>
@@ -192,10 +207,10 @@
                 </div>
 
                 <!-- Locked Reason -->
-                {% if admin.locked and admin.locked_reason %}
+                {% if member.locked and member.locked_reason %}
                 <div class="mb-4">
                     <h3 class="info-header">Locked Reason:</h3>
-                    <p>{{ admin.locked_reason }}</p>
+                    <p>{{ member.locked_reason }}</p>
                 </div>
                 {% endif %}
             </div>
