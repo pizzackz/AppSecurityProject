@@ -13,18 +13,14 @@
 <br>
 <!-- Step Indicator -->
 <div class="step-container">
-    <a href="menu">
        <div class="step step-active">
         <span>1</span>
         <span>Order</span>
        </div>
-   </a>
-    <a href="calender">
        <div class="step ">
         <span>2</span>
         <span>Booking</span>
-       </div>
-   </a>
+    </div>
     <div class="step">
         <span>3</span>
         <span>Delivery Information</span>
@@ -40,39 +36,48 @@
 <div class="big-container">
     {% for menu_item in menu_items %}
         <div class="container">
-            <div><h2>{{ menu_item.name }}</h2></div>
-            <br>
+            <table>
+                <tr><td><div><h2>{{ menu_item.name }}</h2></div> </td></tr>
 
-            {% if menu_item.image %}
-            <div class="image-control"><img src="{{ menu_item.image }}" alt="{{ menu_item.name }}" width="200"></div>
-            {% endif %}
+                <tr><td>
+                    {% if menu_item.image %}
+                    <div class="image-control">
+                        <img src="{{ url_for('member_order_bp.get_image', item_id=menu_item.id) }}" alt="{{ menu_item.name }}">
+                    </div>
+                    {% endif %}
+                </td></tr>
 
-            <br>
-            <div>{{ menu_item.description }}</div>
-
-            <div class="combined center1">
-                <button class="openModalBtn btn btn-secondary pad" data-modal="modal{{ loop.index }}">View</button>
-                    <!-- Modal -->
-                    <div id="modal{{ loop.index }}" class="modal">
-                        <div class="modal-content">
-                            <span class="close" data-modal="modal{{ loop.index }}">&times;</span>  <!--Close button(Always on TOP) -->
-                            <div class="big-container">
-                                {% if menu_item.image %}
-                                    <div class="image-control"><img src="{{ menu_item.image }}" alt="{{ menu_item.name }}"></div>
-                                {% endif %}
+                <tr><td><div><br>{{ menu_item.description }}</div></td></tr>
+                <tr><td>
+                    <div class="combined center1">
+                    <button class="openModalBtn btn btn-secondary pad" data-modal="modal{{ loop.index }}">View</button>
+                        <!-- Modal -->
+                        <div id="modal{{ loop.index }}" class="modal">
+                            <div class="modal-content">
+                                <span class="close" data-modal="modal{{ loop.index }}">&times;</span>  <!--Close button(Always on TOP) -->
+                                <h2>{{ menu_item.name }}</h2>
                                 <div class="modal-container">
-                                    <h2>{{ menu_item.name }}</h2>
-                                    <p>Ingredients provided: {{ menu_item.ingredient_list }}</p>
+                                    {% if menu_item.image %}
+                                    <div class="image-control modal-image ">
+                                        <img src="{{ url_for('member_order_bp.get_image', item_id=menu_item.id) }}" alt="{{ menu_item.name }}">
+                                    </div>
+                                    {% endif %}
+                                    <div class="modal-description">
+                                        <p>Ingredients provided: {{ menu_item.ingredient_list }}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                        <form action="" method="post">
+                            {{ form.hidden_tag() }}
+                            {{ form.menu_item_id(value=menu_item.id) }}
+                            {{ form.submit(class="btn btn-primary pad") }}
+                        </form>
                     </div>
-                    <form action="" method="post">
-                        {{ form.hidden_tag() }}
-                        {{ form.menu_item_id(value=menu_item.id) }}
-                        {{ form.submit(class="btn btn-primary pad") }}
-                    </form>
-            </div>
+                </td></tr>
+
+
+            </table>
         </div>
     {% endfor %}
 </div>

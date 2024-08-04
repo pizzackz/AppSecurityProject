@@ -8,7 +8,7 @@ import os
 from datetime import datetime, timedelta, timezone
 from flask_login import UserMixin
 from flask_jwt_extended import create_access_token
-from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, ForeignKey, JSON, LargeBinary
 from sqlalchemy.sql import func
 from typing import Optional
 
@@ -601,10 +601,10 @@ class Payment(db.Model):
 
 class MenuItem(db.Model):
     __tablename__ = "menu_items"
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    image = db.Column(db.String(255), nullable=True)
+    image = Column(LargeBinary(length=(2**32)-1), nullable=True)
     ingredient_list = db.Column(db.Text, nullable=True)
 
     def __repr__(self):
