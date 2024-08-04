@@ -1,15 +1,20 @@
 import logging
 import os
-from flask import Blueprint, render_template, request, redirect, url_for, flash
-from app.models import MenuItem, Order, OrderItem
-from app.forms.forms import OrderForm, MenuForm
-from app import db, csrf
-from sqlalchemy.exc import SQLAlchemyError
-from app.utils import clean_input, get_session_data, set_session_data, clear_session_data
 import json
 import atexit
-from datetime import datetime, timedelta
+import pendulum
+from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file, abort
 from flask_login import login_required, current_user
+from sqlalchemy.exc import SQLAlchemyError
+from app.models import MenuItem, Order, OrderItem
+from app.forms.forms import OrderForm, MenuForm
+from app import db, csrf, limiter
+from app.utils import clean_input, get_session_data, set_session_data, clear_session_data, check_admin
+from datetime import datetime, timedelta
+from io import BytesIO
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from app.models import MenuItem, db
 
 # Create a logs directory if it doesn't exist
 if not os.path.exists('logs'):
@@ -39,7 +44,6 @@ if not logger.handlers:
 # Create blueprint
 member_order_bp = Blueprint('member_order_bp', __name__)
 
-from app.models import MenuItem, db
 
 
 # Define a custom filter to escape JavaScript strings
@@ -65,6 +69,19 @@ def add_no_cache_headers(response):
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '0'
     return response
+
+
+# Image Renderer
+@member_order_bp.route('/image/<int:item_id>')
+@login_required
+@limiter.exempt
+def get_image(item_id):
+
+    menu_item = MenuItem.query.get(item_id)
+    if not menu_item or not menu_item.image:
+        abort(404)  # Not found if the menu item or image does not exist
+    return send_file(BytesIO(menu_item.image), mimetype='image/jpeg', as_attachment=False, download_name=f"{menu_item.name}.jpg")
+
 
 # Order Blueprint
 
@@ -246,6 +263,24 @@ def order_history():
     for order in orders:
         item_ids = order.selected_items
         order.items_details = MenuItem.query.filter(MenuItem.id.in_(item_ids)).all()
-        order.formatted_date = order.created_at.strftime("%b %d, %I:%M %p")
+        order.formatted_created_at = pendulum.instance(order.created_at).format("D MMMM YYYY, h:mm A")
 
     return render_template('member/order/order_history.html', orders=orders)
+
+
+# Admin viewing of order history
+# @member_order_bp.route('/admin/members/view/order_history', methods=['GET'])
+# @login_required
+# @check_admin
+# def order_history():
+#     # Fetch orders for the current user
+#     user_id = current_user.id  # Assuming the user is logged in and `current_user` is set
+#     orders = Order.query.filter_by(user_id=user_id).all()
+#
+#     # Fetch menu item details for each order
+#     for order in orders:
+#         item_ids = order.selected_items
+#         order.items_details = MenuItem.query.filter(MenuItem.id.in_(item_ids)).all()
+#         order.formatted_created_at = pendulum.instance(order.created_at).format("D MMMM YYYY, h:mm A")
+#
+#     return render_template('member/order/order_history.html', orders=orders)

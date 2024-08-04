@@ -8,14 +8,13 @@
 .image-control{
     margin-left: auto;
     margin-right: auto;
-    max-width: 45%;
-    height: auto;
+    width: 100%;
+    max-width: 200px;
+    object-fit: cover;
     border: 3px solid grey;
     border-radius: 10px;
     overflow: hidden;
 }
-
-
 
 /* Modal CSS Related Stuff*/
 .modal {
@@ -58,17 +57,27 @@
 }
 
 .modal-container{
-    background-color: #fcd811;
-    border-radius: 25px;
     padding-top: 1%;
     padding-bottom: 1%;
     padding-right: 2%;
     padding-left: 2%;
     width: 40%;
     height: auto;
-    border:2px solid black;
     margin: 10px;
     justify-content:center;
+    text-align: center;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.modal-image {
+    max-width: 100%;
+    max-height: 300px; /* Adjust based on your needs */
+    margin-bottom: 15px;
+
+}
+
+.modal-description {
     text-align: center;
 }
 
