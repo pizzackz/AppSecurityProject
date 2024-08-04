@@ -323,7 +323,7 @@ def create_recipe():
                 flash('Invalid image format', 'error')
                 return redirect(url_for('member_recipe_bp.create_recipe'))
             picture2 = picture
-            # scan_result = scan_file_with_virustotal(picture, os.getenv('VIRUSTOTAL_API_KEY'))
+            # scan_result = scan_file_with_virustotal(picture2, os.getenv('VIRUSTOTAL_API_KEY'))
             # if 'data' in scan_result and scan_result['data'].get('attributes', {}).get('last_analysis_stats', {}).get(
             #         'malicious', 0) > 0:
             #     flash('The uploaded file is potentially malicious and has not been saved.', 'error')
@@ -362,7 +362,7 @@ def view_recipe(recipe_id):
     if recipe.type == 'Private' and recipe.user_created_id != current_user.id:
         flash('Action cannot be done', 'error')
         return redirect(url_for('member_recipe_bp.recipe_database'))
-    if recipe.type == 'Premium' and current_user.type != 'premium':
+    if recipe.type == 'Premium' and current_user.subscription_plan != 'premium':
         flash('Action cannot be done', 'error')
         return redirect(url_for('member_recipe_bp.recipe_database'))
     recipe_data = {

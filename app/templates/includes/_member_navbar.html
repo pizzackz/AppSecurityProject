@@ -57,10 +57,10 @@
                         <div class="profile-box d-flex align-items-center">
                             {% if current_user.profile_images %}
                             <img src="{{ url_for('static', filename='images/default_profile_pic.png') }}"
-                                class="rounded-circle" alt="Profile Picture" style="height: 2.5rem; width: 2.5rem;" />
+                                class="rounded-circle profile-picture" alt="Profile Picture"/>
                             {% else %}
                             <img src="#"
-                                class="rounded-circle" alt="Profile Picture" style="height: 2.5rem; width: 2.5rem;" />
+                                class="rounded-circle profile-picture" alt="Profile Picture"/>
                             {% endif %}
                             <div class="profile-info ms-2">
                                 {{ current_user.username }}
@@ -69,14 +69,11 @@
                     </a>
 
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{{ url_for('member_profile_bp.profile') }}">Edit
-                                Profile</a>
+                        <li><a class="dropdown-item" href="{{ url_for('member_profile_bp.profile') }}">Edit Profile</a>
                         </li>
-                        <li><a class="dropdown-item nav-btn btn btn-danger" href="{{ url_for('member_subscription_bp.plan_select', action='upgrade_plan') }}" data-bs-toggle="modal"
-                                data-bs-target="#confirm-logout">Upgrade to Premium</a>
+                        <li><a class="dropdown-item nav-btn btn btn-danger" href="{{ url_for('member_subscription_bp.plan_select', action='upgrade_plan') }}">Upgrade to Premium</a>
                         </li>
-                        <li><a class="dropdown-item nav-btn btn btn-danger" href="{{ url_for('general_bp.logout', type='member') }}" data-bs-toggle="modal"
-                                data-bs-target="#confirm-logout">Logout</a>
+                        <li><a class="dropdown-item nav-btn btn btn-danger" href="{{ url_for('general_bp.logout', type='member') }}">Logout</a>
                         </li>
                     </ul>
                 </li>

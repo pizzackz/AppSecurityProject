@@ -82,3 +82,8 @@ nav {
     padding-left: 1rem;
     padding-right: 1rem;
 }
+
+.profile-picture {
+    height: 2.5rem;
+    width: 2.5rem;
+}

@@ -88,10 +88,10 @@
           <p class="card-text">
             {{ recipe.ingredients }}
           </p>
-          {% if current_user.type != 'premium' %}
-            <a href="{{ url_for('member_subscription_bp.plan_select') }}" class="btn btn-warning m-2">Upgrade to Premium</a>
-          {% else %}
+          {% if current_user.subscription_plan == 'premium' %}
             <a href="{{ url_for('member_recipe_bp.view_recipe', recipe_id=recipe.id) }}" class="btn btn-success m-2">View Recipe</a>
+          {% else %}
+            <a href="{{ url_for('member_subscription_bp.plan_select') }}" class="btn btn-warning m-2">Upgrade to Premium</a>
           {% endif %}
           <p class="card-text user">By {{ recipe.user_created }}</p>
            </div>
