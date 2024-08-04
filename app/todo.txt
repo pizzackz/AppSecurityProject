@@ -15,6 +15,7 @@ Recovery:
     Implement rate limiting for OTP requests, recovery requests
 
 Login:
+    Properly check, in all routes that sign users in, that account is locked/unlocked
     Fix navbar buttons not linking properly
     Implement rate limiting for login requests
 
