@@ -652,7 +652,8 @@ class Order(db.Model):
     items = db.relationship("OrderItem", backref="order", lazy=True)
 
     def __repr__(self):
-        return f"<Order {self.id}>"
+        formatted_created_at = self.created_at.strftime("%d %B %Y, %I:%M %p")
+        return f"<Order {self.id}, created_at: {formatted_created_at}>"
 
 
 class OrderItem(db.Model):
@@ -670,7 +671,9 @@ class OrderItem(db.Model):
 
 class Token(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     refresh_token = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp(), nullable=False)
 
 
 class Post(db.Model):
@@ -706,3 +709,10 @@ class Log_transaction(db.Model):
     user_id = db.Column(db.Integer, nullable=False)
     file_subdir = db.Column(db.String(255), nullable=False)
     log_info = db.Column(db.String(255), nullable=False)
+
+
+class Post_comments(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+    comment = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp(), nullable=False)

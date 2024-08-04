@@ -3,6 +3,7 @@
 
 {% block css %}
   {{ super() }}
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='forum/forum.css')}}">
 {% endblock %}
 
 {% block scripts %}
@@ -10,10 +11,16 @@
 {% endblock %}
 
 {% block content %}
-    <h1>Hot Posts from /r/food</h1>
-    <ul>
-        {% for post in posts %}
-            <li>{{ post }}</li>
-        {% endfor %}
-    </ul>
+  <h1>Hot Posts from /r/tastefullyfood</h1>
+  <div>
+      {% for post in posts %}
+          <div class="post">
+              <h2>{{ post }}</h2>
+              <div class="buttons">
+                  <button class="comments-btn">Comments</button>
+                  <button class="share-btn">Share</button>
+              </div>
+          </div>
+      {% endfor %}
+  </div>
 {% endblock %}

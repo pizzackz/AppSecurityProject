@@ -108,5 +108,9 @@ class LockDeleteMemberForm(FlaskForm):
 
 # Create forum post
 class ForumPost(FlaskForm):
-    title = StringField('Title', validators=[DataRequired()])
-    body = TextAreaField('Body', validators=[DataRequired()])
+    title = StringField('Title', validators=[validators.DataRequired(), validators.Length(max=50)])
+    body = TextAreaField('Body', validators=[validators.DataRequired(), validators.Length(max=1000)])
+
+
+class PostComment(FlaskForm):
+    comment = TextAreaField('Comment', validators=[DataRequired()])
