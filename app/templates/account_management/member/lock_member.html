@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 {% extends "account_management/base.html" %}
 
-{% block title %}Lock Admin Account{% endblock %}
+{% block title %}Lock Member Account{% endblock %}
 {% from "includes/_form_helper.html" import render_field %}
 
 {% block navbar %}
-{% include "includes/_admin_control_navbar.html" %}
+{% include "includes/_admin_navbar.html" %}
 {% endblock %}
 
 {% block css %}
@@ -54,7 +54,7 @@
         <div class="row">
             <!-- Left Section: Description and Disclaimer -->
             <div class="col-md-6 left-column">
-                <h2 class="text-danger">Lock Admin Account</h2>
+                <h2 class="text-danger">Lock Member Account</h2>
                 <p class="text-muted">Please provide a reason for locking the account.</p>
                 <p class="text-danger">Are you sure you want to lock this account? This action can be undone.</p>
             </div>
@@ -68,11 +68,14 @@
                             {{ render_field(form.reason, class="form-control", rows=5, placeholder="Enter reason", wrap="soft") }}
                         </div>
                         <div class="form-group mb-3">
+                            {{ render_field(form.admin_key, class="form-control", placeholder="Paste the admin key here") }}
+                        </div>
+                        <div class="form-group mb-3">
                             {{ render_field(form.recaptcha) }}
                         </div>
                     </div>
                     <div class="form-actions mt-3 d-flex justify-content-between">
-                        <a href="{{ url_for('admin_control_bp.lock_admin', action='back') }}" class="btn btn-secondary rounded-pill">Cancel</a>
+                        <a href="{{ url_for('member_control_bp.lock_member', action='back') }}" class="btn btn-secondary rounded-pill">Cancel</a>
                         <button type="submit" name="action" value="lock" class="btn btn-danger ml-2 rounded-pill">Lock</button>
                     </div>
                 </form>

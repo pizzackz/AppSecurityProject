@@ -139,10 +139,10 @@ def check_payment_status():
 
 
 # Function to generate new master keys daily (3 daily)
-def generate_new_master_keys():
+def generate_new_master_keys(count: int = 1):
     from app.models import MasterKey
     try:
-        for _ in range(3):
+        for _ in range(count):
             new_key = MasterKey.generate_master_key()
             db.session.add(new_key)
 
@@ -274,7 +274,7 @@ def create_app() -> Flask:
         from app.models import MasterKey
         db.create_all()  # Create all database tables
         if len(MasterKey.query.all()) == 0:
-            generate_new_master_keys()  # Generate 3 master keys initially if no master keys
+            generate_new_master_keys(3)  # Generate 3 master keys initially if no master keys
 
     # Register CLI commands
     register_commands(app)

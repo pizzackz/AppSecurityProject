@@ -182,6 +182,30 @@ class Member(User):
             logger.error(f"An error occurred while creating member: {e}")
             return None
 
+    # Revoke subscription plan
+    def revoke_plan(self):
+        try:
+            self.subscription_plan = "standard"
+            self.subscription_end_date = None
+            db.session.commit()
+            return True
+        except Exception as e:
+            print(f"Error revoking subscription plan: {e}")
+            return False
+    
+    # Delete member
+    @staticmethod
+    def delete(id: Column[int]):
+        try:
+            member = Member.query.get(id)
+            db.session.delete(member)
+            db.session.commit()
+            return member
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"An error occurred while deleting admin with id '{id}'")
+            return None
+
 
 # Admin model as subclass to 'User' and to store special 256 hashed string for verification purposes
 class Admin(User):
@@ -287,7 +311,7 @@ class Admin(User):
 
         data = f"{master_key}{self.id}{self.username}{self.email}"
         self.admin_key = hashlib.sha256(data.encode()).hexdigest()
-        self.admin_key_expires_at = func.current_timestamp() + timedelta(days=1)
+        self.admin_key_expires_at = (datetime.now(timezone.utc) + timedelta(days=1)).isoformat()
         db.session.commit()
 
         return data
@@ -398,16 +422,9 @@ class MasterKey(db.Model):
     @staticmethod
     def generate_master_key():
         new_key = os.urandom(32).hex()
-        expires_at = func.current_timestamp() + timedelta(days=1)
-        master_key = MasterKey(value=new_key, expires_at=expires_at)
+        expires_at = (datetime.now(timezone.utc) + timedelta(days=1)).isoformat()
 
-        admins = Admin.query.all()
-        for admin in admins:
-            admin.generate_admin_key()
-
-        db.session.commit()
-
-        return MasterKey
+        return MasterKey(value=new_key, expires_at=expires_at)
 
     # Retrieve any of the valid keys
     @staticmethod

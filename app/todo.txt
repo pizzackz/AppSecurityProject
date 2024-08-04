@@ -34,12 +34,7 @@ Admin Account Management:
     Make sure to link to Jacen's route for viewing activities
 
 Member Account Management:
-    Pretty much the same as Admin Account Management
-    Admin action extends to:
-        Cancelling plan
-        View order history
-    Admin action to be removed:
-        Generate admin key
+    Implement log out for active account using same username after successful reset of password
     Frontend nonsense (table sorting, filtering)
     Make sure to link to Ervyn's route for viewing order history
     Make sure to link to Jacen's route for viewing activities

@@ -393,7 +393,7 @@ def unlock_admin():
     locked_account = LockedAccount.query.get(admin_id)
     if not locked_account:
         clear_unwanted_session_keys(ADMIN_SPECIFIC_ESSENTIAL_KEYS)
-        flash("Admin account isn't currently locked.", "error")
+        flash("Admin account is already unlocked.", "error")
         logger.error(f"User tried to unlock admin account '{admin.username}' even though it is not locked.")
         return redirect(url_for("admin_control_bp.view_admin_details"))
 

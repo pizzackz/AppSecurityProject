@@ -93,7 +93,7 @@
                             {{ render_field(form.confirm_password, class="form-control", placeholder="Confirm your password") }}
                         </div>
                         <div class="form-group mb-3">
-                            {{ form.recaptcha.label }} {{ form.recaptcha() }}
+                            {{ render_field(form.recaptcha) }}
                         </div>
                     </div>
                     <div class="form-actions mt-3">
