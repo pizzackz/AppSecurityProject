@@ -1,0 +1,6 @@
+2024-08-05 09:30:16,369 - flask_app - INFO - Deleted 0 rows from MenuItem table.
+2024-08-05 09:30:16,690 - flask_app - INFO - Menu Items test data added!
+2024-08-05 09:30:16,701 - flask_app - INFO - Deleted 0 rows from Admin table.
+2024-08-05 09:30:17,124 - flask_app - INFO - Admins test data added!
+2024-08-05 09:30:17,128 - flask_app - INFO - Deleted 0 rows from Member table.
+2024-08-05 09:30:17,355 - flask_app - INFO - Members test data added!

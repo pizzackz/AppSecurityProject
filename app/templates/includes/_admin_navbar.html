@@ -61,11 +61,14 @@
                 <li class="nav-item dropdown">
                     <a class="nav-link profile-section" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <div class="profile-box d-flex align-items-center">
-                            {% if current_user.profile_images %}
-                            <img src="{{ url_for('static', filename='images/default_profile_pic.png') }}"
+                            {% if current_user.profile_images.source == "file_system" %}
+                            <img src="{{ url_for('static', filename='uploads/profile_pictures/' + current_user.profile_images.filename) }}"
+                                class="rounded-circle profile-picture" alt="Profile Picture"/>
+                            {% elif current_user.profile_images.source == "google" %}
+                            <img src="{{ current_user.profile_images.google_url }}"
                                 class="rounded-circle profile-picture" alt="Profile Picture"/>
                             {% else %}
-                            <img src="#"
+                            <img src="{{ url_for('static', filename='uploads/profile_pictures/default.png') }}"
                                 class="rounded-circle profile-picture" alt="Profile Picture"/>
                             {% endif %}
                             <div class="profile-info ms-2">
