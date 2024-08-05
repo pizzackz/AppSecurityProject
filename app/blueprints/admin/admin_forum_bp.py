@@ -41,7 +41,7 @@ reddit = praw.Reddit(
 )
 
 
-scopes = ['read', 'identity', 'submit', 'comment', 'modposts', 'modlog', 'modconfig'] 
+scopes = ['read', 'identity', 'submit', 'comment','modposts'] 
 
 
 @admin_forum_bp.route("/admin/forum")

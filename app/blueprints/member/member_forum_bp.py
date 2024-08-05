@@ -40,7 +40,6 @@ reddit = praw.Reddit(
 )
 
 
-# Assuming 'read' and 'identity' scopes are needed for your task
 scopes = ['read', 'identity', 'submit', 'comment'] 
 
 
