@@ -231,20 +231,25 @@ def create_recipe():
             instructions = instructions.strip()
             if instructions == '':
                 flash('Instructions are empty!', 'error')
-                return redirect(url_for('member_recipe_bp.create_recipe'))
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
             if len(instructions) > 1000:
                 flash('Instructions cannot be more than 1000 characters', 'error')
-                return redirect(url_for('member_recipe_bp.create_recipe'))
-            html.unescape(instructions)
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
             # Parse HTML
             soup = BeautifulSoup(instructions, 'html.parser')
 
-            # Remove all script tags
-            for script in soup(["script", "style"]):
-                script.decompose()
-            # Remove all iFrame and input tags
-            for iframe in soup(["iframe", "input", "link", "submit", "link", "meta"]):
-                iframe.decompose()
+            # Only allow whitelisted tags
+            whitelist = ['b', 'i', 'ul', 'ol', 'li', 'hr', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'em', 'span']
+            for tag in soup.find_all(True):
+                if tag.name not in whitelist:
+                    tag.decompose()
+
+            # Remove Attributes from Tag
+            for tag in soup.find_all(True):
+                if tag.attrs != {'text-decoration': 'underline'}:
+                    tag.attrs = {}
+
+            instructions = soup.prettify(formatter='minimal')
 
             # PROCESS CALORIES
             if type(calories) != int:
@@ -335,13 +340,13 @@ def create_recipe():
             if len(picture_filename) != 2:
                 flash('Invalid image format', 'error')
                 return redirect(url_for('member_recipe_bp.create_recipe'))
-            picture_name = sha256(picture_filename[0].encode()).hexdigest()
+            picture_name = sha256(name.encode()).hexdigest()
             picture_filename = picture_name + '.' + picture_filename[1]
 
             picture.save(os.path.join('app/static/images_recipe', picture_filename))
 
             # Store in database
-            new_recipe = Recipe(name=name, ingredients=ingredient_cleaned, instructions=soup.prettify(),
+            new_recipe = Recipe(name=name, ingredients=ingredient_cleaned, instructions=instructions,
                                 picture=picture_filename, type=recipe_type, calories=calories, prep_time=prep_time,
                                 user_created=current_user.username, user_created_id= current_user.id)
             try:
@@ -457,19 +462,28 @@ def update_recipe(recipe_id):
                 return redirect(url_for('member_recipe_bp.update_recipe', recipe_id=recipe_id))
 
         if instructions != '':
+            instructions = instructions.strip()
+            if instructions == '':
+                flash('Instructions are empty!', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
             if len(instructions) > 1000:
                 flash('Instructions cannot be more than 1000 characters', 'error')
-                return redirect(url_for('member_recipe_bp.create_recipe'))
-            html.unescape(instructions)
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
             # Parse HTML
             soup = BeautifulSoup(instructions, 'html.parser')
 
-            # Remove all script tags
-            for script in soup(["script", "style"]):
-                script.decompose()
-            # Remove all iFrame and input tags
-            for iframe in soup(["iframe", "input", "link", "submit", "link", "meta"]):
-                iframe.decompose()
+            # Only allow whitelisted tags
+            whitelist = ['b', 'i', 'ul', 'ol', 'li', 'hr', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'em', 'span']
+            for tag in soup.find_all(True):
+                if tag.name not in whitelist:
+                    tag.decompose()
+
+            # Remove Attributes from Tag
+            for tag in soup.find_all(True):
+                if tag.attrs != {'text-decoration': 'underline'}:
+                    tag.attrs = {}
+
+            instructions = soup.prettify(formatter='minimal')
 
         # PROCESS CALORIES
         if calories != '':
@@ -540,10 +554,15 @@ def update_recipe(recipe_id):
             if not is_image(picture):
                 flash('Invalid image format', 'error')
                 return redirect(url_for('member_recipe_bp.create_recipe'))
-                # Save the image file
+            # Delete old image
+            try:
+                os.remove(os.path.join('app/static/images_recipe', recipe.picture))
+            except:
+                print('Error deleting image')
             picture_filename = picture.filename
             picture_filename = picture_filename.split('.')
-            picture_filename = name + '.' + picture_filename[1]
+            picture_name = sha256(name.encode()).hexdigest()
+            picture_filename = picture_name + '.' + picture_filename[1]
             picture.save(os.path.join('app/static/images_recipe', picture_filename))
 
         if name != '':
@@ -593,7 +612,8 @@ def ai_recipe_creator():
 @limiter.limit('10 per minute')
 @limiter.limit('100 per hour')
 def recipe_creator_ai():
-    if request.endpoint != 'recipe-creator-ai':
+    print(request.referrer)
+    if request.referrer[request.referrer.rfind('/'):] != '/ai_recipe_creator':
         return jsonify({"content": "Invalid request"})
     # Get user inputs from json data
     print('AI Recipe Creator Activating')

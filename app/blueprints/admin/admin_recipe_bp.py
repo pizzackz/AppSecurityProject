@@ -75,7 +75,12 @@ def is_image(filename):
 
 # Recipe Pages
 @admin_recipe_bp.route("/admin/recipe_database", methods=["GET", "POST"])
+@login_required
 def recipe_database():
+    if current_user.type != 'admin':
+        # return 401 if user is not admin
+        return jsonify({"message": "Unauthorized"}), 401
+
     print(db) # Checking Database Status
     form = RecipeSearch()
 
@@ -171,7 +176,11 @@ def recipe_database():
     return render_template("admin/recipe/recipe_database.html", form=form, recipes=items_on_page, total_pages=total_pages, page=page)
 
 @admin_recipe_bp.route('/admin/create_recipe', methods=['GET', 'POST'])
+@login_required
 def create_recipe():
+    if current_user.type != 'admin':
+        # return 401 if user is not admin
+        return jsonify({"message": "Unauthorized"}), 401
     form = CreateRecipeForm()
     if request.method == "POST":
         try:
@@ -234,14 +243,15 @@ def create_recipe():
             soup = BeautifulSoup(instructions, 'html.parser')
 
             # Only allow whitelisted tags
-            whitelist = ['b', 'i', 'ul', 'ol', 'li', 'hr', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'em']
+            whitelist = ['b', 'i', 'ul', 'ol', 'li', 'hr', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'em', 'span']
             for tag in soup.find_all(True):
                 if tag.name not in whitelist:
                     tag.decompose()
 
             # Remove Attributes from Tag
             for tag in soup.find_all(True):
-                tag.attrs = {}
+                if tag.attrs != {'text-decoration': 'underline'}:
+                    tag.attrs = {}
 
             instructions = soup.prettify(formatter='minimal')
             print(instructions)
@@ -326,11 +336,11 @@ def create_recipe():
 
             picture2 = picture
             # To be fixed
-            # scan_result = scan_file_with_virustotal(picture2, os.getenv('VIRUSTOTAL_API_KEY'))
-            # if 'data' in scan_result and scan_result['data'].get('attributes', {}).get('last_analysis_stats', {}).get(
-            #         'malicious', 0) > 0:
-            #     flash('The uploaded file is potentially malicious and has not been saved.', 'error')
-            #     return redirect(url_for('admin_recipe_bp.create_recipe'))
+            scan_result = scan_file_with_virustotal(picture2, os.getenv('VIRUSTOTAL_API_KEY'))
+            if 'data' in scan_result and scan_result['data'].get('attributes', {}).get('last_analysis_stats', {}).get(
+                    'malicious', 0) > 0:
+                flash('The uploaded file is potentially malicious and has not been saved.', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
             # if not is_square_image(picture):
             #     flash('Image size must be 1:1', 'error')
             #     return redirect(url_for('admin_recipe_bp.create_recipe'))
@@ -341,7 +351,7 @@ def create_recipe():
             if len(picture_filename) != 2:
                 flash('Invalid image format', 'error')
                 return redirect(url_for('admin_recipe_bp.create_recipe'))
-            picture_name = sha256(picture_filename[0].encode()).hexdigest()
+            picture_name = sha256(name.encode()).hexdigest()
             picture_filename = picture_name + '.' + picture_filename[1]
 
             picture.save(os.path.join('app/static/images_recipe', picture_filename))
@@ -372,7 +382,11 @@ def create_recipe():
 
 
 @admin_recipe_bp.route('/admin/view_recipe/<recipe_id>', methods=['GET', 'POST'])
+@login_required
 def view_recipe(recipe_id):
+    if current_user.type != 'admin':
+        # return 401 if user is not admin
+        return jsonify({"message": "Unauthorized"}), 401
     recipe = Recipe.query.filter_by(id=recipe_id).first()
     recipe_data = {
        'id': recipe.id,
@@ -390,7 +404,11 @@ def view_recipe(recipe_id):
     return render_template('admin/recipe/recipe_view2.html', recipe=recipe_data)
 
 @admin_recipe_bp.route('/admin/delete_recipe/<recipe_id>', methods=['GET', 'POST'])
+@login_required
 def delete_recipe(recipe_id):
+    if current_user.type != 'admin':
+        # return 401 if user is not admin
+        return jsonify({"message": "Unauthorized"}), 401
     try:
         # Try to fetch the row with name 'locked_recipes'
         locked_recipes = RecipeConfig.query.filter_by(name='locked_recipes').first()
@@ -415,7 +433,11 @@ def delete_recipe(recipe_id):
     return redirect(url_for('admin_recipe_bp.recipe_database'))
 
 @admin_recipe_bp.route('/admin/update_recipe/<recipe_id>', methods=['GET', 'POST'])
+@login_required
 def update_recipe(recipe_id):
+    if current_user.type != 'admin':
+        # return 401 if user is not admin
+        return jsonify({"message": "Unauthorized"}), 401
     recipe = Recipe.query.filter_by(id=recipe_id).first()
     form = CreateRecipeForm()
     if request.method == 'POST':
@@ -457,19 +479,28 @@ def update_recipe(recipe_id):
                 return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
 
         if instructions != '':
+            instructions = instructions.strip()
+            if instructions == '':
+                flash('Instructions are empty!', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
             if len(instructions) > 1000:
                 flash('Instructions cannot be more than 1000 characters', 'error')
-                return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
-            html.unescape(instructions)
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
             # Parse HTML
             soup = BeautifulSoup(instructions, 'html.parser')
 
-            # Remove all script tags
-            for script in soup(["script", "style"]):
-                script.decompose()
-            # Remove all iFrame and input tags
-            for iframe in soup(["iframe", "input", "link", "submit", "link", "meta"]):
-                iframe.decompose()
+            # Only allow whitelisted tags
+            whitelist = ['b', 'i', 'ul', 'ol', 'li', 'hr', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'em', 'span']
+            for tag in soup.find_all(True):
+                if tag.name not in whitelist:
+                    tag.decompose()
+
+            # Remove Attributes from Tag
+            for tag in soup.find_all(True):
+                if tag.attrs != {'text-decoration': 'underline'}:
+                    tag.attrs = {}
+
+            instructions = soup.prettify(formatter='minimal')
 
         # PROCESS CALORIES
         if calories != '':
@@ -551,9 +582,12 @@ def update_recipe(recipe_id):
             if len(picture_filename) != 2:
                 flash('Invalid image format', 'error')
                 return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
-            picture_name = sha256(picture_filename[0].encode()).hexdigest()
+            # Delete old image
+            os.remove(os.path.join('app/static/images_recipe', recipe.picture))
+            picture_name = sha256(name.encode()).hexdigest()
             picture_filename = picture_name + '.' + picture_filename[1]
             picture.save(os.path.join('app/static/images_recipe', picture_filename))
+        
 
         if name != '':
             recipe.name = name
@@ -591,7 +625,11 @@ def update_recipe(recipe_id):
     return render_template('admin/recipe/recipe_update.html', form=form, ingredients=ingredients)
 
 @admin_recipe_bp.route('/admin/recipe_dashboard')
+@login_required
 def recipe_dashboard():
+    if current_user.type != 'admin':
+        # return 401 if user is not admin
+        return jsonify({"message": "Unauthorized"}), 401
     recipes = Recipe.query.all()
     now = datetime.utcnow()
 
@@ -634,7 +672,11 @@ def recipe_dashboard():
     return render_template('admin/recipe/recipe_dashboard.html', recipes=recipes, locked_recipes=locked_recipes, data=data, deletedrecipes=deletedrecipes, recipe_count_list=recipe_count_last_12_hours)
 
 @admin_recipe_bp.route('/admin/lock_recipes')
+@login_required
 def lock_recipes():
+    if current_user.type != 'admin':
+        # return 401 if user is not admin
+        return jsonify({"message": "Unauthorized"}), 401
     try:
         locked_recipes = RecipeConfig.query.filter_by(name='locked_recipes').first()
     except:
@@ -651,7 +693,11 @@ def lock_recipes():
     return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
 
 @admin_recipe_bp.route('/admin/unlock_recipes')
+@login_required
 def unlock_recipes():
+    if current_user.type != 'admin':
+        # return 401 if user is not admin
+        return jsonify({"message": "Unauthorized"}), 401
     try:
         locked_recipes = RecipeConfig.query.filter_by(name='locked_recipes').first()
     except:
@@ -668,21 +714,50 @@ def unlock_recipes():
     return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
 
 @admin_recipe_bp.route('/admin/populate_recipes')
+@login_required
 def populate_recipes_database():
+    if current_user.type != 'admin':
+        # return 401 if user is not admin
+        return jsonify({"message": "Unauthorized"}), 401
     populate_recipes()
     flash('Populated recipe', 'info')
     return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
 
 @admin_recipe_bp.route('/admin/reset_recipes')
+@login_required
 def reset_recipes():
+    if current_user.type != 'admin':
+        # return 401 if user is not admin
+        return jsonify({"message": "Unauthorized"}), 401
     recipes = Recipe.query.all()
     for recipe in recipes:
+        old_recipe = RecipeDeleted(name=recipe.name, ingredients=recipe.ingredients, instructions=recipe.instructions,
+                                   picture=recipe.picture, type=recipe.type, calories=recipe.calories,
+                                   prep_time=recipe.prep_time, user_created=recipe.user_created,
+                                   user_created_id=recipe.user_created_id, date_created=recipe.date_created)
+        db.session.add(old_recipe)
         db.session.delete(recipe)
+        db.session.commit()
     db.session.commit()
     flash('Database reset', 'info')
     return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
 
+@admin_recipe_bp.route('/admin/reset_deleted_recipes')
+@login_required
+def reset_deleted_recipes():
+    if current_user.type != 'admin':
+        # return 401 if user is not admin
+        return jsonify({"message": "Unauthorized"}), 401
+    recipes = RecipeDeleted.query.all()
+    for recipe in recipes:
+        os.remove(os.path.join('app/static/images_recipe', recipe.picture))
+        db.session.delete(recipe)
+    db.session.commit()
+    flash('Deleted Database reset', 'info')
+    return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
+
 @admin_recipe_bp.route('/admin/deleted_recipe_database', methods=['GET', 'POST'])
+@login_required
 def deleted_recipe_database():
     print(db) # Checking Database Status
     form = RecipeSearch()
@@ -776,6 +851,7 @@ def deleted_recipe_database():
 
 # View deleted recipes
 @admin_recipe_bp.route('/admin/view_deleted_recipe/<recipe_id>', methods=['GET', 'POST'])
+@login_required
 def view_deleted_recipe(recipe_id):
     recipe = RecipeDeleted.query.filter_by(id=recipe_id).first()
     recipe_data = {
@@ -795,6 +871,7 @@ def view_deleted_recipe(recipe_id):
     return render_template('admin/recipe/recipe_view_deleted.html', recipe=recipe_data)
 
 @admin_recipe_bp.route('/admin/delete_recipe_forever/<recipe_id>', methods=['GET', 'POST'])
+@login_required
 def delete_recipe_forever(recipe_id):
     recipe = RecipeDeleted.query.filter_by(id=recipe_id).first()
     os.remove(os.path.join('app/static/images_recipe', recipe.picture))
@@ -804,6 +881,7 @@ def delete_recipe_forever(recipe_id):
     return redirect(url_for('admin_recipe_bp.deleted_recipe_database'))
 
 @admin_recipe_bp.route('/admin/restore_recipe/<recipe_id>', methods=['GET', 'POST'])
+@login_required
 def restore_recipe(recipe_id):
     recipe = RecipeDeleted.query.filter_by(id=recipe_id).first()
     flash(f'{recipe.name} was restored', 'info')
@@ -819,134 +897,97 @@ def ai_recipe_creator():
     form = AICreateRecipeForm()
     return render_template('admin/recipe/recipe_ai_creator.html', form=form)
 
-@admin_recipe_bp.route('/api/recipe-creator-ai', methods=['POST'])
-# @jwt_required()
-@limiter.limit('10 per minute')
-@limiter.limit('100 per hour')
-def recipe_creator_ai():
-    # Get user inputs from json data
-    print('AI Recipe Creator Activating')
-    cuisine = request.json.get('cuisine')
-    ingredients = request.json.get('ingredients')
-    dietary_preference = request.json.get('dietary_preference')
-    allergy = request.json.get('allergy')
-    meal_type = request.json.get('meal_type')
-    difficulty = request.json.get('difficulty')
-    print(difficulty)
-    remarks = request.json.get('remarks')
-
-    # Clean Inputs
-    regex = r'^[a-zA-Z ]+$'  # Regex pattern allowing only letters and spaces
-    regex2 = r'^[a-zA-Z, ]+$'
-
-    cuisine = cuisine.strip()
-    if cuisine != '':
-        if len(cuisine) > 12:
-            return jsonify({'content': 'Cuisine is too long. Please keep within 12 characters'})
-        if not re.fullmatch(regex, cuisine):
-            return jsonify({'content':'Only letters and spaces allowed in cuisine'})
-
-    ingredients = ingredients.strip()
-    if ingredients != '':
-        if len(ingredients) > 30:
-            return jsonify({'content': 'Ingredients are too long. Please keep within 30 characters'})
-        if not re.fullmatch(regex2, ingredients):
-            return jsonify({'content':'Only letters, spaces and commas allowed in ingredients'})
-
-    dietary_preference = dietary_preference.strip()
-    if dietary_preference != '':
-        if len(dietary_preference) > 15:
-            return jsonify({'content': 'Dietary preference is too long. Please keep within 15 characters'})
-        if not re.fullmatch(regex, dietary_preference):
-            return jsonify({'content':'Only letters and spaces allowed in dietary preference'})
-
-    allergy = allergy.strip()
-    if allergy != '':
-        if len(allergy) > 15:
-            return jsonify({'content': 'Allergy is too long. Please keep within 15 characters'})
-        if not re.fullmatch(regex, allergy):
-            return jsonify({'content':'Only letters and spaces allowed in allergy'})
-
-    meal_type = meal_type.strip()
-    if meal_type != '':
-        if len(meal_type) > 15:
-            return jsonify({'content': 'Meal type is too long. Please keep within 15 characters'})
-        if not re.fullmatch(regex, meal_type):
-            return jsonify({'content':'Only letters and spaces allowed in meal type'})
-
-    difficulty = difficulty.strip()
-    if difficulty not in ['easy', 'medium', 'hard', 'any']:
-        return jsonify({'content':'Please try again.'})
-
-    remarks = remarks.strip()
-    if remarks != '':
-        if len(remarks) > 30:
-            return jsonify({'content': 'Remarks is too long. Please keep within 30 characters'})
-        if not re.fullmatch(regex2, remarks):
-            return jsonify({'content':'Only letters, spaces and commas allowed in remarks'})
-
-    messages = ''
-    messages += """You are a recipe creator.
-                       Ignore all unrelated inputs, and only output recipe in 
-                       the following format: Name, ingredients, description (Put in the other details 
-                       inside like calories, and other things the user specifies), and instructions. 
-                       Do not put #, * or any other special symbols."""
-
-    messages += f'''You are creating a recipe for {cuisine} cuisine. 
-                    Ensure {ingredients} are in the recipe. The dietary preference is
-                    {dietary_preference}. The allergies are {allergy}. The meal type is {meal_type}.
-                    The difficulty is {difficulty}.
-                    Remarks are (Ignore this part if irrelevant) {remarks}'''
-
-    print(messages)
-    response = model.generate_content(messages)
-    cleaned = response.text
-    cleaned = cleaned.replace("## ", "")
-    cleaned = cleaned.replace("**", "")
-    cleaned = cleaned.replace("* ", "- ")
-
-    print(cleaned)
-    return jsonify({'content': cleaned})
-
-@admin_recipe_bp.route('/api_testing')
-@limiter.limit('2 per day')
-def api_testing():
-    return 'This is a valid response :)'
-
-# # @jwt_required()
-# @limiter.limit("10 per hour")
 # @admin_recipe_bp.route('/api/recipe-creator-ai', methods=['POST'])
+# @login_required
+# # @jwt_required()
+# @limiter.limit('10 per minute')
+# @limiter.limit('100 per hour')
 # def recipe_creator_ai():
 #     # Get user inputs from json data
-#
-#     # Clean inputs
-#
-#     messages = []
-#     messages.append({"role": "system",
-#                         "content":"""You are a recipe creator.
-#                        Ignore all unrelated inputs, and only output recipe in
-#                        the following format: Name, description (Put in the other details
-#                        inside like calories, and other things the user specifies."""})
 #     print('AI Recipe Creator Activating')
+#     cuisine = request.json.get('cuisine')
+#     ingredients = request.json.get('ingredients')
+#     dietary_preference = request.json.get('dietary_preference')
+#     allergy = request.json.get('allergy')
+#     meal_type = request.json.get('meal_type')
+#     difficulty = request.json.get('difficulty')
+#     print(difficulty)
+#     remarks = request.json.get('remarks')
 #
-#     completion = openai.ChatCompletion.create(
-#         model="gpt-3.5-turbo",
-#         messages=[
-#             {"role": "system",
-#              "content":"You are a recipe creator. "
-#                        "Ignore all unrelated inputs, and only output recipe in "
-#                        "the following format: Name, description (Put in the other details "
-#                        "inside like calories, and other things the user specifies."}
-#         ]
-#     )
-#     print('Remarks are (Ignore this part if it is irrelevant)')
+#     # Clean Inputs
+#     regex = r'^[a-zA-Z ]+$'  # Regex pattern allowing only letters and spaces
+#     regex2 = r'^[a-zA-Z, ]+$'
 #
-#     reply = completion["choices"][0]["message"]["content"]
-#     print(reply)
+#     cuisine = cuisine.strip()
+#     if cuisine != '':
+#         if len(cuisine) > 12:
+#             return jsonify({'content': 'Cuisine is too long. Please keep within 12 characters'})
+#         if not re.fullmatch(regex, cuisine):
+#             return jsonify({'content':'Only letters and spaces allowed in cuisine'})
 #
-#     flash('Unauthorised response/request', 'error')
+#     ingredients = ingredients.strip()
+#     if ingredients != '':
+#         if len(ingredients) > 30:
+#             return jsonify({'content': 'Ingredients are too long. Please keep within 30 characters'})
+#         if not re.fullmatch(regex2, ingredients):
+#             return jsonify({'content':'Only letters, spaces and commas allowed in ingredients'})
 #
-#     return 'Not yet'
+#     dietary_preference = dietary_preference.strip()
+#     if dietary_preference != '':
+#         if len(dietary_preference) > 15:
+#             return jsonify({'content': 'Dietary preference is too long. Please keep within 15 characters'})
+#         if not re.fullmatch(regex, dietary_preference):
+#             return jsonify({'content':'Only letters and spaces allowed in dietary preference'})
+#
+#     allergy = allergy.strip()
+#     if allergy != '':
+#         if len(allergy) > 15:
+#             return jsonify({'content': 'Allergy is too long. Please keep within 15 characters'})
+#         if not re.fullmatch(regex, allergy):
+#             return jsonify({'content':'Only letters and spaces allowed in allergy'})
+#
+#     meal_type = meal_type.strip()
+#     if meal_type != '':
+#         if len(meal_type) > 15:
+#             return jsonify({'content': 'Meal type is too long. Please keep within 15 characters'})
+#         if not re.fullmatch(regex, meal_type):
+#             return jsonify({'content':'Only letters and spaces allowed in meal type'})
+#
+#     difficulty = difficulty.strip()
+#     if difficulty not in ['easy', 'medium', 'hard', 'any']:
+#         return jsonify({'content':'Please try again.'})
+#
+#     remarks = remarks.strip()
+#     if remarks != '':
+#         if len(remarks) > 30:
+#             return jsonify({'content': 'Remarks is too long. Please keep within 30 characters'})
+#         if not re.fullmatch(regex2, remarks):
+#             return jsonify({'content':'Only letters, spaces and commas allowed in remarks'})
+#
+#     messages = ''
+#     messages += """You are a recipe creator.
+#                        Ignore all unrelated inputs, and only output recipe in
+#                        the following format: Name, ingredients, description (Put in the other details
+#                        inside like calories, and other things the user specifies), and instructions.
+#                        Do not put #, * or any other special symbols."""
+#
+#     messages += f'''You are creating a recipe for {cuisine} cuisine.
+#                     Ensure {ingredients} are in the recipe. The dietary preference is
+#                     {dietary_preference}. The allergies are {allergy}. The meal type is {meal_type}.
+#                     The difficulty is {difficulty}.
+#                     Remarks are (Ignore this part if irrelevant) {remarks}'''
+#
+#     print(messages)
+#     response = model.generate_content(messages)
+#     cleaned = response.text
+#     cleaned = cleaned.replace("## ", "")
+#     cleaned = cleaned.replace("**", "")
+#     cleaned = cleaned.replace("* ", "- ")
+#
+#     print(cleaned)
+#     return jsonify({'content': cleaned})
+
+
 
 
 
