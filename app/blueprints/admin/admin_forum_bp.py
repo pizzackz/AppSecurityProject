@@ -51,3 +51,4 @@ def admin_forum():
         # return 401 if user is not admin
         return jsonify({"message": "Unauthorized"}), 401
      
+     
