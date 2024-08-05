@@ -9,7 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.models import MenuItem, Order, OrderItem
 from app.forms.forms import OrderForm, MenuForm
 from app import db, csrf, limiter
-from app.utils import clean_input, get_session_data, set_session_data, clear_session_data, check_admin
+from app.utils import clean_input, get_session_data, set_session_data, clear_session_data, check_admin, check_premium_member
 from datetime import datetime, timedelta
 from io import BytesIO
 from flask_limiter import Limiter
@@ -76,7 +76,9 @@ def add_no_cache_headers(response):
 @login_required
 @limiter.exempt
 def get_image(item_id):
-
+    check = check_premium_member(fallback_endpoint='login_auth_bp.login')
+    if check:
+        return check
     menu_item = MenuItem.query.get(item_id)
     if not menu_item or not menu_item.image:
         abort(404)  # Not found if the menu item or image does not exist
@@ -88,6 +90,9 @@ def get_image(item_id):
 @member_order_bp.route('/menu', methods=['POST', 'GET'])
 @login_required
 def menu():
+    check = check_premium_member(fallback_endpoint='login_auth_bp.login')
+    if check:
+        return check
     form = MenuForm()
     items = MenuItem.query.all()
 
@@ -102,6 +107,9 @@ def menu():
 @member_order_bp.route('/booking', methods=['GET', 'POST'])
 @login_required
 def booking():
+    check = check_premium_member(fallback_endpoint='login_auth_bp.login')
+    if check:
+        return check
     form = OrderForm()
 
     # Retrieve session data
@@ -157,6 +165,9 @@ def booking():
 @member_order_bp.route('/order', methods=['GET', 'POST'])
 @login_required
 def order():
+    check = check_premium_member(fallback_endpoint='login_auth_bp.login')
+    if check:
+        return check
     form = OrderForm()
 
     # Retrieve session data
@@ -244,6 +255,9 @@ def order():
 @member_order_bp.route('/order_confirm', methods=['POST', 'GET'])
 @login_required
 def success():
+    check = check_premium_member(fallback_endpoint='login_auth_bp.login')
+    if check:
+        return check
     clear_session_data(['selected_items', 'delivery_date', 'delivery_time'])
     if request.method == "POST":
         if request.form.get('return') == 'True':
@@ -255,6 +269,10 @@ def success():
 @member_order_bp.route('/order_history', methods=['GET'])
 @login_required
 def order_history():
+    check = check_premium_member(fallback_endpoint='login_auth_bp.login')
+    if check:
+        return check
+
     # Fetch orders for the current user
     user_id = current_user.id  # Assuming the user is logged in and `current_user` is set
     orders = Order.query.filter_by(user_id=user_id).all()

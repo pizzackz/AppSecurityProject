@@ -175,6 +175,38 @@ def check_member(keys_to_keep: Optional[Set[str]] = None, fallback_endpoint: str
     return None
 
 
+def check_premium_member(keys_to_keep: Optional[Set[str]] = None, fallback_endpoint: str = "login_auth_bp.login", log_message: str = "User is not a premium member"):
+    """
+    Utility function to check if the user is a premium member. If not, clears session and JWT data, then redirects to login.
+
+    Parameters:
+    - keys_to_keep (set, optional): Additional session keys to retain.
+    - fallback_endpoint (str, optional): The endpoint to redirect to if the user is not a member. Defaults to login.
+    - log_message (str, optional): The message to log if the user is not a member.
+
+    Returns:
+    - None if the user is a premium member.
+    - Redirect response if the user is not a premium member.
+    """
+    if current_user.is_authenticated and current_user.type == "member":
+        if not(current_user.subscription_plan == "premium" and current_user.subscription_end_date > datetime.now()):
+            # Clear session and JWT data
+            clear_unwanted_session_keys(extra_keys_to_keep=keys_to_keep)
+            current_user.login_details.logout()
+            logout_user()
+
+            # Unset JWT cookies
+            response = make_response(redirect(url_for(fallback_endpoint)))
+            unset_jwt_cookies(response)
+
+            # Flash message and log
+            flash("You no access to this page.", "warning")
+            logger.warning(log_message)
+            return response
+
+    return None
+
+
 # Check user is admin function
 def check_admin(keys_to_keep: Optional[Set[str]] = None, fallback_endpoint: str = "login_auth_bp.login", log_message: str = "User is not an Admin"):
     """
