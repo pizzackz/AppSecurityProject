@@ -113,4 +113,4 @@ class ForumPost(FlaskForm):
 
 
 class PostComment(FlaskForm):
-    comment = TextAreaField('Comment', validators=[DataRequired()])
+    comment = TextAreaField('Comment', validators=[DataRequired(), validators.Length(max=500)])

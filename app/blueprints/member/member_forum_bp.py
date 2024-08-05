@@ -11,6 +11,7 @@ from flask import (
     jsonify
 )
 from flask_login import login_required, current_user
+from datetime import datetime
 import praw
 import logging
 import sqlite3
@@ -158,12 +159,13 @@ def create_post():
             )
             db.session.add(new_post)
             db.session.commit()
+
             
-            flash('Post created successfully!', 'success')
             return redirect(url_for('member_forum_bp.subreddit'))
         except Exception as e:
             logging.error(f"Error creating post: {e}")
             flash(f"Error creating post: {e}", 'danger')
+
     return render_template("member/forum/create_post.html", form=forum)
 
 
@@ -171,14 +173,16 @@ def create_post():
 @login_required
 def post_details(post_id):
     reddit_user = get_reddit_instance(current_user.id)
-    print("KNN")
     if not reddit_user:
-        print("CCB")
         return redirect(url_for('member_forum_bp.authorize'))
     
     try:
         # Fetch the post from Reddit
         submission = reddit_user.submission(id=post_id)
+        post = {
+            'title': submission.title,
+            'body': submission.selftext
+        }
         comments = submission.comments.list()  # Fetch all comments for the post
     
         form = PostComment()
@@ -188,7 +192,7 @@ def post_details(post_id):
             submission.reply(comment)
             flash('Your comment has been added!', 'success')
             return redirect(url_for('member_forum_bp.post_details', post_id=post_id))
-        return render_template('member/forum/post_details.html', post=submission, comments=comments, form=form)
+        return render_template('member/forum/post_details.html', post=post, comments=comments, form=form)
     except praw.exceptions.PRAWException as e:
         logging.error(f"PRAWException: {e}")
         return f"Error fetching post information: {e}", 500
