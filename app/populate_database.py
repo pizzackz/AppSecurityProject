@@ -3,8 +3,9 @@ import os
 from datetime import datetime, timedelta, timezone
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash
-from app.models import db, Admin, Member, MenuItem, MasterKey
-from datetime import datetime, timedelta, timezone
+from app.models import db, Admin, Member, MenuItem, MasterKey, Log_general, Log_account, Log_transaction, User
+from faker import Faker
+
 
 
 
@@ -21,6 +22,9 @@ def seed_database():
     create_fake_master_keys(3)
     create_admins()
     create_members()
+    create_fake_logs(Log_transaction, 20)
+    create_fake_logs(Log_account, 20)
+    create_fake_logs(Log_general, 20)
     logging.info("Database initialised and test data added.")
 
 
@@ -221,3 +225,19 @@ def create_members():
         logger.info("Members test data added!")
     else:
         logger.info("Members test data already exists.")
+
+
+def create_fake_logs(model, num_logs):
+    fake = Faker()
+    users=User.query.all()
+    print(list(users))
+    for _ in range(num_logs):
+        log = model(
+            log_datetime=fake.date_time_this_year(),
+            priority_level=fake.random_element(elements=('Low', 'Medium', 'High')),
+            user_id=users[fake.random_int(min=0, max=len(users)-1)].id,
+            file_subdir=fake.file_path(depth=1),
+            log_info=fake.sentence(nb_words=10)
+        )
+        db.session.add(log)
+    db.session.commit()

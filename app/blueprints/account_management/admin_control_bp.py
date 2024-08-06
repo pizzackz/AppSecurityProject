@@ -10,7 +10,7 @@ from flask_jwt_extended import create_access_token, set_access_cookies, unset_jw
 from werkzeug.security import generate_password_hash
 
 from app import db
-from app.models import Admin, MasterKey, LockedAccount, PasswordResetToken
+from app.models import Admin, MasterKey, LockedAccount, PasswordResetToken, Log_account, Log_transaction, Log_general
 from app.forms.forms import CreateAdminForm, LockAdminForm, DeleteAdminForm
 from app.forms.auth_forms import OtpForm
 from app.utils import logout_if_logged_in, clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_session_keys, check_expired_session, set_session_data, check_auth_stage, check_jwt_values, get_image_url
@@ -251,8 +251,7 @@ def view_admin_details():
             return redirect(url_for("admin_control_bp.generate_admin_key"))
 
         if action == "view_activities":
-            # TODO: Redirect to Jacen's route to display all admin activities
-            return redirect(url_for("admin_control_bp.view_admin_details"))
+            return redirect(url_for("admin_control_bp.view_activities"))
 
     # Prepare data for rendering
     admin_data = {
@@ -616,6 +615,45 @@ def generate_admin_key():
         return redirect(url_for("admin_control_bp.view_admin_details"))
 
 
+# View activity logs
+@admin_control_bp.route("/2/view_activities")
+def view_activities():
+    # Conduct essential checks to manage access control
+    check_result = admin_control_checks()
+    if check_result:
+        return check_result
+    
+    # Check whether admin_id in session
+    no_admin_id = check_session_keys(
+        required_keys=['admin_id'],
+        fallback_endpoint='admin_control_bp.view_admin_details',
+        flash_message='There is no admin selected to unlock. Please choose an admin account to unlock.',
+        log_message='User tried to unlock an admin account without provided the account id',
+        keys_to_keep=ADMIN_SPECIFIC_ESSENTIAL_KEYS
+    )
+    if no_admin_id:
+        return no_admin_id
+
+    # Check whether account actually exists
+    admin_id = session.get("admin_id")
+    admin = Admin.query.get(admin_id)
+    if not admin:
+        clear_unwanted_session_keys(ADMIN_SPECIFIC_ESSENTIAL_KEYS)
+        flash("Couldn't find the admin account to unlock", "error")
+        logger.error(f"User tried to unlock an admin without providing the id for an existing account")
+        return redirect(url_for("admin_control_bp.view_admin_details"))
+    
+    # Querying for a specific user's logs
+    log_general_entries = Log_general.query.filter_by(user_id=admin_id).all()
+    log_account_entries = Log_account.query.filter_by(user_id=admin_id).all()
+    log_transaction_entries = Log_transaction.query.filter_by(user_id=admin_id).all()
+    print(log_general_entries)
+    return render_template(f'{TEMPLATE_FOLDER}/view_activities.html', 
+                           log_general_entries=log_general_entries,
+                           log_account_entries=log_account_entries,
+                           log_transaction_entries=log_transaction_entries)
+
+
 # Admin creation route for creating new admins (requires 2FA with OTP sent to email)
 @admin_control_bp.route("/3", methods=['GET', 'POST'])
 def create_admin():
@@ -789,3 +827,5 @@ def verify_email():
 
     # Render the verify email template
     return render_template(f'{TEMPLATE_FOLDER}/verify_email.html', form=form, otp_expiry=otp_expiry)
+
+

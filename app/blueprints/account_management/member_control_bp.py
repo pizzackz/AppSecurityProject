@@ -7,7 +7,7 @@ from flask import Blueprint, Response, request, session, redirect, render_templa
 from flask_jwt_extended import unset_jwt_cookies
 from flask_login import login_required, current_user
 
-from app.models import Member, LockedAccount, PasswordResetToken
+from app.models import Member, LockedAccount, PasswordResetToken, Log_account, Log_general, Log_transaction
 from app.forms.forms import LockDeleteMemberForm
 from app.utils import clean_input, send_email, check_admin, check_session_keys, clear_unwanted_session_keys, get_image_url
 
@@ -160,9 +160,7 @@ def view_member_details():
             return redirect(url_for("member_order_bp.admin_order_history", user_id=member_id))
 
         if action == "view_activities":
-            # TODO: Redirect to Jacen's route to display all member activities
-            print("Redirecting to view activities")
-            return redirect(url_for("member_control_bp.view_member_details"))
+            return redirect(url_for("member_control_bp.view_activities"))
         
     # Prepare data for rendering
     member_data = {
@@ -576,3 +574,53 @@ def send_password_link():
         logger.error(f"Failed to send password reset link to {email}")
         return redirect(url_for("member_control_bp.view_member_details"))
 
+
+# View activity logs
+@member_control_bp.route("/view/activities")
+@login_required
+def view_activities():
+    # Check if user is admin
+    check = check_admin(fallback_endpoint='login_auth_bp.login')
+    if check:
+        return check
+
+    # Check member_id exists in session
+    no_member_id_in_session = check_session_keys(
+        required_keys=['member_id'],
+        fallback_endpoint='member_control_bp.view_members',
+        flash_message="No member selected. Please select a member from the list.",
+        log_message=f"Admin '{current_user.username}' attempted to view member details without selecting a member.",
+        keys_to_keep=ESSENTIAL_KEYS
+    )
+    if no_member_id_in_session:
+        return no_member_id_in_session
+    
+    # Check whether member in session
+    no_member_id = check_session_keys(
+        required_keys=['member_id'],
+        fallback_endpoint='member_control_bp.view_member_details',
+        flash_message='There is no member account selected to view activities for. Please choose an member account.',
+        log_message='User tried to send reset password link to a member\'s email without providing the account id.',
+        keys_to_keep=MEMBER_SPECIFIC_ESSENTIAL_KEYS
+    )
+    if no_member_id:
+        return no_member_id
+
+    # Check whether account actually exists
+    member_id = session.get("member_id")
+    member = Member.query.get(member_id)
+    if not member:
+        clear_unwanted_session_keys(MEMBER_SPECIFIC_ESSENTIAL_KEYS)
+        flash("Couldn't find the member account to view activities for.", "error")
+        logger.error(f"Admin '{current_user.username}' tried to view activites for the member without providing the id for an existing account")
+        return redirect(url_for("member_control_bp.view_member_details"))
+    
+    # Querying for a specific user's logs
+    log_general_entries = Log_general.query.filter_by(user_id=member_id).all()
+    log_account_entries = Log_account.query.filter_by(user_id=member_id).all()
+    log_transaction_entries = Log_transaction.query.filter_by(user_id=member_id).all()
+
+    return render_template(f'{TEMPLATE_FOLDER}/view_activities.html', 
+                           log_general_entries=log_general_entries,
+                           log_account_entries=log_account_entries,
+                           log_transaction_entries=log_transaction_entries)

@@ -688,7 +688,7 @@ class Log_general(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     log_datetime = db.Column(db.DateTime, default=db.func.current_timestamp())
     priority_level = db.Column(db.String(20), nullable=False)
-    user_id = db.Column(db.Integer, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     file_subdir = db.Column(db.String(255), nullable=False)
     log_info = db.Column(db.String(255), nullable=False)
 
@@ -697,7 +697,7 @@ class Log_account(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     log_datetime = db.Column(db.DateTime, default=db.func.current_timestamp())
     priority_level = db.Column(db.String(20), nullable=False)
-    user_id = db.Column(db.Integer, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     file_subdir = db.Column(db.String(255), nullable=False)
     log_info = db.Column(db.String(255), nullable=False)
 
@@ -706,7 +706,7 @@ class Log_transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     log_datetime = db.Column(db.DateTime, default=db.func.current_timestamp())
     priority_level = db.Column(db.String(20), nullable=False)
-    user_id = db.Column(db.Integer, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     file_subdir = db.Column(db.String(255), nullable=False)
     log_info = db.Column(db.String(255), nullable=False)
 
@@ -716,3 +716,4 @@ class Post_comments(db.Model):
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
     comment = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp(), nullable=False)
+

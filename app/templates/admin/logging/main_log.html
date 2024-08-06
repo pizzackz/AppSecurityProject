@@ -1,30 +1,84 @@
 <!DOCTYPE html>
 {% extends "base.html" %}
-{% block title %}Article Database{% endblock %}
+{%block content%}
+    <h1>Log Entries</h1>
 
-    {% block navbar %} {% include "includes/_admin_navbar.html" %} {% endblock %}
+    <h2>General Logs</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Date Time</th>
+                <th>Priority Level</th>
+                <th>User ID</th>
+                <th>File Subdirectory</th>
+                <th>Log Info</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in log_general_entries %}
+            <tr>
+                <td>{{ entry.id }}</td>
+                <td>{{ entry.log_datetime }}</td>
+                <td>{{ entry.priority_level }}</td>
+                <td>{{ entry.user_id }}</td>
+                <td>{{ entry.file_subdir }}</td>
+                <td>{{ entry.log_info }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
-{% block content %}
+    <h2>Account Logs</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Date Time</th>
+                <th>Priority Level</th>
+                <th>User ID</th>
+                <th>File Subdirectory</th>
+                <th>Log Info</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in log_account_entries %}
+            <tr>
+                <td>{{ entry.id }}</td>
+                <td>{{ entry.log_datetime }}</td>
+                <td>{{ entry.priority_level }}</td>
+                <td>{{ entry.user_id }}</td>
+                <td>{{ entry.file_subdir }}</td>
+                <td>{{ entry.log_info }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
+    <h2>Transaction Logs</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Date Time</th>
+                <th>Priority Level</th>
+                <th>User ID</th>
+                <th>File Subdirectory</th>
+                <th>Log Info</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in log_transaction_entries %}
+            <tr>
+                <td>{{ entry.id }}</td>
+                <td>{{ entry.log_datetime }}</td>
+                <td>{{ entry.priority_level }}</td>
+                <td>{{ entry.user_id }}</td>
+                <td>{{ entry.file_subdir }}</td>
+                <td>{{ entry.log_info }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
-<script nonce="{{ nonce }}">
-    // Confirmation button
-function confirmdelete(content, id) {
-    console.log(content);
-    document.getElementById('modal-body').innerHTML = 'Are you sure you want to delete ' + content + '?';
-    document.getElementById('delete').onclick = function() {
-        window.location.href = "delete_article/" + id;
-    }
-}
-</script>
-<header class="py-5">
-    <div style="background-color:#ffffff" class="py-5">
-    </div>
-
-    
-</header>
-{% endblock %}
-
-{% block scripts %}
-    {{ super() }}
-{% endblock %}
+{%endblock%}

@@ -23,10 +23,11 @@ from werkzeug.utils import secure_filename
 
 from app import db, profile_pictures
 from app.config.config import Config
-from app.models import User, ProfileImage
+from app.models import User, ProfileImage, Log_account, Log_general, Log_transaction
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
 
 # Initialise variables
 logger: Logger = logging.getLogger('tastefully')
@@ -723,3 +724,40 @@ def scan_file_with_virustotal(file: FileStorage, api_key: str) -> dict:
         logger.error(f"Error scanning file with VirusTotal: {e}")
         return {}
 
+
+def general_log_setter(): 
+    logging.basicConfig(level=logging.INFO, filename="general.log", filemode="a",
+                        format="%(asctime)s||%(message)s")
+    
+
+def transaction_log_setter():
+    logging.basicConfig(level=logging.INFO, filename="transaction.log", filemode="a",
+                        format="%(asctime)s||%(message)s")
+    
+
+def account_log_setter():
+    logging.basicConfig(level=logging.INFO, filename="account.log", filemode="a",
+                        format="%(asctime)s||%(message)s") 
+    
+
+def log_trans(priority_level, category, user_id, action, info):
+    file_name = os.path.basename(__file__)
+    # Get the subdirectory (without the root directory)
+    subdirectory = os.path.dirname(__file__)
+    root_directory = '/path/to/your/directory'
+    if subdirectory.startswith(root_directory):
+        subdirectory = subdirectory[len(root_directory):].lstrip(os.path.sep)
+    if category=='general':
+        new_log=Log_general(priority_level=priority_level, category=category, user=user_id, action=action, message_info=info)
+    elif category=='transaction':
+        new_log=Log_transaction(priority_level=priority_level, category=category, user=user_id, action=action, message_info=info)
+    elif category=='account':
+        new_log=Log_account(priority_level=priority_level, category=category, user=user_id, action=action, message_info=info)
+    else:
+        print("Error! category can only be: \'general\', \'transactions\' or \'account\'")
+    
+    try:
+        db.session.add(new_log)
+        db.session.commit()
+    except:
+        return 'empty'

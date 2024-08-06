@@ -217,7 +217,6 @@ def register_admin_bp(app: Flask):
         app.register_blueprint(admin_log_bp)
         app.register_blueprint(admin_feedback_bp)
 
-
 # Register account control blueprints
 def register_account_control_bp(app: Flask):
     with app.app_context():

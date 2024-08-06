@@ -1,16 +1,38 @@
-from flask import Blueprint, render_template, session, url_for, flash, redirect, request
-from flask_login import login_user
+from flask import (
+    Flask,
+    current_app,
+    Blueprint,
+    render_template,
+    request,
+    redirect,
+    session,
+    flash,
+    url_for,
+    jsonify
+)
+from flask_login import login_required, current_user
+from datetime import datetime
+import logging
+import sqlite3
+import os
 
 
-admin_log_bp: Blueprint = Blueprint("admin_log", __name__)
+from app import db
+from app.models import Log_account, Log_general, Log_transaction
 
 
-
-@admin_log_bp.route("/dashboard")
-def dashB():
-    # return render_template("admin_dashboard_bp.py")  # You're supposed to render a template (i.e. HTML file), not a python file
-    return render_template("admin/logging/dashboard.html")
+admin_log_bp = Blueprint("admin_log_bp", __name__, url_prefix='/admin/log')
 
 
-# @admin_log_bp.route("")
+@admin_log_bp.route('/dashboard')
+@login_required
+def display_logs():
+    log_general_entries = Log_general.query.all()
+    log_account_entries = Log_account.query.all()
+    log_transaction_entries = Log_transaction.query.all()
+    
+    return render_template('admin/logging/main_log.html', 
+                           log_general_entries=log_general_entries,
+                           log_account_entries=log_account_entries,
+                           log_transaction_entries=log_transaction_entries)
 
