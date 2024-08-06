@@ -1,0 +1,66 @@
+{% block css %}
+<link href="{{ url_for('static', filename='css/retrievehistory.css') }}" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+<style>
+      #no-order-history {
+        text-align: center;
+        margin-top: 10rem;
+    }
+
+    #no-order-history h1{
+        margin: 0;
+    }
+
+    #no-order-history button {
+        margin-top: 1.2rem;
+    }
+</style>
+{% endblock %}
+
+{% block title %}tastefully | Receipt{% endblock %}
+
+{% block content %}
+<!-- Ensure invoice is checked before accessing its attributes -->
+{% if invoice %}
+<div class="modal-body">
+    <table class="receipt">
+        <tr><td colspan="4"><img src="https://i.imgur.com/AaUuxo9.png" style="height: 3.5rem; width: auto; text-align: center;"></td></tr>
+        <tr></tr>
+        <tr>
+            <td colspan="2">To: {{ user.email }} </td>
+            <td colspan="2">{{ invoice.created | datetimeformat }}</td>
+        </tr>
+        <tr>
+            <td colspan="2">Amount Paid: {{ invoice.amount_paid / 100 }} {{ invoice.currency.upper() }} </td>
+            <td colspan="2">Paid By: Card</td>
+        </tr>
+        <tr><td colspan="4"><hr></td></tr>
+        <tr>
+            <td>Product Name</td>
+            <td>Quantity</td>
+            <td>Unit Price </td>
+            <td>Subtotal</td>
+        </tr>
+        <tr></tr>
+        <tr>
+            <td>Premium Subscription Plan</td>
+            <td>1</td>
+            <td>{{ invoice.amount_paid / 100 }} {{ invoice.currency.upper() }}</td>
+            <td>{{ invoice.amount_paid / 100 }} {{ invoice.currency.upper() }}</td>
+        </tr>
+        <tr></tr>
+        <tr></tr>
+        <tr>
+            <td colspan="4"><hr></td>
+        </tr>
+        <tr>
+            <td colspan="2"></td>
+            <td>Total:</td>
+            <td>{{ invoice.amount_paid / 100 }} {{ invoice.currency.upper() }}</td>
+        </tr>
+    </table>
+</div>
+{% else %}
+<div>No invoice found.</div>
+{% endif %}
+{% endblock %}

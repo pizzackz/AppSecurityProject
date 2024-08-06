@@ -38,6 +38,11 @@ profile_pictures = UploadSet("profilepictures", IMAGES)
 scheduler = BackgroundScheduler()
 
 
+#Date Time Formatter
+def datetimeformat(value, format='%Y-%m-%d %H:%M:%S'):
+    return value.strftime(format)
+
+
 # Setup logger for own logs function
 def setup_custom_logger(name: str) -> Logger:
     """Configure a custom logger for the application"""
@@ -259,6 +264,9 @@ def create_app() -> Flask:
 
     # Custom logger for app logic
     setup_custom_logger("tastefully")
+
+    # Register datetimeformat filter
+    app.jinja_env.filters['datetimeformat'] = datetimeformat
 
     # Configure Flask-Session to use SQLAlchemy
     app.config["SESSION_SQLALCHEMY"] = db

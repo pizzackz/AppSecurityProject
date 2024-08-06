@@ -49,7 +49,10 @@ def send_email(to_email: str, subject: str, body) -> bool:
         msg['From'] = FROM_EMAIL
         msg['To'] = to_email
         msg['Subject'] = subject
-        msg.attach(MIMEText(body, 'plain'))
+
+
+        part2 = MIMEText(body, 'html')
+        msg.attach(part2)
 
         # Connect to the SMTP server
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
@@ -61,7 +64,7 @@ def send_email(to_email: str, subject: str, body) -> bool:
         logger.info(f"Email sent to {to_email}")
 
         # For testing purposes
-        print(f"Mail body:\n{str(body)}")
+        # print(f"Mail body:\n{str(body)}")
 
         return True
 

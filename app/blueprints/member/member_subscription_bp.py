@@ -8,8 +8,8 @@ from app import db, csrf
 from sqlalchemy.sql import func
 from app.models import Payment, Member
 from datetime import datetime, timedelta,timezone
-
 from flask_login import login_required, current_user
+from app.utils  import send_email
 
 # Set up logging
 logger = logging.getLogger('tastefully')
@@ -87,10 +87,12 @@ def success():
         logger.error("Missing Stripe session ID")
         return jsonify({'error': 'Missing Stripe session ID'}), 400
 
+    invoice = None # Initialize invoice variable
+
     try:
         # Retrieve the Stripe session details
         stripe_session = stripe.checkout.Session.retrieve(stripe_session_id)
-        logger.info(f"Retrieved Stripe session: {stripe_session}")
+        logger.info(f"Retrieved Stripe session for user_id: {user_id}")
 
         user = Member.query.get(user_id)
         if user:
@@ -115,7 +117,6 @@ def success():
                 user.subscription_plan = "premium"
                 user.subscription_end_date = datetime.now(timezone.utc) + timedelta(days=30)
 
-
             db.session.commit()
         else:
             logger.error(f"No user found with ID {user_id}")
@@ -127,11 +128,15 @@ def success():
             logger.error("Subscription ID is missing in the Stripe session")
             return jsonify({'error': 'Subscription ID is missing in the Stripe session'}), 400
 
+        logger.info(f"Retrieved subscription ID: {subscription_id} for user_id: {user_id}")
+
         subscription = stripe.Subscription.retrieve(subscription_id)
         latest_invoice_id = subscription.latest_invoice
 
         if latest_invoice_id:
+            logger.info(f"Retrieved latest invoice ID: {latest_invoice_id} for subscription ID: {subscription_id}")
             invoice = stripe.Invoice.retrieve(latest_invoice_id)
+            logger.info(f"Retrieved invoice: {invoice}")
 
             new_payment = Payment(
                 user_id=user.id,
@@ -144,6 +149,12 @@ def success():
 
             db.session.add(new_payment)
             db.session.commit()
+            
+            # Send confirmation email with the receipt
+            receipt_html = render_template('member/transaction-processing/receipt.html', invoice=invoice, user=user)
+            logger.debug(f"Receipt HTML: {receipt_html}")
+            send_email(user.email, "Subscription Confirmation", receipt_html)
+            logger.info(f"Sent subscription confirmation email to {user.email} with invoice ID: {invoice.id}")
 
         else:
             logger.error("No invoice found for the subscription")
@@ -156,7 +167,7 @@ def success():
         logger.error(f"Error retrieving Stripe session: {e}")
         return jsonify({'error': f'Error retrieving Stripe session: {str(e)}'}), 500
 
-    return render_template('member/transaction-processing/success.html')
+    return render_template('member/transaction-processing/success.html', invoice=invoice)
 
 
 
