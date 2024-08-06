@@ -335,8 +335,7 @@ def create_recipe():
                 return redirect(url_for('admin_recipe_bp.create_recipe'))
 
             picture2 = picture
-            # To be fixed
-            scan_result = scan_file_with_virustotal(picture2, os.getenv('VIRUSTOTAL_API_KEY'))
+            scan_result = scan_file_with_virustotal(picture, os.getenv('VIRUSTOTAL_API_KEY'))
             if 'data' in scan_result and scan_result['data'].get('attributes', {}).get('last_analysis_stats', {}).get(
                     'malicious', 0) > 0:
                 flash('The uploaded file is potentially malicious and has not been saved.', 'error')
@@ -346,7 +345,7 @@ def create_recipe():
             #     return redirect(url_for('admin_recipe_bp.create_recipe'))
 
             # Save the image file
-            picture_filename = picture.filename
+            picture_filename = picture2.filename
             picture_filename = picture_filename.split('.')
             if len(picture_filename) != 2:
                 flash('Invalid image format', 'error')
@@ -354,7 +353,8 @@ def create_recipe():
             picture_name = sha256(name.encode()).hexdigest()
             picture_filename = picture_name + '.' + picture_filename[1]
 
-            picture.save(os.path.join('app/static/images_recipe', picture_filename))
+            picture2.stream.seek(0)
+            picture2.save(os.path.join('app/static/images_recipe', picture_filename))
 
             # api_key = 'dbdb212116c4942f7006289754600a68a9561dcebfff754f0981ef595aa49fed'
             # filename = os.path.join('app/static/images_recipe', picture_filename)
@@ -572,21 +572,25 @@ def update_recipe(recipe_id):
                 flash('Invalid image format', 'error')
                 return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
             picture2 = picture
-            scan_result = scan_file_with_virustotal(picture2, os.getenv('VIRUSTOTAL_API_KEY'))
+            scan_result = scan_file_with_virustotal(picture, os.getenv('VIRUSTOTAL_API_KEY'))
             if 'data' in scan_result and scan_result['data'].get('attributes', {}).get('last_analysis_stats', {}).get(
                     'malicious', 0) > 0:
                 flash('The uploaded file is potentially malicious and has not been saved.', 'error')
                 return redirect(url_for('admin_recipe_bp.create_recipe'))
-            picture_filename = picture.filename
+            picture_filename = picture2.filename
             picture_filename = picture_filename.split('.')
             if len(picture_filename) != 2:
                 flash('Invalid image format', 'error')
                 return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
             # Delete old image
-            os.remove(os.path.join('app/static/images_recipe', recipe.picture))
+            try:
+                os.remove(os.path.join('app/static/images_recipe', recipe.picture))
+            except:
+                print('No old picture')
             picture_name = sha256(name.encode()).hexdigest()
             picture_filename = picture_name + '.' + picture_filename[1]
-            picture.save(os.path.join('app/static/images_recipe', picture_filename))
+            picture2.stream.seek(0)
+            picture2.save(os.path.join('app/static/images_recipe', picture_filename))
         
 
         if name != '':
@@ -631,16 +635,6 @@ def recipe_dashboard():
         # return 401 if user is not admin
         return jsonify({"message": "Unauthorized"}), 401
     recipes = Recipe.query.all()
-    now = datetime.utcnow()
-
-    recipe_count_last_12_hours = []
-
-    # Loop through the last 12 hours
-    for i in range(12, 0, -1):
-        start_time = now - timedelta(hours=i)
-        end_time = now - timedelta(hours=i - 1)
-        count = sum(1 for recipe in recipes if start_time <= recipe.date_created < end_time)
-        recipe_count_last_12_hours.append(count)
 
     # sort the recipes by date created
     recipes = sorted(recipes, key=lambda x: x.date_created, reverse=True)
@@ -669,7 +663,28 @@ def recipe_dashboard():
     locked_recipes = locked_recipe_object.status
     print(locked_recipes)
 
-    return render_template('admin/recipe/recipe_dashboard.html', recipes=recipes, locked_recipes=locked_recipes, data=data, deletedrecipes=deletedrecipes, recipe_count_list=recipe_count_last_12_hours)
+    return render_template('admin/recipe/recipe_dashboard.html', recipes=recipes, locked_recipes=locked_recipes, data=data, deletedrecipes=deletedrecipes)
+
+@admin_recipe_bp.route('/api/recipe_info', methods=['GET'])
+@login_required
+def recipe_info():
+    if current_user.type != 'admin':
+        # return 401 if user is not admin
+        return jsonify({"message": "Unauthorized"}), 401
+    if request.referrer[request.referrer.rfind('/'):] != '/recipe_dashboard':
+        return jsonify({"message": "Unauthorized"}), 401
+    recipes = Recipe.query.all()
+    now = datetime.utcnow()
+    recipe_count_last_12_hours = []
+
+    # Loop through the last 12 hours
+    for i in range(12, 0, -1):
+        start_time = now - timedelta(hours=i)
+        end_time = now - timedelta(hours=i - 1)
+        count = sum(1 for recipe in recipes if start_time <= recipe.date_created < end_time)
+        recipe_count_last_12_hours.append(count)
+
+    return jsonify({'content':recipe_count_last_12_hours})
 
 @admin_recipe_bp.route('/admin/lock_recipes')
 @login_required
@@ -750,7 +765,10 @@ def reset_deleted_recipes():
         return jsonify({"message": "Unauthorized"}), 401
     recipes = RecipeDeleted.query.all()
     for recipe in recipes:
-        os.remove(os.path.join('app/static/images_recipe', recipe.picture))
+        try:
+            os.remove(os.path.join('app/static/images_recipe', recipe.picture))
+        except:
+            print('Picture not found')
         db.session.delete(recipe)
     db.session.commit()
     flash('Deleted Database reset', 'info')

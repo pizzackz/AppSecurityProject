@@ -328,14 +328,14 @@ def create_recipe():
                 flash('Invalid image format', 'error')
                 return redirect(url_for('member_recipe_bp.create_recipe'))
             picture2 = picture
-            # scan_result = scan_file_with_virustotal(picture2, os.getenv('VIRUSTOTAL_API_KEY'))
-            # if 'data' in scan_result and scan_result['data'].get('attributes', {}).get('last_analysis_stats', {}).get(
-            #         'malicious', 0) > 0:
-            #     flash('The uploaded file is potentially malicious and has not been saved.', 'error')
-            #     return redirect(url_for('admin_recipe_bp.create_recipe'))
+            scan_result = scan_file_with_virustotal(picture, os.getenv('VIRUSTOTAL_API_KEY'))
+            if 'data' in scan_result and scan_result['data'].get('attributes', {}).get('last_analysis_stats', {}).get(
+                    'malicious', 0) > 0:
+                flash('The uploaded file is potentially malicious and has not been saved.', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
 
             # Save the image file
-            picture_filename = picture.filename
+            picture_filename = picture2.filename
             picture_filename = picture_filename.split('.')
             if len(picture_filename) != 2:
                 flash('Invalid image format', 'error')
@@ -343,7 +343,8 @@ def create_recipe():
             picture_name = sha256(name.encode()).hexdigest()
             picture_filename = picture_name + '.' + picture_filename[1]
 
-            picture.save(os.path.join('app/static/images_recipe', picture_filename))
+            picture2.stream.seek(0)
+            picture2.save(os.path.join('app/static/images_recipe', picture_filename))
 
             # Store in database
             new_recipe = Recipe(name=name, ingredients=ingredient_cleaned, instructions=instructions,
@@ -559,10 +560,17 @@ def update_recipe(recipe_id):
                 os.remove(os.path.join('app/static/images_recipe', recipe.picture))
             except:
                 print('Error deleting image')
-            picture_filename = picture.filename
+            picture2 = picture
+            scan_result = scan_file_with_virustotal(picture, os.getenv('VIRUSTOTAL_API_KEY'))
+            if 'data' in scan_result and scan_result['data'].get('attributes', {}).get('last_analysis_stats', {}).get(
+                    'malicious', 0) > 0:
+                flash('The uploaded file is potentially malicious and has not been saved.', 'error')
+                return redirect(url_for('admin_recipe_bp.create_recipe'))
+            picture_filename = picture2.filename
             picture_filename = picture_filename.split('.')
             picture_name = sha256(name.encode()).hexdigest()
             picture_filename = picture_name + '.' + picture_filename[1]
+            picture2.stream.seek(0)
             picture.save(os.path.join('app/static/images_recipe', picture_filename))
 
         if name != '':
