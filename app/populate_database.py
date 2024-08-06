@@ -7,11 +7,8 @@ from app.models import db, Admin, Member, MenuItem, MasterKey, Log_general, Log_
 from faker import Faker
 
 
-
-
 # Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("flask_app")
+logger = logging.getLogger("tastefully")
 
 
 # Generalised function to create all tables & seed database
@@ -230,7 +227,6 @@ def create_members():
 def create_fake_logs(model, num_logs):
     fake = Faker()
     users=User.query.all()
-    print(list(users))
     for _ in range(num_logs):
         log = model(
             log_datetime=fake.date_time_this_year(),

@@ -4,3 +4,4 @@
 **/__pycache__/
 .env
 app/config/google_client_secret.json
+**/*.log
