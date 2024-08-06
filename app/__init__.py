@@ -58,6 +58,9 @@ def setup_custom_logger(name: str) -> Logger:
     logger.setLevel(logging.INFO)
     logger.propagate = False  # Prevents log messages from being propagated to Flask default logger
 
+    # Set the root logger level to INFO to prevent debug messages from showing up
+    logging.getLogger().setLevel(logging.INFO)
+
     return logger
 
 
@@ -268,7 +271,6 @@ def create_app() -> Flask:
     app.register_blueprint(admin_recipe_bp)
     limiter.limit('50 per minute')(admin_recipe_bp)
 
-   
     with app.app_context():
         from app.models import MasterKey
         db.create_all()  # Create all database tables

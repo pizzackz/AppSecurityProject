@@ -8,12 +8,12 @@ from logging import Logger
 
 from flask import Blueprint, request, session, redirect, render_template, flash, url_for, make_response
 from flask_jwt_extended import create_access_token, set_access_cookies, unset_jwt_cookies, get_jwt, get_jwt_identity, jwt_required
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import db
 from app.models import User, Member, ProfileImage
-from app.forms.profile_forms import ProfileForm
+from app.forms.profile_forms import ProfileForm, DeleteMemberForm
 from app.forms.auth_forms import OtpForm, ResetPasswordForm, PasswordForm
 from app.utils import clean_input, generate_otp, send_email, check_auth_stage, check_jwt_values, check_member, clear_unwanted_session_keys, get_image_url, upload_pfp, reset_pfp
 
@@ -94,6 +94,14 @@ def profile():
             response = redirect(url_for(endpoint, action="upgrade_plan"))
 
         return response
+
+    # Redirect to view order history
+    if action == "view_order_history":
+        return redirect(url_for("member_order_bp.order_history"))
+    
+    # Rediect to delete
+    if action == "delete":
+        return redirect(url_for("member_profile_bp.delete"))
 
     form = ProfileForm()
 
@@ -538,7 +546,7 @@ def set_password():
         response = redirect(url_for('member_profile_bp.profile'))
         unset_jwt_cookies(response)
         flash("Setting of password canceled.", "info")
-        logger.info("User opted to restart cancel password setting.")
+        logger.info(f"Member '{current_user.username}' opted to cancel password setting.")
         return response
 
     # Check session not expired & profile_update_stage == save_changes
@@ -643,7 +651,7 @@ def reset_password():
         response = redirect(url_for('member_profile_bp.profile'))
         unset_jwt_cookies(response)
         flash("Password reset canceled.", "info")
-        logger.info("User opted to restart cancel password reset.")
+        logger.info(f"Mmeber '{current_user.username}' opted to cancel password reset.")
         return response
 
     # Check session not expired & profile_update_stage == save_changes
@@ -729,4 +737,63 @@ def reset_password():
 
     # Render the reset password template
     return render_template(f"{TEMPLATE_FOLDER}/reset_password.html", form=form, user=user, image=image_url)
+
+
+# Delete account route
+@member_profile_bp.route("delete", methods=['GET', 'POST'])
+@login_required
+def delete():
+    # Check if user is member
+    check = check_member(fallback_endpoint='login_auth_bp.login')
+    if check:
+        return check
+
+    # Redirect to profile & clear temp data in session & jwt when pressed 'back'
+    if 'action' in request.args and request.args.get('action') == 'back':
+        # Clear session and JWT data
+        session.pop("profile_update_stage", None)
+        response = redirect(url_for('member_profile_bp.profile'))
+        unset_jwt_cookies(response)
+        flash("Account deletion canceled.", "info")
+        logger.info(f"Member '{current_user.username}' opted to cancel account deletion.")
+        return response
+    
+    # Check if the user account exists
+    user = User.query.filter_by(id=current_user.id, email=current_user.email).first()
+    if not user:
+        flash("An error occurred. Please try again later.", "error")
+        logger.error(f"User account not found for email: {current_user.email}")
+        return redirect(url_for('member_profile_bp.profile'))
+    
+    form = DeleteMemberForm()
+    if request.method == "POST" and form.validate_on_submit():
+        # Retrieve input
+        reason = clean_input(form.reason.data)
+
+        # Try sending email using utility send_email function
+        email_body = f"Your account has been deleted. The reason is:\n{reason}"
+        if send_email(current_user.email, "Deleted Account", email_body):
+            Member.delete(current_user.id)
+            clear_unwanted_session_keys(ESSENTIAL_KEYS)
+            flash("Successfully deleted your account!", "success")
+            logger.info(f"Successfully deleted member '{current_user.username}'")
+        else:
+            flash("An error occurred while deleting your account.", "error")
+            logger.error(f"Failed to send email to inform member '{current_user.username}' that their account has been deleted.")
+            return redirect(url_for("member_profile_bp.profile"))
+
+        # Log user out
+        current_user.login_details.logout()
+        logout_user()
+
+        # Remove any jwt cookies stored
+        response = redirect(url_for("general_bp.home"))
+        unset_jwt_cookies(response)
+
+        return response
+
+    image_url = get_image_url(user)
+
+    # Render the delete member template
+    return render_template(f"{TEMPLATE_FOLDER}/delete.html", form=form, user=user, image=image_url)
 

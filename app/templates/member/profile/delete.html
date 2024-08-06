@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+{% extends "member/profile/verify_email.html" %}
+
+{% block title %}Delete Account{% endblock %}
+
+{% block css %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/authentication/password_checker.css') }}" />
+<style nonce="{{ nonce }}">
+    textarea.form-control {
+        resize: none;
+        overflow: auto;
+    }
+</style>
+{% endblock %}
+
+<!-- Modal Overlay, visible by default -->
+<!-- Reset password -->
+{% block modal %}
+<form method="post" action="" id="delete-member-form">
+    <div class="modal fade show" id="myModal" data-bs-backdrop="false" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h3 class="modal-title text-danger">Delete Account</h3>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    {% block flash_messages_2 %}
+                    <!-- 'error' category flash message -->
+                    {% for message in get_flashed_messages(category_filter=["error"]) %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn btn-close bypass-disable" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                    <!-- 'info' category flash message -->
+                    {% for message in get_flashed_messages(category_filter=["info"]) %}
+                    <div class="alert alert-info alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn btn-close bypass-disable" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                    {% endblock %}
+
+                    <!-- Message to warn users -->
+                    <div class="mt-2">
+                        <p class="text-danger">Warning: This action is irreversible and will permanently delete this account and all associated data.</p>
+                        <p class="text-muted">Please confirm by completing the reCAPTCHA challenge.</p>
+                    </div>
+
+                    {{ form.hidden_tag() }}
+                    <div class="form-group">
+                        {{ render_field(form.reason, class="form-control", rows=5, placeholder="Enter reason", wrap="soft") }}
+                    </div>
+                    {{ render_field(form.recaptcha) }}
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer">
+                    <!-- Submit buttons (back, save) -->
+                    <a href="{{ url_for('member_profile_bp.delete', action='back') }}" class="btn btn-light btn-outline-primary rounded-pill">Back</a>
+                    <button type="submit" name="action" value="save" class="btn btn-danger rounded-pill">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script nonce="{{ nonce }}" src="{{ url_for('static', filename='js/profile/password_checker.js') }}"></script>
+{% endblock %}

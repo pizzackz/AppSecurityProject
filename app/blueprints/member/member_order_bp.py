@@ -304,4 +304,4 @@ def admin_order_history(user_id):
         order.items_details = MenuItem.query.filter(MenuItem.id.in_(item_ids)).all()
         order.formatted_created_at = pendulum.instance(order.created_at).format("D MMMM YYYY, h:mm A")
 
-    return render_template('member/order/order_history.html', orders=orders)
+    return render_template('member/order/admin_order_history.html', orders=orders)
