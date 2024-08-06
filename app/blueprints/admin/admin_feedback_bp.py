@@ -26,3 +26,13 @@ def admin_feedback():
     feedback = Feedback.query.all()
     print(feedback)
     return render_template("admin/feedback/admin_feedback.html", feedback=feedback)
+
+# @admin_feedback_bp.route('/admin/delete_feedback')
+# @login_required
+# def delete_feedback(feedback_id):
+#     if current_user != 'admin':
+#         # return 401 if user is not admin
+#         return jsonify({"message": "Unauthorized"}), 401
+    
+#     feedback_id = Feedback.id
+    
