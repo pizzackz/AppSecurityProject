@@ -16,8 +16,10 @@
       {% for post in posts %}
           <div class="post">
               <h2>{{ post.title }}</h2>
+              
               <div class="buttons">
                   <a href="{{ url_for('member_forum_bp.post_details', post_id=post.id) }}">Comments</a>
+                  <button class="share-btn">Share</button>
               </div>
           </div>
       {% endfor %}
