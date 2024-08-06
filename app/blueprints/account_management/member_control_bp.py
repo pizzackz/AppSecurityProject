@@ -212,7 +212,7 @@ def lock_member():
         required_keys=['member_id'],
         fallback_endpoint='member_control_bp.view_members',
         flash_message="No member selected. Please select a member from the list.",
-        log_message=f"Admin '{current_user.username}' attempted to view member details without selecting a member.",
+        log_message=f"Admin '{current_user.username}' attempted to lock member without selecting a member.",
         keys_to_keep=ESSENTIAL_KEYS
     )
     if no_member_id_in_session:
@@ -245,7 +245,7 @@ def lock_member():
     if not member:
         clear_unwanted_session_keys(MEMBER_SPECIFIC_ESSENTIAL_KEYS)
         flash("Couldn't find the member account to lock", "error")
-        logger.error(f"Admin '{current_user.username}' tried lock an member without providing the id for an existing account")
+        logger.error(f"Admin '{current_user.username}' tried lock a member without providing the id for an existing account")
         return redirect(url_for("member_control_bp.view_member_details"))
     
     # Check whether account is not locked
@@ -303,7 +303,7 @@ def unlock_member():
         required_keys=['member_id'],
         fallback_endpoint='member_control_bp.view_members',
         flash_message="No member selected. Please select a member from the list.",
-        log_message=f"Admin '{current_user.username}' attempted to view member details without selecting a member.",
+        log_message=f"Admin '{current_user.username}' attempted to unlock a member without selecting a member.",
         keys_to_keep=ESSENTIAL_KEYS
     )
     if no_member_id_in_session:
@@ -314,8 +314,8 @@ def unlock_member():
     member = Member.query.get(member_id)
     if not member:
         clear_unwanted_session_keys(MEMBER_SPECIFIC_ESSENTIAL_KEYS)
-        flash("Couldn't find the member account to lock", "error")
-        logger.error(f"Admin '{current_user.username}' tried lock an member without providing the id for an existing account")
+        flash("Couldn't find the member account to unlock", "error")
+        logger.error(f"Admin '{current_user.username}' tried unlocking a member without providing the id for an existing account")
         return redirect(url_for("member_control_bp.view_member_details"))
     
     # Check whether account is locked
@@ -359,7 +359,7 @@ def revoke_plan():
         required_keys=['member_id'],
         fallback_endpoint='member_control_bp.view_members',
         flash_message="No member selected. Please select a member from the list.",
-        log_message=f"Admin '{current_user.username}' attempted to view member details without selecting a member.",
+        log_message=f"Admin '{current_user.username}' attempted to revoke subscription for a member without selecting a member.",
         keys_to_keep=ESSENTIAL_KEYS
     )
     if no_member_id_in_session:
@@ -379,7 +379,7 @@ def revoke_plan():
     no_member_id = check_session_keys(
         required_keys=['member_id'],
         fallback_endpoint='member_control_bp.view_member_details',
-        flash_message='There is no member selected to lock. Please choose an member account to lock.',
+        flash_message='There is no member selected to revoke subscription for. Please choose an member account.',
         log_message='User tried to revoke a member\'s subscription without providing the account id.',
         keys_to_keep=MEMBER_SPECIFIC_ESSENTIAL_KEYS
     )
@@ -451,7 +451,7 @@ def delete_member():
         required_keys=['member_id'],
         fallback_endpoint='member_control_bp.view_members',
         flash_message="No member selected. Please select a member from the list.",
-        log_message=f"Admin '{current_user.username}' attempted to view member details without selecting a member.",
+        log_message=f"Admin '{current_user.username}' attempted to delete a member without selecting a member.",
         keys_to_keep=ESSENTIAL_KEYS
     )
     if no_member_id_in_session:
@@ -472,7 +472,7 @@ def delete_member():
         required_keys=['member_id'],
         fallback_endpoint='member_control_bp.view_member_details',
         flash_message='There is no member selected to delete. Please choose an member account to delete.',
-        log_message='User tried to delete a member account without providing the account id.',
+        log_message=f'Admin \'{current_user.username}\' tried to delete a member account without providing the account id.',
         keys_to_keep=MEMBER_SPECIFIC_ESSENTIAL_KEYS
     )
     if no_member_id:
@@ -529,7 +529,7 @@ def send_password_link():
         required_keys=['member_id'],
         fallback_endpoint='member_control_bp.view_members',
         flash_message="No member selected. Please select a member from the list.",
-        log_message=f"Admin '{current_user.username}' attempted to view member details without selecting a member.",
+        log_message=f"Admin '{current_user.username}' attempted to send reset password link without selecting a member.",
         keys_to_keep=ESSENTIAL_KEYS
     )
     if no_member_id_in_session:
@@ -540,7 +540,7 @@ def send_password_link():
         required_keys=['member_id'],
         fallback_endpoint='member_control_bp.view_member_details',
         flash_message='There is no member account selected to send reset password link to. Please choose an member account.',
-        log_message='User tried to send reset password link to a member\'s email without providing the account id.',
+        log_message=f'Admin \'{current_user.username}\' tried to send reset password link to a member\'s email without providing the account id.',
         keys_to_keep=MEMBER_SPECIFIC_ESSENTIAL_KEYS
     )
     if no_member_id:
@@ -551,8 +551,8 @@ def send_password_link():
     member = Member.query.get(member_id)
     if not member:
         clear_unwanted_session_keys(MEMBER_SPECIFIC_ESSENTIAL_KEYS)
-        flash("Couldn't find the member account to delete.", "error")
-        logger.error(f"Admin '{current_user.username}' tried delete the member without providing the id for an existing account")
+        flash("Couldn't find the member account to send reset password link to.", "error")
+        logger.error(f"Admin '{current_user.username}' tried to send reset password link to a member without providing the id for an existing account")
         return redirect(url_for("member_control_bp.view_member_details"))
 
     # Generate secure token for password reset

@@ -519,8 +519,8 @@ def send_password_link():
     no_admin_id = check_session_keys(
         required_keys=['admin_id'],
         fallback_endpoint='admin_control_bp.view_admin_details',
-        flash_message='There is no admin selected to unlock. Please choose an admin account to unlock.',
-        log_message='User tried to unlock an admin account without provided the account id',
+        flash_message='There is no admin selected to send reset password link to. Please choose an admin account.',
+        log_message='User tried to send reset password link to an admin account without provided the account id',
         keys_to_keep=ADMIN_SPECIFIC_ESSENTIAL_KEYS
     )
     if no_admin_id:
@@ -531,8 +531,8 @@ def send_password_link():
     admin = Admin.query.get(admin_id)
     if not admin:
         clear_unwanted_session_keys(ADMIN_SPECIFIC_ESSENTIAL_KEYS)
-        flash("Couldn't find the admin account to unlock", "error")
-        logger.error(f"User tried to unlock an admin without providing the id for an existing account")
+        flash("Couldn't find the admin account to send reset password link to", "error")
+        logger.error(f"User tried to send reset password link to an admin without providing the id for an existing account")
         return redirect(url_for("admin_control_bp.view_admin_details"))
     
     # Check whether account is not locked
@@ -576,8 +576,8 @@ def generate_admin_key():
     no_admin_id = check_session_keys(
         required_keys=['admin_id'],
         fallback_endpoint='admin_control_bp.view_admin_details',
-        flash_message='There is no admin selected to unlock. Please choose an admin account to unlock.',
-        log_message='User tried to unlock an admin account without provided the account id',
+        flash_message='There is no admin selected to regenerate admin key for. Please choose an admin account to unlock.',
+        log_message='User tried to regenerate admin key for an admin account without provided the account id',
         keys_to_keep=ADMIN_SPECIFIC_ESSENTIAL_KEYS
     )
     if no_admin_id:
@@ -588,8 +588,8 @@ def generate_admin_key():
     admin = Admin.query.get(admin_id)
     if not admin:
         clear_unwanted_session_keys(ADMIN_SPECIFIC_ESSENTIAL_KEYS)
-        flash("Couldn't find the admin account to unlock", "error")
-        logger.error(f"User tried to unlock an admin without providing the id for an existing account")
+        flash("Couldn't find the admin account to regenerate admin key for", "error")
+        logger.error(f"User tried to regenerate admin key for an admin without providing the id for an existing account")
         return redirect(url_for("admin_control_bp.view_admin_details"))
     
     # Check whether account is not locked

@@ -4,9 +4,6 @@ General:
     Review & enhance session handling mechanisms
     Allow messages to be displayed when accessing pages that user is not allowed to
 
-Models:
-    Write a function to generate unique new user id
-
 Signup:
     Implement rate limiting for OTP requests
 
