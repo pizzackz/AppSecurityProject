@@ -67,14 +67,12 @@ def authorize():
     auth_url = reddit.auth.url(scopes, os.urandom(16).hex(), 'permanent')
     logging.debug(f"Authorization URL: {auth_url}")
     print(auth_url)
-    # return redirect(url_for('member_forum_bp.subreddit'))
     return redirect(auth_url)
 
 
 @member_forum_bp.route('/authorize_callback')
 @login_required
 def authorize_callback():
-    print(current_user)
     code = request.args.get('code')
     if not code:
         return "Error: No code returned", 400
