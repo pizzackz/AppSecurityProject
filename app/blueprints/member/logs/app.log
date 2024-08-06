@@ -34,3 +34,21 @@
 2024-08-06 12:13:31,939 - flask_app - INFO - Admins test data added!
 2024-08-06 12:13:31,962 - flask_app - INFO - Deleted 2 rows from Member table.
 2024-08-06 12:13:32,083 - flask_app - INFO - Members test data added!
+2024-08-06 16:57:33,623 - flask_app - INFO - Deleted 9 rows from MenuItem table.
+2024-08-06 16:57:33,891 - flask_app - INFO - Menu Items test data added!
+2024-08-06 16:57:33,924 - flask_app - INFO - Deleted 2 rows from Admin table.
+2024-08-06 16:57:34,144 - flask_app - INFO - Admins test data added!
+2024-08-06 16:57:34,161 - flask_app - INFO - Deleted 2 rows from Member table.
+2024-08-06 16:57:34,280 - flask_app - INFO - Members test data added!
+2024-08-06 17:19:10,285 - flask_app - INFO - Deleted 9 rows from MenuItem table.
+2024-08-06 17:19:10,527 - flask_app - INFO - Menu Items test data added!
+2024-08-06 17:19:10,556 - flask_app - INFO - Deleted 2 rows from Admin table.
+2024-08-06 17:19:10,761 - flask_app - INFO - Admins test data added!
+2024-08-06 17:19:10,779 - flask_app - INFO - Deleted 2 rows from Member table.
+2024-08-06 17:19:10,895 - flask_app - INFO - Members test data added!
+2024-08-06 17:36:23,082 - flask_app - INFO - Deleted 9 rows from MenuItem table.
+2024-08-06 17:36:23,426 - flask_app - INFO - Menu Items test data added!
+2024-08-06 17:36:23,474 - flask_app - INFO - Deleted 2 rows from Admin table.
+2024-08-06 17:36:23,721 - flask_app - INFO - Admins test data added!
+2024-08-06 17:36:23,743 - flask_app - INFO - Deleted 2 rows from Member table.
+2024-08-06 17:36:23,872 - flask_app - INFO - Members test data added!

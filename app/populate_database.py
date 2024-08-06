@@ -230,14 +230,16 @@ def create_members():
 def create_fake_logs(model, num_logs):
     fake = Faker()
     users=User.query.all()
+    now = datetime.now()
     print(list(users))
     for _ in range(num_logs):
         log = model(
-            log_datetime=fake.date_time_this_year(),
-            priority_level=fake.random_element(elements=('Low', 'Medium', 'High')),
+            log_datetime=now - timedelta(hours=fake.random_int(min=0, max=24)),
+            priority_level=fake.random_element(elements=('Critical', 'Error', 'Info')),
             user_id=users[fake.random_int(min=0, max=len(users)-1)].id,
             file_subdir=fake.file_path(depth=1),
             log_info=fake.sentence(nb_words=10)
         )
         db.session.add(log)
     db.session.commit()
+

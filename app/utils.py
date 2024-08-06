@@ -8,6 +8,7 @@ import hashlib
 import requests
 import uuid
 import smtplib
+import requests
 
 from datetime import datetime, timezone
 from logging import Logger
@@ -761,3 +762,14 @@ def log_trans(priority_level, category, user_id, action, info):
         db.session.commit()
     except:
         return 'empty'
+    
+
+def get_performance_data():
+    # This function should fetch and process data from your sources
+    data = {
+        'response_time': 120,  # in milliseconds
+        'uptime': 99.99,       # in percentage
+        'error_rate': 0.01,    # in percentage
+        'traffic': 1200,       # number of requests
+    }
+    return data

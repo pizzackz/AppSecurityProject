@@ -38,3 +38,11 @@ Member Account Management:
     Implement log out for active account using same username after successful reset of password
     Frontend nonsense (table sorting, filtering)
     Make sure to link to Jacen's route for viewing activities
+
+
+Jacen:
+    Have more charts that collect a wider range of data
+    Use rate limiter for my api
+    Start collecting real data to be displayed
+    Format my logs better
+    Create admin security tools
