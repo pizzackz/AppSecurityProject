@@ -35,12 +35,11 @@ logger: Logger = logging.getLogger('tastefully')
 VIRUSTOTAL_API_KEY = Config.VIRUSTOTAL_API_KEY
 ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png']
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
-
-SMTP_SERVER = os.getenv('SMTP_SERVER')
-SMTP_PORT = int(os.getenv('SMTP_PORT'))
-EMAIL_USERNAME = os.getenv('EMAIL_USERNAME')
-EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD')
-FROM_EMAIL = os.getenv('FROM_EMAIL')
+SMTP_SERVER = Config.SMTP_SERVER
+SMTP_PORT = Config.SMTP_PORT
+EMAIL_USERNAME = Config.EMAIL_USERNAME
+EMAIL_PASSWORD = Config.EMAIL_PASSWORD
+FROM_EMAIL = Config.FROM_EMAIL
 
 
 def send_email(to_email: str, subject: str, body) -> bool:
@@ -727,33 +726,30 @@ def scan_file_with_virustotal(file: FileStorage, api_key: str) -> dict:
 
 
 def general_log_setter(): 
-    logging.basicConfig(level=logging.INFO, filename="general.log", filemode="a",
-                        format="%(asctime)s||%(message)s")
+    logging.basicConfig(level=logging.INFO, filename="general.log", filemode="a", format="%(asctime)s||%(message)s")
     
 
 def transaction_log_setter():
-    logging.basicConfig(level=logging.INFO, filename="transaction.log", filemode="a",
-                        format="%(asctime)s||%(message)s")
+    logging.basicConfig(level=logging.INFO, filename="transaction.log", filemode="a", format="%(asctime)s||%(message)s")
     
 
 def account_log_setter():
-    logging.basicConfig(level=logging.INFO, filename="account.log", filemode="a",
-                        format="%(asctime)s||%(message)s") 
-    
+    logging.basicConfig(level=logging.INFO, filename="account.log", filemode="a", format="%(asctime)s||%(message)s")
 
+
+# Store logs for 3 kinds (general, transaction based, account related) of logs in database
 def log_trans(priority_level, category, user_id, action, info):
-    file_name = os.path.basename(__file__)
     # Get the subdirectory (without the root directory)
     subdirectory = os.path.dirname(__file__)
     root_directory = '/path/to/your/directory'
     if subdirectory.startswith(root_directory):
         subdirectory = subdirectory[len(root_directory):].lstrip(os.path.sep)
     if category=='general':
-        new_log=Log_general(priority_level=priority_level, category=category, user=user_id, action=action, message_info=info)
+        new_log = Log_general(priority_level=priority_level, category=category, user=user_id, action=action, message_info=info)
     elif category=='transaction':
-        new_log=Log_transaction(priority_level=priority_level, category=category, user=user_id, action=action, message_info=info)
+        new_log = Log_transaction(priority_level=priority_level, category=category, user=user_id, action=action, message_info=info)
     elif category=='account':
-        new_log=Log_account(priority_level=priority_level, category=category, user=user_id, action=action, message_info=info)
+        new_log = Log_account(priority_level=priority_level, category=category, user=user_id, action=action, message_info=info)
     else:
         print("Error! category can only be: \'general\', \'transactions\' or \'account\'")
     

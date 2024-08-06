@@ -12,8 +12,7 @@ from datetime import datetime, timedelta,timezone
 from flask_login import login_required, current_user
 
 # Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger('flask_app')
+logger = logging.getLogger('tastefully')
 
 # Create blueprint
 member_subscription_bp = Blueprint('member_subscription_bp', __name__)
@@ -23,6 +22,7 @@ load_dotenv('..env')
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 publishable_key = os.getenv('STRIPE_PUBLISHABLE_KEY')
 endpoint_secret = os.getenv('STRIPE_ENDPOINT_SECRET')
+
 
 if not stripe.api_key:
     raise ValueError("No Stripe API key provided")

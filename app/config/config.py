@@ -70,13 +70,11 @@ class Config:
     }
 
     # Email configuration
-    MAIL_SERVER = os.getenv("MAIL_SERVER")
-    MAIL_PORT = os.getenv("MAIL_PORT")
-    MAIL_USER = os.getenv("MAIL_USER")
-    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
-    MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER")
-    MAIL_USE_SSL = False
-    MAIL_USE_TLS = True
+    SMTP_SERVER = os.getenv('SMTP_SERVER')
+    SMTP_PORT = int(os.getenv('SMTP_PORT'))
+    EMAIL_USERNAME = os.getenv('EMAIL_USERNAME')
+    EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD')
+    FROM_EMAIL = os.getenv('FROM_EMAIL')
 
     # OpenAI API key
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')

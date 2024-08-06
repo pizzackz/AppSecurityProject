@@ -41,8 +41,7 @@
         padding-left: 1.25rem; /* Add space between columns */
     }
     textarea {
-        resize: vertical;
-        max-height: 5rem;
+        resize: none;
         overflow: auto;
     }
 </style>
@@ -73,7 +72,7 @@
                     </div>
                     <div class="form-actions mt-3 d-flex justify-content-between">
                         <a href="{{ url_for('admin_control_bp.lock_admin', action='back') }}" class="btn btn-secondary rounded-pill">Cancel</a>
-                        <button type="submit" name="action" value="lock" class="btn btn-danger ml-2 rounded-pill">Lock</button>
+                        <button type="submit" name="action" value="lock" class="btn btn-danger ml-2 rounded-pill submit-disabler">Lock</button>
                     </div>
                 </form>
             </div>

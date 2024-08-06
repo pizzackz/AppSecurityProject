@@ -75,6 +75,10 @@
                 <button type="button" name="action" value="upload_profile_picture" class="btn btn-primary rounded-pill ml-2">Edit</button>
             </div>
         {% endif %}
+        <!-- View own order history only for premium members -->
+        {% if user.subscription_plan == "premium" %}
+            <a href="" class="w-full text-center text-blue-500 hover:underline block">View Order History</a>
+        {% endif %}
     </div>
 
     <!-- Right side (displays account information) -->
@@ -160,6 +164,9 @@
                 {% endif %}
                 <p>To help keep your account safe, we want to make sure it's really you trying to update your profile.</p>
                 <p>So we will send you a verification email after you click 'Next'.</p>
+
+                <!-- Delete account link -->
+                <p class="text-danger">If you wish to delete your account, click <a href="" class="text-danger">here</a>.</p>
             </div>
 
             <!-- Submit buttons -->

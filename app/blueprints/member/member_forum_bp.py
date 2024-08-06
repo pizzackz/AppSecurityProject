@@ -55,7 +55,6 @@ def store_refresh_token(token, current_user):
         raise
 
 
-
 def get_refresh_token(user_id):
     token = Token.query.filter_by(user_id=user_id).order_by(Token.id.desc()).first()
     return token.refresh_token if token else None

@@ -15,15 +15,12 @@ Recovery:
     Implement rate limiting for OTP requests, recovery requests
 
 Login:
-    Properly check, in all routes that sign users in, that account is locked/unlocked
-    Fix navbar buttons not linking properly
     Implement rate limiting for login requests
 
 Password forms:
     Fix password reset/ set buttons not being able to be disabled on frontend
 
 Member Profile:
-    Allow deletion of own account
     Implement log out for active account using same username after successful reset of password
 
 Admin Profile:

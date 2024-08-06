@@ -2,6 +2,7 @@ import logging
 
 from logging import Logger
 from typing import Optional
+from datetime import datetime
 
 from flask import Blueprint, Response, request, session, redirect, render_template, flash, url_for, make_response
 from flask_jwt_extended import unset_jwt_cookies
@@ -506,7 +507,7 @@ def delete_member():
             logger.info(f"Admin '{current_user.username}' successfully deleted member with member id of '{id}'")
             return redirect(url_for("member_control_bp.view_members"))
         else:
-            flash("An error occurred while deleting the account.")
+            flash("An error occurred while deleting the account.", "error")
             logger.error(f"Failed to send email to inform member '{member.username}' that their account has been deleted.")
             return redirect(url_for("member_control_bp.view_member_details"))
     

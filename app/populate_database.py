@@ -7,11 +7,9 @@ from app.models import db, Admin, Member, MenuItem, MasterKey, Log_general, Log_
 from faker import Faker
 
 
-
-
 # Set up logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("flask_app")
+logger = logging.getLogger("tastefully")
 
 
 # Generalised function to create all tables & seed database
@@ -47,9 +45,6 @@ def create_fake_master_keys(num_keys=5):
         db.session.rollback()
         print(f"Error creating fake master keys: {e}")
 
-
-# Create test data for menu items
-import os
 
 def create_menu_items():
     """Create test data for menu items."""
@@ -148,7 +143,6 @@ def create_menu_items():
         logger.info("Menu Items test data already exists.")
 
 
-
 # Create test data for admins
 def create_admins():
     """Create test data for admins."""
@@ -227,6 +221,7 @@ def create_members():
         logger.info("Members test data already exists.")
 
 
+# Create fake logs
 def create_fake_logs(model, num_logs):
     fake = Faker()
     users=User.query.all()

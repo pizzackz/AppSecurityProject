@@ -16,7 +16,7 @@ from google_auth_oauthlib.flow import Flow
 from app import db, login_manager
 from app.config.config import Config
 from app.models import User, Member, Admin, LockedAccount
-from app.forms.auth_forms import LoginForm, OtpForm, ConfirmNewMemberForm, ConfirmGoogleLinkForm
+from app.forms.auth_forms import LoginForm, OtpForm, ConfirmNewMemberForm, ConfirmGoogleLinkForm, ConfirmDeleteForm
 from app.utils import logout_if_logged_in, clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_auth_stage, check_jwt_values
 
 
@@ -94,9 +94,6 @@ def handle_ideal_case1(email: str, username: str, google_id: str, profile_pictur
 
 # Handle ideal case 2: Existing account with matching google id for user_by_email & user_by_username
 def handle_ideal_case2(user_by_email: User, username: str, email: str, profile_picture: str):
-    # Get correct endpoint based on user type
-    endpoint = "general_bp.home"
-
     # Update to use google provided profile picture
     try:
         user_by_email.profile_images.source = "google"
@@ -108,20 +105,12 @@ def handle_ideal_case2(user_by_email: User, username: str, email: str, profile_p
         logger.error(f"Error updating profile_images for user '{username}': {e}")
         return redirect(url_for('login_auth_bp.login'))
 
-    # Clear any jwt & session data
-    session.clear()
-    response = make_response(redirect(url_for(endpoint)))
-    unset_jwt_cookies(response)
-
-    # Log user in and necessary login_details updates
-    login_details = user_by_email.login_details
-    login_details.update_login()
-    login_user(user_by_email)
-
-    # Display messages
-    flash(f"Welcome {username}. You are now logged in!", "success")
-    logger.info(f"User '{username}' with email '{email}' logged in successfully through Google Sign-in.")
-
+    # Update jwt & redirect to final login
+    identity = {"username": user_by_email.username, "email": user_by_email.email}
+    claims = {"flash_message": "Email verified successfully. You are now logged in.", "log_message": f"Email verified for user - '{user_by_email.username}' and user is logged in."}
+    response = make_response(redirect(url_for("login_auth_bp.final_login")))
+    token = create_access_token(identity=identity, additional_claims=claims)
+    set_access_cookies(response, token)
     return response
 
 
@@ -217,7 +206,7 @@ def login():
         # Check if account is locked and retrieve the lock reason
         if user.account_status.is_locked:
             locked_account = LockedAccount.query.filter_by(id=user.id).first()
-            
+
             # Check if lock request has been sent
             if locked_account.unlock_request:
                 flash("Your account is currently locked. A request to unlock your account has been sent to support. Please wait for further instructions.", "info")
@@ -225,8 +214,17 @@ def login():
                 return redirect(url_for('login_auth_bp.login'))
 
             lock_reason = locked_account.locked_reason if locked_account else "Unknown reason"
-            flash(f"Your account has been locked due to the following reason: {lock_reason}. Please contact support below.", "error")
-            logger.warning(f"Login attempt for locked account with username '{username}'. Lock reason: {lock_reason}")
+            response = redirect(url_for("login_auth_bp.confirm_delete"))
+            identity = {"username": username, "email": user.email}
+            claims = {"flash_message": f"Your account has been locked due to the following reason: {lock_reason}.", "log_message": f"Login attempt for locked account with username '{username}'. Lock reason: {lock_reason}"}
+            token = create_access_token(identity=identity, additional_claims=claims)
+            set_access_cookies(response, token)
+            return response
+
+        # Check if account is google linked and has no password set
+        if user.google_id and not user.password_hash:
+            flash("Your account is linked to Google. Please Sign-in via Google.", "info")
+            logger.info(f"Attempted to manually login to account google linked '{user.username}' without password set.")
             return redirect(url_for("login_auth_bp.login"))
 
         # Check input password not match stored password
@@ -340,7 +338,7 @@ def send_otp():
 @login_auth_bp.route("/verify_email", methods=["GET", "POST"])
 @jwt_required()
 def verify_email():
-    # Redirect to signup & clear temp data in session & jwt when pressed 'back'
+    # Redirect to login & clear temp data in session & jwt when pressed 'back'
     if 'action' in request.args and request.args.get('action') == 'back':
         # Clear session and JWT data
         session.clear()
@@ -399,25 +397,11 @@ def verify_email():
             logger.warning(f"Invalid OTP attempt for user: {identity['username']}")
             return redirect(url_for("login_auth_bp.verify_email"))
 
-        # Get correct endpoint based on user type
-        user = User.query.filter_by(username=identity['username'], email=identity['email']).first()
-        endpoint = "general_bp.home"
-
-        # Clear any jwt & session data
-        session.clear()
-        response = redirect(url_for(endpoint))
-        unset_jwt_cookies(response)
-
-        # Log user in and necessary database updates
-        
-        login_details = user.login_details
-        login_details.update_login()
-        login_user(user)
-
-        # Display messages
-        flash("Email verified successfully. You are now logged in.", "success")
-        logger.info(f"Email verified for user - '{identity['username']}' and user is logged in")
-
+        # Update jwt & redirect to final login
+        claims = {"flash_message": "Email verified successfully. You are now logged in.", "log_message": f"Email verified for user - '{identity['username']}' and user is logged in."}
+        response = redirect(url_for("login_auth_bp.final_login"))
+        token = create_access_token(identity=identity, additional_claims=claims)
+        set_access_cookies(response, token)
         return response
 
     # Render the verify email template
@@ -562,21 +546,12 @@ def confirm_new_member_account():
                 logger.error(f"Failed to create new member account for {email}.")
                 return redirect(url_for('login_auth_bp.login'))
 
-            endpoint = "general_bp.home"
-
-            # Clear any jwt & session data
-            session.clear()
-            response = redirect(url_for(endpoint))
-            unset_jwt_cookies(response)
-
-            # Log user in and necessary login_details updates
-            login_details = new_user.login_details
-            login_details.update_login()
-            login_user(new_user)
-
-            # Display messages
-            flash("Member account created successfully. You are now logged in.", "success")
-            logger.info(f"Created new member account for user '{username}' with email '{email}' after successful Google Sign-in.")
+            # Update jwt & redirect to final login
+            claims = {"flash_message": "Member account created successfully. You are now logged in.", "log_message": f"Created new member account for user '{username}' with email '{email}' after successful Google Sign-in."}
+            response = redirect(url_for("login_auth_bp.final_login"))
+            token = create_access_token(identity=identity, additional_claims=claims)
+            set_access_cookies(response, token)
+            return response
         
         # Case when confirm data is not 'yes' or 'no'
         else:
@@ -644,30 +619,18 @@ def link_google():
                     user.profile_images.google_url = profile_picture
                 db.session.commit()
 
-                # Get correct endpoint based on user type
-                endpoint = "general_bp.home"
-
-                # Clear any jwt & session data
-                session.clear()
-                response = redirect(url_for(endpoint))
-                unset_jwt_cookies(response)
-
-                # Log user in and necessary login_details updates
-                login_details = user.login_details
-                login_details.update_login()
-                login_user(user)
-
-                # Display messages
-                flash("Google account linked successfully. You are now logged in.", "success")
-                logger.info(f"User '{username}' with email '{email}' logged in after linking to Google Account.")
-
+                # Update jwt & redirect to final login
+                claims = {"flash_message": "Google account linked successfully. You are now logged in.", "log_message": f"User '{username}' with email '{email}' logged in after linking to Google Account."}
+                response = redirect(url_for("login_auth_bp.final_login"))
+                token = create_access_token(identity=identity, additional_claims=claims)
+                set_access_cookies(response, token)
                 return response
 
             # User not found
             session.clear()
             response = redirect(url_for('login_auth_bp.login'))
             unset_jwt_cookies(response)
-            
+
             flash("An error occurred while linking the Google account. Please try again.", "error")
             logger.error(f"Failed to link Google account for {email}.")
             return response
@@ -675,3 +638,140 @@ def link_google():
     # Render the confirm Google account linking template
     return render_template(f"{TEMPLATE_FOLDER}/confirm_google_link.html", form=form)
 
+
+# Final login route
+@login_auth_bp.route("/final_login", methods=['GET'])
+@jwt_required()
+def final_login():
+    # Check for correct JWT identity keys
+    check = check_jwt_values(
+        required_identity_keys=['email', 'username'],
+        required_claims=['flash_message', 'log_message'],
+        fallback_endpoint='login_auth_bp.login',
+        flash_message="Invalid session. Please try again.",
+        log_message="Invalid JWT identity or claims when finalising login process."
+    )
+    if check:
+        return check
+    
+    # Retrieve data from jwt
+    identity = get_jwt_identity()
+    claims = get_jwt()
+
+    # Check if user account exists
+    user = User.query.filter_by(email=identity['email'], username=identity['username']).first()
+    if not user:
+        session.clear()
+        flash("An unexpected error occurred while trying to log you in. Please try again later.", "error")
+        logger.warning(f"Account with username '{user.username}' not found.")
+        response = redirect(url_for("login_auth_bp.login"))
+        unset_jwt_cookies(response)
+        return response
+    
+    # Check if account is locked and retrieve the lock reason
+    if user.account_status.is_locked:
+        locked_account = LockedAccount.query.filter_by(id=user.id).first()
+        
+        # Check if lock request has been sent
+        if locked_account.unlock_request:
+            flash("Your account is currently locked. A request to unlock your account has been sent to support. Please wait for further instructions.", "info")
+            logger.info(f"Attempt to login to locked account with username '{identity['username']}' after request for unlock has been sent.")
+            return redirect(url_for('login_auth_bp.login'))
+
+        lock_reason = locked_account.locked_reason if locked_account else "Unknown reason"
+        flash(f"Your account has been locked due to the following reason: {lock_reason}.", "error")
+        logger.warning(f"Login attempt for locked account with username '{identity['username']}'. Lock reason: {lock_reason}")
+        return redirect(url_for("login_auth_bp.confirm_delete"))
+
+    # Get correct endpoint based on user type
+    endpoint = "general_bp.home"
+
+    # Clear any jwt & session data
+    session.clear()
+    response = redirect(url_for(endpoint))
+    unset_jwt_cookies(response)
+
+    # Log user in and necessary database updates
+    login_details = user.login_details
+    login_details.update_login()
+    login_user(user)
+
+    # Display messages
+    flash(claims.get("flash_message"), "success")
+    logger.info(claims.get("log_message"))
+
+    return response
+
+
+# Confirm delete upon locked account login route
+@login_auth_bp.route("/confirm_delete", methods=['GET', 'POST'])
+@jwt_required()
+def confirm_delete():
+    # Check for correct JWT identity keys
+    check = check_jwt_values(
+        required_identity_keys=['email', 'username'],
+        required_claims=['flash_message', 'log_message'],
+        fallback_endpoint='login_auth_bp.login',
+        flash_message="Invalid session. Please try again.",
+        log_message="Invalid JWT identity or claims when finalising login process."
+    )
+    if check:
+        return check
+    
+    # Retrieve data from jwt
+    identity = get_jwt_identity()
+
+    # Redirect to login & clear temp data in session & jwt when pressed 'back'
+    if 'action' in request.args and request.args.get('action') == 'back':
+        # Clear session and JWT data
+        session.clear()
+        response = redirect(url_for('login_auth_bp.login'))
+        unset_jwt_cookies(response)
+        flash("Your account wasn't deleted.", "info")
+        logger.info(f"User '{identity['username']}' opted not to delete their account despite being locked.")
+        return response
+
+    # Check if user account exists
+    user = User.query.filter_by(email=identity['email'], username=identity['username']).first()
+    if not user:
+        session.clear()
+        flash("An unexpected error occurred while trying to log you in. Please try again later.", "error")
+        logger.warning(f"Account with username '{user.username}' not found.")
+        response = redirect(url_for("login_auth_bp.login"))
+        unset_jwt_cookies(response)
+        return response
+    
+    # Check whether account is not locked
+    locked_account = LockedAccount.query.get(user.id)
+    if not locked_account:
+        session.clear()
+        response = redirect(url_for("login_auth_bp.login"))
+        flash("Your account isn't currently locked.", "error")
+        logger.error(f"User '{user.username}' tried to delete their account in login even thought their account isn't locked.")
+        unset_jwt_cookies(response)
+        return response
+
+    form = ConfirmDeleteForm()
+    if request.method == "POST" and form.validate_on_submit():
+        # Retrieve input
+        reason = clean_input(form.reason.data)
+
+        # Try sending email using utility send_email function
+        email_body = f"Your account has been deleted. The reason is:\n{reason}"
+        if send_email(user.email, "Deleted Account", email_body):
+            Member.delete(user.id)
+            session.clear()
+            flash("Successfully deleted your account. We wish to see you again!", "success")
+            logger.info(f"Successfully deleted member '{user.username}'")
+        else:
+            flash("An error occurred while deleting your account. Please try again later", "error")
+            logger.error(f"Failed to send email to inform member '{user.username}' that their account has been deleted.")
+            return redirect(url_for("login_auth_bp.confirm_delete"))
+
+        # Remove any jwt cookies stored
+        response = redirect(url_for("general_bp.home"))
+        unset_jwt_cookies(response)
+
+        return response
+
+    return render_template(f"{TEMPLATE_FOLDER}/confirm_delete.html", form=form, locked_reason=locked_account.locked_reason)

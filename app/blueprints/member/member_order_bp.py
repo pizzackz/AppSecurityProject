@@ -16,34 +16,35 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from app.models import MenuItem, db
 
-# Create a logs directory if it doesn't exist
-if not os.path.exists('logs'):
-    os.makedirs('logs')
+# # Create a logs directory if it doesn't exist
+# if not os.path.exists('logs'):
+#     os.makedirs('logs')
 
-# Set up logging to a file
-log_file_path = os.path.join('app/blueprints/member/logs', 'app.log')
+# # Set up logging to a file
+# log_file_path = os.path.join('app/blueprints/member/logs', 'app.log')
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger('flask_app')
+# logging.basicConfig(level=logging.INFO)
+# logger = logging.getLogger('flask_app')
 
-# Check if handlers are already added
-if not logger.handlers:
-    file_handler = logging.FileHandler(log_file_path)
-    file_handler.setLevel(logging.INFO)
+# # Check if handlers are already added
+# if not logger.handlers:
+#     file_handler = logging.FileHandler(log_file_path)
+#     file_handler.setLevel(logging.INFO)
 
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
+#     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+#     file_handler.setFormatter(formatter)
+#     logger.addHandler(file_handler)
 
-    # Ensure the default logging to the console remains
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
+#     # Ensure the default logging to the console remains
+#     console_handler = logging.StreamHandler()
+#     console_handler.setLevel(logging.INFO)
+#     console_handler.setFormatter(formatter)
+#     logger.addHandler(console_handler)
+
+logger = logging.getLogger("tastefully")
 
 # Create blueprint
 member_order_bp = Blueprint('member_order_bp', __name__)
-
 
 
 # Define a custom filter to escape JavaScript strings
@@ -303,4 +304,4 @@ def admin_order_history(user_id):
         order.items_details = MenuItem.query.filter(MenuItem.id.in_(item_ids)).all()
         order.formatted_created_at = pendulum.instance(order.created_at).format("D MMMM YYYY, h:mm A")
 
-    return render_template('member/order/order_history.html', orders=orders)
+    return render_template('member/order/admin_order_history.html', orders=orders)
