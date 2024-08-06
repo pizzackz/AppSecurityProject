@@ -38,6 +38,7 @@ class Config:
     SESSION_COOKIE_SECURE = True  # Ensure session cookies only sent over HTTPS
     SESSION_COOKIE_SAMESITE = "Lax"  # Mitigate CSRF by limiting cross-site requests
     PERMANENT_SESSION_LIFETIME = timedelta(hours=1)  # Set session lifetime to 1 hour(s)
+    SESSION_USE_SIGNER = True  # Enable use of signer for session data
 
     # Session storage configurations
     SESSION_TYPE = "sqlalchemy"  # Store session data in database

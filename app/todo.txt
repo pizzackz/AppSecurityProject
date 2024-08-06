@@ -1,4 +1,5 @@
 General:
+    Find a way to make send_email take in html and send that
     Replace logging mechanisms to use logger provided by Jacen
     Write handlers for possible status codes (401, 404, 421, 429, 500)
     Review & enhance session handling mechanisms

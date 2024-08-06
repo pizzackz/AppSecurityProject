@@ -28,7 +28,8 @@ def home():
 # Logout route
 @general_bp.route("/logout")
 def logout():
-    # Display logout messages    
+    print(f"session id = {session.get('_id')}")
+    # Display logout messages
     flash("You have been successfully logged out!", "success")
     logger.info(f"User '{current_user.username}' has been logged out successfully.")
 

@@ -642,7 +642,7 @@ def reset_pfp(user: User, profile_image: ProfileImage, fallback_endpoint: str):
 
 
 # To retrieve the correct url for the stored profile picture
-def get_image_url(user: User):
+def get_image_url(user: User) -> str:
     default_image = 'default.png'
     image_url = url_for('static', filename=f"uploads/profile_pictures/{default_image}")
 
