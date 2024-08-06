@@ -1,7 +1,7 @@
-from flask_wtf import FlaskForm
+from flask_wtf import FlaskForm, RecaptchaField
 from flask_wtf.file import FileAllowed
-from wtforms import Form, StringField, FileField, TelField
-from wtforms.validators import Length, Optional
+from wtforms import Form, StringField, FileField, TelField, TextAreaField, PasswordField
+from wtforms.validators import Length, Optional, DataRequired
 
 from app.forms.validators import validate_phone_number, validate_postal_code, validate_file_size_limit
 from app import profile_pictures
@@ -19,3 +19,10 @@ class ProfileForm(FlaskForm):
         FileAllowed(profile_pictures, "Only image files with these extensions are allowed: (jpg, jpeg, png, gif)"),
         validate_file_size_limit(5 * 1024 * 1024)
     ])
+
+
+# Delete member account form
+class DeleteMemberForm(FlaskForm):
+    reason = TextAreaField("Reason for Deletion", validators=[DataRequired()])
+    recaptcha = RecaptchaField()
+

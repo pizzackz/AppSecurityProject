@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm, RecaptchaField
-from wtforms import Form, StringField, PasswordField, RadioField, TelField
+from wtforms import Form, StringField, PasswordField, RadioField, TelField, TextAreaField
 from wtforms.validators import DataRequired, Length, Optional, EqualTo
 
 from app.forms.validators import unique_email, unique_username, validate_email_format, validate_otp, validate_password_complexity, validate_phone_number, validate_postal_code
@@ -61,3 +61,8 @@ class ConfirmNewMemberForm(FlaskForm):
 class ConfirmGoogleLinkForm(FlaskForm):
     confirm = RadioField("Do you want to link your current tastefully account with google?", choices=[("yes", "Yes"), ("no", "No")], validators=[DataRequired()], validate_choice=True)
 
+
+# Confirm delete account form for locked accounts
+class ConfirmDeleteForm(FlaskForm):
+    reason = TextAreaField("Reason for Deletion", validators=[DataRequired()])
+    recaptcha = RecaptchaField()

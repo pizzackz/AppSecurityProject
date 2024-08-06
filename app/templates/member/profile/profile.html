@@ -50,6 +50,10 @@
                     <button type="submit" name="action" value="upload_profile_picture" class="btn btn-primary rounded-pill ml-2">Edit</button>
                 </div>
             {% endif %}
+            <!-- View own order history only for premium members -->
+            {% if user.subscription_plan == "premium" %}
+                <a href="{{ url_for('member_profile_bp.profile', action='view_order_history') }}" class="w-full text-center text-blue-500 hover:underline block">View Order History</a>
+            {% endif %}
         </div>
 
         <!-- Right side (displays account information) -->
@@ -74,7 +78,7 @@
 
                 <div id="google-link-msg">
                     {% if user.google_id %}
-                        <p>If you want to change your profile picture here, you will need to <a href="{{ url_for('admin_profile_bp.profile', action='unlink_account') }}">unlink</a> from Google.</p>
+                        <p>If you want to change your profile picture here, you will need to <a href="{{ url_for('member_profile_bp.profile', action='unlink_account') }}">unlink</a> from Google.</p>
                     {% else %}
                         <p>If you want to link to Google, choose to Sign-in with Google in the future.</p>
                     {% endif %}
@@ -128,12 +132,15 @@
                 <!-- Allow setting of password if user has no password & is google linked -->
                 <div id="extra-details" class="text-center">
                     {% if user.password_hash %}
-                        <p>Click <a href="{{ url_for('admin_profile_bp.profile', action='reset_password') }}">here</a> to change your password.</p>
+                        <p>Click <a href="{{ url_for('member_profile_bp.profile', action='reset_password') }}">here</a> to change your password.</p>
                     {% elif user.google_id %}
-                        <p>We highly recommend setting a password <a href="{{ url_for('admin_profile_bp.profile', action='set_password') }}">here</a> so you can also login through normal means without using your Google account.</p>
+                        <p>We highly recommend setting a password <a href="{{ url_for('member_profile_bp.profile', action='set_password') }}">here</a> so you can also login through normal means without using your Google account.</p>
                     {% endif %}
                     <p>To help keep your account safe, we want to make sure it's really you trying to update your profile.</p>
                     <p>So we will send you a verification email after you click 'Next'.</p>
+
+                    <!-- Delete account link -->
+                    <p class="text-danger">If you wish to delete your account, click <a href="{{ url_for('member_profile_bp.profile', action='delete') }}" class="text-danger">here</a>.</p>
                 </div>
 
                 <!-- Submit buttons -->
