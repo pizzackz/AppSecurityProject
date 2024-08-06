@@ -87,3 +87,28 @@ nav {
     height: 2.5rem;
     width: 2.5rem;
 }
+
+.form-control {
+    border-radius: 25px;
+    padding-left: 15px;
+    padding-right: 15px;
+    max-height: 40px;
+}
+
+but-login{
+    padding: 5px;
+    padding-right:15px;
+    padding-left:15px;
+    font-weight: bold;
+    transition: color 0.4s linear;
+    border:2px solid black;
+    border-radius: 25px;
+    background-color: #F7EBC9;
+    max-width: 300px;
+}
+
+.but-login:hover{
+    color: white;
+    text-decoration: underline;
+    text-decoration-thickness: 2px ;
+}

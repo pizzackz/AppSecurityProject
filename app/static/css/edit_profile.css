@@ -65,6 +65,7 @@ body {
 .form-group .col {
     padding-left: 0;
     padding-right: 1rem;
+    height: 6rem;
 }
 
 .form-group input {
@@ -129,4 +130,37 @@ body {
 
 #admin_details {
     margin-right: 4rem;
+}
+
+.but1{
+    padding: 5px;
+    padding-right:15px;
+    padding-left:15px;
+    font-weight: bold;
+    transition: color 0.4s linear;
+    border:2px solid black;
+    border-radius: 25px;
+    background-color: #F7EBC9;
+    max-width: 300px;
+
+}
+
+.but1:hover{
+    color: white;
+    text-decoration: underline;
+    text-decoration-thickness: 2px ;
+}
+
+.center1{
+    margin-left: auto;
+    margin-right: auto;
+    align-items: center;
+    justify-content: center;
+}
+
+.form-control {
+    border-radius: 25px;
+    padding-left: 15px;
+    padding-right: 15px;
+    max-height: 40px;
 }

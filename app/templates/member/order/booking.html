@@ -36,11 +36,10 @@
         <div id='calendar'></div>
     </div>
     <br>
-    <br>
 
 
-
-<form class="center1" method="POST" action="{{ url_for('member_order_bp.booking', selected_items=request.args.getlist('selected_items')) }}" id="delivery-time-form">
+<div class="container center1">
+    <form class="center1" method="POST" action="{{ url_for('member_order_bp.booking', selected_items=request.args.getlist('selected_items')) }}" id="delivery-time-form">
     {{ form.hidden_tag() }}
     <label for="delivery_time">Select a delivery time:</label>
     <select id="delivery_time"  name="delivery_time">
@@ -54,10 +53,11 @@
     <br>
     <br>
     <input type="hidden" name="delivery_date" id="delivery_date">
-    <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded" name="return" value="True">Return</button>
+    <button class="but-orange" name="return" value="True">Return</button>
     &nbsp;&nbsp;&nbsp;
-    <button type="submit" class="btn btn-primary">Confirm Booking</button>
+    <button type="submit" class="but-blue">Confirm Booking</button>
 </form>
+</div>
 <br>
 <div id="flash-messages">
     {% with messages = get_flashed_messages(with_categories=true) %}

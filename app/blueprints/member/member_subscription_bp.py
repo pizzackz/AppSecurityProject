@@ -3,7 +3,7 @@ import os
 import stripe
 
 from dotenv import load_dotenv
-from flask import Blueprint, request, redirect, url_for, render_template, jsonify, session
+from flask import Blueprint, request, redirect, url_for, render_template, jsonify, flash
 from app import db, csrf
 from sqlalchemy.sql import func
 from app.models import Payment, Member
@@ -28,9 +28,14 @@ if not stripe.api_key:
     raise ValueError("No Stripe API key provided")
 
 
-@member_subscription_bp.route('/home', methods=['POST', 'GET'])
-def home():
-    return render_template('member/transaction-processing/index.html')
+@member_subscription_bp.after_request
+def add_no_cache_headers(response):
+    response.cache_control.no_store = True
+    response.cache_control.no_cache = True
+    response.cache_control.must_revalidate = True
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 
 @member_subscription_bp.route('/plan_select', methods=['POST', 'GET'])
@@ -85,7 +90,9 @@ def success():
 
     if not stripe_session_id:
         logger.error("Missing Stripe session ID")
-        return jsonify({'error': 'Missing Stripe session ID'}), 400
+
+        flash("An error occurred while processing your request. Please try again.", "error")
+        return redirect(url_for('member_subscription_bp.plan_select', action='upgrade'))
 
     try:
         # Retrieve the Stripe session details
@@ -155,6 +162,10 @@ def success():
     except Exception as e:
         logger.error(f"Error retrieving Stripe session: {e}")
         return jsonify({'error': f'Error retrieving Stripe session: {str(e)}'}), 500
+    except:
+        logger.error(f"Invalid stripe session ID: {stripe_session_id}")
+        flash("An error occurred while processing your request. Please try again.", "error")
+        return redirect(url_for('member_subscription_bp.plan_select', action='upgrade'))
 
     return render_template('member/transaction-processing/success.html')
 
@@ -165,7 +176,7 @@ def success():
 def cancel():
     if request.method == "POST":
         if request.form.get('return') == 'True':
-            return redirect(url_for('home'))
+            return redirect(url_for('general_bp.home'))
     return render_template('member/transaction-processing/cancel.html')
 
 

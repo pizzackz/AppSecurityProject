@@ -4,10 +4,13 @@
 {% block title %}Signup{% endblock %}
 
 {% block navbar %}{% endblock %}
-
+{% include "includes/_new_navbar.html" %}
+{% block css %}
+ <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/main.css') }}">
+{% endblock %}
 {% block content %}
 {% from "includes/_form_helper.html" import render_field %}
-<h1>Signup</h1>
+<h1>Sign Up</h1>
 
 <!-- Link to guest recipes page -->
 <p>Just browsing? Our recipes are <a href="{{ url_for('signup_auth_bp.signup', action='recipe') }}">here</a></p>

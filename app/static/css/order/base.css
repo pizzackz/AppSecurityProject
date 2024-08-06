@@ -39,7 +39,7 @@ a{
 /* Base Starts Here */
 
 .container{
-    background-color: #fcd811;
+    background-color: #F7EBC9;
     border-radius: 25px;
     width: 30%;
     height: auto;
@@ -107,4 +107,62 @@ a{
     background-color: #FFF086;
 }
 
+.but-green{
+    color: white;
+    padding: 5px;
+    padding-right:15px;
+    padding-left:15px;
+    font-weight: bold;
+    transition: color 0.4s linear;
+    border:2px solid black;
+    border-radius: 25px;
+    background-color: #66D305;
+    max-width: 300px;
 
+}
+
+.but-green:hover{
+    color: black;
+    text-decoration: underline;
+    text-decoration-thickness: 2px ;
+}
+
+.but-blue{
+    color: white;
+    padding: 5px;
+    padding-right:15px;
+    padding-left:15px;
+    font-weight: bold;
+    transition: color 0.4s linear;
+    border:2px solid black;
+    border-radius: 25px;
+    background-color: #057AFF;
+    max-width: 300px;
+
+}
+
+.but-blue:hover{
+    color: black;
+    text-decoration: underline;
+    text-decoration-thickness: 2px ;
+}
+
+.but-orange{
+    color: white;
+    padding: 5px;
+    padding-right:15px;
+    padding-left:15px;
+    font-weight: bold;
+    transition: color 0.4s linear;
+    border:2px solid black;
+    border-radius: 25px;
+    background-color: #E1A13C;
+    max-width: 300px;
+
+}
+
+.but-orange:hover{
+    color: black;
+    text-decoration: underline;
+    text-decoration-thickness: 2px ;
+}

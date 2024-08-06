@@ -3,10 +3,11 @@
 
 {% block title %}Login{% endblock %}
 {% from "includes/_form_helper.html" import render_field %}
-
+{% include "includes/_new_navbar.html" %}
 {% block navbar %}{% endblock %}
 
 {% block content %}
+
 <h1>Sign In</h1>
 
 <!-- Link to guest recipes page -->
@@ -37,7 +38,7 @@
 
     <!-- Submit buttons (Create Account, Signin) -->
     <div>
-        <a href="{{ url_for('signup_auth_bp.signup') }}" class="btn btn-light btn-outline-primary rounded-pill">Create Account</a>
+        <a href="{{ url_for('signup_auth_bp.signup') }}" class="but-login">Create Account</a>
         <button type="submit" class="btn btn-primary rounded-pill submit-disabler">Sign in</button>
     </div>
 </form>

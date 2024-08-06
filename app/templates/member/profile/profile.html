@@ -50,9 +50,13 @@
                     <button type="submit" name="action" value="upload_profile_picture" class="btn btn-primary rounded-pill ml-2">Edit</button>
                 </div>
             {% endif %}
+            <br>
             <!-- View own order history only for premium members -->
             {% if user.subscription_plan == "premium" %}
-                <a href="{{ url_for('member_profile_bp.profile', action='view_order_history') }}" class="w-full text-center text-blue-500 hover:underline block">View Order History</a>
+
+                <a href="{{ url_for('member_profile_bp.profile', action='view_order_history') }}" class="center1">
+                    <div class="but1">View Order History</div>
+                </a>
             {% endif %}
         </div>
 

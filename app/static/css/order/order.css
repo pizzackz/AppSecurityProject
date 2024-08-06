@@ -17,5 +17,20 @@
     max-height: 100vh; /* Adjust the height as needed */
 }
 
+.form-control{
+    border-radius: 50px;
+    padding-left: 15px;
+    padding-right: 15px;
+    max-height: 80px;
+}
 
+.form-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
 
+.form-label {
+    margin-top: 0.5rem;
+    margin-left: 0.5rem; /* Adjust as needed */
+}
