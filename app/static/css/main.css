@@ -95,20 +95,22 @@ nav {
     max-height: 40px;
 }
 
-but-login{
-    padding: 5px;
+.nav-link{
+    color: black;
+    font-size: 17px;
     padding-right:15px;
-    padding-left:15px;
-    font-weight: bold;
+    border-radius: 3px;
     transition: color 0.4s linear;
-    border:2px solid black;
-    border-radius: 25px;
-    background-color: #F7EBC9;
-    max-width: 300px;
-}
 
-.but-login:hover{
-    color: white;
+}
+.nav-link:hover{
+    color: grey;
     text-decoration: underline;
     text-decoration-thickness: 2px ;
 }
+
+.custom-dropdown-menu {
+    right: 10;
+    transform: translateX(-40%); /* Fine-tune this value to position correctly */
+}
+

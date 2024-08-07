@@ -1,45 +1,57 @@
 {% extends "base.html" %} <!-- Used to be customer_base.html -->
-{% block title %}Feedback{% endblock %}
+{% block title %}tastefully | Feedback{% endblock %}
 
 {% block css %}
   {{ super() }}
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/feedback/feedback_create.css') }}">
 {% endblock %}
 
 {% block scripts %}
   {{ super() }}
     <script>
-    var slider = document.getElementById("slider");
-    var output = document.getElementById("slider-value");
-    output.innerHTML = slider.value;
+        function updateSliderValue(value) {
+            document.getElementById('slider-value').textContent = value;
+        }
 
-    slider.oninput = function() {
-        output.innerHTML = this.value;
-    }
+        // Initialize slider value
+        document.addEventListener('DOMContentLoaded', (event) => {
+            document.getElementById('slider').value = 3; // Default value
+            document.getElementById('slider-value').textContent = 3;
+        });
     </script>
 {% endblock %}
 
 {% block content %}
+<div class="container">
   <form method="POST" action="">
     {{ form.hidden_tag() }}
-      <h3 class="card-title">Feedback</h3>
+      <h1 class="card-title">Feedback</h1>
 
             <div class="form-group">
                 {{ form.name.label }}
                 {{ form.name(class="form-control") }}
             </div>
+             <br>
             <div class="form-group">
                 {{ form.category.label }}
                 {{ form.category(class="form-control") }}
             </div>
+            <br>
             <div class="form-group">
                 {{ form.rating.label }}
-                <input type="range" id="slider" name="rating" class="form-control-range" min="1" max="5" step="0.5">
-                <span id="slider-value"></span>
+                <div class="slider-container center1">
+                    <input type="range" id="slider" name="rating" class="form-control-range custom-slider" min="1" max="5" step="0.5" oninput="updateSliderValue(this.value)">
+                    <span id="slider-value">3</span>
+                </div>
             </div>
+            <br>
             <div class="form-group">
                 {{ form.comment.label }}
                 {{ form.comment(class="form-control") }}
             </div>
-        <button type="submit" class="btn btn-primary">Submit</button>
+            <br>
+             <div class="center1"><button type="submit" class="but-blue">Submit</button></div>
+
     </form>
+</div>
 {% endblock %}

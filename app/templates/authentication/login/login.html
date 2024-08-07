@@ -1,46 +1,56 @@
 <!DOCTYPE html>
 {% extends "base.html" %}
 
-{% block title %}Login{% endblock %}
+{% block title %}tastefully | Login{% endblock %}
+
 {% from "includes/_form_helper.html" import render_field %}
 {% include "includes/_new_navbar.html" %}
+
 {% block navbar %}{% endblock %}
 
+{% block css %}
+{{ super() }}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/login.css') }}">
+{% endblock %}
+
 {% block content %}
+<div class="login-container">
+    <h1>Sign In</h1>
 
-<h1>Sign In</h1>
+    <!-- Link to guest recipes page -->
+    <p>Just browsing? Our recipes are <a href="">here</a></p>
 
-<!-- Link to guest recipes page -->
-<p>Just browsing? Our recipes are <a href="">here</a></p>
+    <!-- Google Signin button to use Google Signin API -->
+    <a href="{{ url_for('login_auth_bp.google_login') }}" class="btn btn-light">Sign in with Google</a>
 
-<!-- Google Signin button to use Google Signin API -->
-<a href="{{ url_for('login_auth_bp.google_login') }}" class="btn btn-light">Sign in with Google</a>
+       <form action="" method="post" id="initial-login-form">
+        {{ form.hidden_tag() }}
+        <div>
+            {{ render_field(form.username, class="form-control", placeholder="Enter your username") }}
+        </div>
 
-<form action="" method="post" id="initial-login-form">
-    {{ form.hidden_tag() }}
-    <div>
-        {{ render_field(form.username, class="form-control", placeholder="Enter your username") }}
-    </div>
+        <div>
+            {{ render_field(form.password, class="form-control", placeholder="Enter your password") }}
+        </div>
 
-    <div>
-        {{ render_field(form.password, class="form-control", placeholder="Enter your password") }}
-    </div>
+        <br>
+        <div>
+            <!-- Account recovery (get username or set new password) -->
+            <a href="{{ url_for('recovery_auth_bp.recovery') }}">Forgot Username or Password?</a>
 
-    <br>
-    <!-- Account recovery (get username or set new password) -->
-    <a href="{{ url_for('recovery_auth_bp.recovery') }}">Forgot Username or Password?</a>
+            <!-- Recaptcha -->
+            {{ render_field(form.recaptcha) }}
+        </div>
 
-    <div>
-        {{ render_field(form.recaptcha) }}
-    </div>
+        <br>
+        <div class="center1">
+            <button type="submit" class="but-login ">Sign in</button>
+        </div>
+        <br>
+        <div> New user?  <a href="{{ url_for('signup_auth_bp.signup') }}" class="login"> Sign Up </a></div>
 
-    <br>
+    </form>
+</div>
 
-    <!-- Submit buttons (Create Account, Signin) -->
-    <div>
-        <a href="{{ url_for('signup_auth_bp.signup') }}" class="but-login">Create Account</a>
-        <button type="submit" class="btn btn-primary rounded-pill submit-disabler">Sign in</button>
-    </div>
-</form>
 
 {% endblock %}

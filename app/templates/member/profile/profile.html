@@ -46,8 +46,8 @@
                 <div id="image" class="text-center mt-4">
                     {{ render_field(form.profile_picture, class="form-control") }}
                     <br>
-                    <button type="submit" name="action" value="reset_profile_picture" class="btn btn-danger rounded-pill mr-2">Reset</button>
-                    <button type="submit" name="action" value="upload_profile_picture" class="btn btn-primary rounded-pill ml-2">Edit</button>
+                    <button type="submit" name="action" value="reset_profile_picture" class="but-red-mini">Reset</button>
+                    <button type="submit" name="action" value="upload_profile_picture" class="but-blue-mini">Update</button>
                 </div>
             {% endif %}
             <br>
@@ -55,7 +55,7 @@
             {% if user.subscription_plan == "premium" %}
 
                 <a href="{{ url_for('member_profile_bp.profile', action='view_order_history') }}" class="center1">
-                    <div class="but1">View Order History</div>
+                    <div class="but-blue">View Order History</div>
                 </a>
             {% endif %}
         </div>
@@ -70,7 +70,7 @@
                     {% if user.subscription_plan == 'premium' %}
                     <div id="plan-info">
                         <p>Current Plan: <u>Premium</u> &lpar;<span id="subscription-days-left"></span>d left&rpar;</p>
-                        <button type="submit" name="action" value="renew_plan" class="btn btn-warning rounded-pill">Renew!</button>
+                        <button type="submit" name="action" value="renew_plan" class="but-orange-mini">Renew!</button>
                     </div>
                     {% elif user.subscription_plan == 'standard' %}
                     <div id="plan-info">
@@ -149,8 +149,8 @@
 
                 <!-- Submit buttons -->
                 <div class="text-center mt-4">
-                    <button type="submit" class="btn btn-light btn-outline-primary rounded-pill mr-2" name="action" value="revert">Revert</button>
-                    <button type="submit" class="btn btn-primary rounded-pill ml-2" name="action" value="next">Next</button>
+                    <button type="submit" class="but-blue-mini-alt" name="action" value="revert">Revert</button>
+                    <button type="submit" class="but-blue-mini" name="action" value="next">Next</button>
                 </div>
             </div>
         </div>

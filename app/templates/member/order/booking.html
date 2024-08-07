@@ -32,33 +32,31 @@
 <br>
 
     <div class="bigger-container center1">
-        <h3 class="center1 top">Schedule Delivery</h3>
+        <h1 class="h1-line" style="text-align:left;">Schedule Delivery</h1>
+        <br>
         <div id='calendar'></div>
+        <br>
+        <form class="center1" method="POST" action="{{ url_for('member_order_bp.booking', selected_items=request.args.getlist('selected_items')) }}" id="delivery-time-form">
+            {{ form.hidden_tag() }}
+            <label for="delivery_time">Select a delivery time:</label>
+            <select id="delivery_time"  name="delivery_time">
+              <option value="11:00">11:00</option>
+              <option value="12:00">12:00</option>
+              <option value="13:00">13:00</option>
+              <option value="16:00">16:00</option>
+              <option value="17:00">17:00</option>
+              <option value="18:00">18:00</option>
+            </select>
+            <br>
+            <br>
+            <input type="hidden" name="delivery_date" id="delivery_date">
+            <button class="but-orange" name="return" value="True">Return</button>
+            &nbsp;&nbsp;&nbsp;
+            <button type="submit" class="but-blue">Confirm Booking</button>
+        </form>
     </div>
     <br>
 
-
-<div class="container center1">
-    <form class="center1" method="POST" action="{{ url_for('member_order_bp.booking', selected_items=request.args.getlist('selected_items')) }}" id="delivery-time-form">
-    {{ form.hidden_tag() }}
-    <label for="delivery_time">Select a delivery time:</label>
-    <select id="delivery_time"  name="delivery_time">
-      <option value="11:00">11:00</option>
-      <option value="12:00">12:00</option>
-      <option value="13:00">13:00</option>
-      <option value="16:00">16:00</option>
-      <option value="17:00">17:00</option>
-      <option value="18:00">18:00</option>
-    </select>
-    <br>
-    <br>
-    <input type="hidden" name="delivery_date" id="delivery_date">
-    <button class="but-orange" name="return" value="True">Return</button>
-    &nbsp;&nbsp;&nbsp;
-    <button type="submit" class="but-blue">Confirm Booking</button>
-</form>
-</div>
-<br>
 <div id="flash-messages">
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}

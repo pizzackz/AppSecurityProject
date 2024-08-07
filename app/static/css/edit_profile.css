@@ -132,21 +132,107 @@ body {
     margin-right: 4rem;
 }
 
-.but1{
+/*Button Styling*/
+.but-blue{
+    color: white;
     padding: 5px;
     padding-right:15px;
     padding-left:15px;
     font-weight: bold;
     transition: color 0.4s linear;
-    border:2px solid black;
+    border:2px solid #839CF3;
     border-radius: 25px;
-    background-color: #F7EBC9;
-    max-width: 300px;
+    background-color: #057AFF;
+    min-width: 300px;
 
 }
 
-.but1:hover{
+.but-blue:hover{
+    background-color: white;
+    color: #839CF3;
+    text-decoration: underline;
+    text-decoration-thickness: 2px ;
+}
+
+
+.but-blue-mini{
     color: white;
+    padding: 5px;
+    padding-right:15px;
+    padding-left:15px;
+    font-weight: bold;
+    transition: color 0.4s linear;
+    border:2px solid #839CF3;
+    border-radius: 25px;
+    background-color: #057AFF;
+    max-width: 300px;
+}
+
+.but-blue-mini:hover{
+    background-color: white;
+    color: #839CF3;
+    text-decoration: underline;
+    text-decoration-thickness: 2px ;
+}
+
+
+.but-blue-mini-alt{
+    background-color: white;
+    color: #839CF3;
+    text-decoration: none;
+    padding: 5px;
+    padding-right:15px;
+    padding-left:15px;
+    font-weight: bold;
+    transition: color 0.4s linear;
+    border:2px solid #839CF3;
+    border-radius: 25px;
+    max-width: 300px;
+}
+
+.but-blue-mini-alt:hover{
+    color: white;
+    background-color: #057AFF;
+    text-decoration: underline;
+    text-decoration-thickness: 2px ;
+}
+
+.but-orange-mini{
+    color: white;
+    padding: 5px;
+    padding-right:15px;
+    padding-left:15px;
+    font-weight: bold;
+    transition: color 0.4s linear;
+    border:2px solid #FFF7D7;
+    border-radius: 25px;
+    background-color: #D4B759;
+    max-width: 300px;
+}
+
+.but-orange-mini:hover{
+    background-color: white;
+    color: #D4B759;
+    text-decoration: underline;
+    text-decoration-thickness: 2px ;
+}
+
+.but-red-mini{
+    color: white;
+    padding: 5px;
+    padding-right:15px;
+    padding-left:15px;
+    font-weight: bold;
+    transition: color 0.4s linear;
+    border:2px solid #FFF7D7;
+    border-radius: 25px;
+    background-color: #CC484E;
+    max-width: 300px;
+}
+
+.but-red-mini:hover{
+    background-color: white;
+    color: #CC484E;
     text-decoration: underline;
     text-decoration-thickness: 2px ;
 }

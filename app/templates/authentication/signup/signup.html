@@ -1,24 +1,28 @@
 <!DOCTYPE html>
 {% extends "base.html" %}
 
-{% block title %}Signup{% endblock %}
+{% block title %}tastefully | Sign Up{% endblock %}
 
 {% block navbar %}{% endblock %}
 {% include "includes/_new_navbar.html" %}
+
 {% block css %}
- <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/main.css') }}">
+{{ super() }}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/login.css') }}">
 {% endblock %}
+
 {% block content %}
 {% from "includes/_form_helper.html" import render_field %}
-<h1>Sign Up</h1>
+<div class="login-container">
+    <h1>Sign Up</h1>
 
-<!-- Link to guest recipes page -->
-<p>Just browsing? Our recipes are <a href="{{ url_for('signup_auth_bp.signup', action='recipe') }}">here</a></p>
+    <!-- Link to guest recipes page -->
+    <p>Just browsing? Our recipes are <a href="{{ url_for('signup_auth_bp.signup', action='recipe') }}">here</a></p>
 
-<!-- Google Signin button to use Google Signin API -->
-<a href="{{ url_for('login_auth_bp.google_login') }}" class="btn btn-light">Sign in with Google</a>
+    <!-- Google Signin button to use Google Signin API -->
+    <a href="{{ url_for('login_auth_bp.google_login') }}" class="btn btn-light">Sign up with Google</a>
 
-<form action="" method="post" id="initial-signup-form">
+    <form action="" method="post" id="initial-signup-form">
     {{ form.hidden_tag() }}
     <div>
         {{ render_field(form.username, class="form-control", placeholder="Enter your username") }}
@@ -35,10 +39,11 @@
 
     <!-- Submit buttons (Sign in, Next) -->
      <!-- Replace link to signup to some action -->
-    <div>
-        <a href="{{ url_for('login_auth_bp.login') }}" class="btn btn-light btn-outline-primary rounded-pill">Sign In</a>
-        <button type="submit" class="btn btn-primary rounded-pill submit-disabler">Next</button>
-    </div>
-</form>
-
+        <div class="center1">
+            <button type="submit" class="but-login ">Sign Up</button>
+        </div>
+        <br>
+         <div> Already have an account?  <a href="{{ url_for('login_auth_bp.login') }}" class="login"> Sign In</a></div>
+    </form>
+</div>
 {% endblock %}

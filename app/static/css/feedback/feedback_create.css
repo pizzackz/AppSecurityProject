@@ -52,3 +52,124 @@ body {
 *{ 
     font-family: Inter-SemiBold;
 }
+
+/*Additional CSS Changes */
+
+.container{
+    margin-top: 5%;
+    margin-bottom: 5%;
+    padding-left: 5%;
+    padding-right: 5%;
+    padding-top: 2%;
+    padding-bottom: 2%;
+    border-radius: 25px;
+    border: 2px solid black;
+    max-width: 700px;
+    margin-right: auto;
+    margin-left: auto;
+    background-color: #E5E5E5;
+}
+
+.form-control {
+    border-radius: 25px;
+    padding-left: 15px;
+    padding-right: 15px;
+    max-height: 150px;
+    max-width: 500px;
+}
+
+.center1{
+    margin-left: auto;
+    margin-right: auto;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Slider changes */
+.slider-container {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.custom-slider {
+    width: 80%;
+    margin-right: 10px;
+    -webkit-appearance: none; /* Remove default appearance */
+    appearance: none;
+    height: 10px;
+    background: #ddd;
+    outline: none;
+    opacity: 0.7;
+    transition: opacity .15s ease-in-out;
+    background-color: rgb(45, 56, 68);
+}
+
+.custom-slider:hover {
+    opacity: 1;
+}
+
+.custom-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #0072ff;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+.custom-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: #0072ff;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+#slider-value {
+    font-weight: bold;
+    font-size: 1.2em;
+    color: #0072ff;
+}
+
+
+/* Button styles */
+
+.but-blue{
+    color: white;
+    padding: 5px;
+    padding-right:15px;
+    padding-left:15px;
+    font-weight: bold;
+    transition: color 0.4s linear;
+    border:2px solid #839CF3;
+    border-radius: 25px;
+    background-color: #057AFF;
+    min-width: 300px;
+}
+
+.but-blue:hover{
+    background-color: white;
+    color: #839CF3;
+    text-decoration: underline;
+    text-decoration-thickness: 2px ;
+}
+
+/*Colored Underline */
+
+h1 {
+    position: relative;
+}
+
+h1::before{
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 3px;
+    width: 30px;
+    background:linear-gradient(to bottom right,#00c6ff,#0072ff);
+
+}

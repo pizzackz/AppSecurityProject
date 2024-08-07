@@ -5,26 +5,34 @@
 
 {% block navbar %}{% endblock %}
 
+{% block css %}
+{{ super() }}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/login.css') }}">
+{% endblock %}
+
 {% block content %}
 {% from "includes/_form_helper.html" import render_field %}
+<div class="login-container">
+    <h1>Verify Email</h1>
+    <!-- Message with resend otp below -->
+    <p>We have sent you a verification email, please verify your email address.</p>
 
-<h1>Verify Email</h1>
-<!-- Message with resend otp below -->
-<p>We have sent you a verification email, please verify your email address.</p>
 
-<a href="{{ url_for('login_auth_bp.send_otp', resend=True) }}">Resend it</a>
 
-<form action="" method="post" id="verify-otp-form">
-    {{ form.hidden_tag() }}
-    <div>
-        {{ render_field(form.otp, class="form-control", placeholder="Enter the code") }}
-    </div>
-
-    <!-- Submit buttons (Back, Next) -->
-    <div>
-        <a href="{{ url_for('login_auth_bp.verify_email', action='back') }}" class="btn btn-light btn-outline-primary rounded-pill">Back</a>
-        <button type="submit" name="action" value="next" class="btn btn-primary rounded-pill submit-disabler">Next</button>
-    </div>
-</form>
+    <form action="" method="post" id="verify-otp-form">
+        {{ form.hidden_tag() }}
+        <div>
+            {{ render_field(form.otp, class="form-control", placeholder="Enter the code") }}
+        </div>
+        <br>
+        <!-- Submit buttons (Back, Next) -->
+        <div>
+            <a href="{{ url_for('login_auth_bp.verify_email', action='back') }}" class="but-login-mini-alt">Back</a>
+            <button type="submit" name="action" value="next" class="but-login-mini">Next</button>
+        </div>
+        <br>
+        <div><a href="{{ url_for('login_auth_bp.send_otp', resend=True) }}">Resend</a></div>
+    </form>
+</div>
 
 {% endblock %}

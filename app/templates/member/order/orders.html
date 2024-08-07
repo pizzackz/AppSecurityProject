@@ -32,7 +32,7 @@
 <br>
 
     <div class="bigger-container center1">
-        <h3 class="center1">Delivery Information</h3>
+        <h1 style="text-align:left;" class="h1-line">Delivery Information</h1>
         <form action="" method="post">
             {{ form.hidden_tag() }}
             <div class="form-group">
@@ -54,15 +54,18 @@
             <div class="form-group center1">
                 {{ form.recaptcha.label(class="form-label") }} {{ form.recaptcha() }}
             </div>
-    </div>
-            <br>
-            <br>
             <div class="center1">
+            <br>
+            <br>
                 <!-- Return -->
                 <a href="menu"><button type="button" class="but-orange">Return</button></a>
                 <button type="submit" class="but-blue">Confirm</button>
             </div>
         </form>
+    </div>
+
+
+
         <br>
 
         <div id="flash-messages">

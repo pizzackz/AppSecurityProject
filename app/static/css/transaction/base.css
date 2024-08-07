@@ -107,6 +107,7 @@ a{
     background-color: #FFF086;
 }
 
+/* Button Styling*/
 .but-green{
     color: white;
     padding: 5px;
@@ -114,7 +115,7 @@ a{
     padding-left:15px;
     font-weight: bold;
     transition: color 0.4s linear;
-    border:2px solid black;
+    border:2px solid #FFF7D7;
     border-radius: 25px;
     background-color: #66D305;
     max-width: 300px;
@@ -122,30 +123,12 @@ a{
 }
 
 .but-green:hover{
-    color: black;
+    color: #66D305;
+    background-color: white;
     text-decoration: underline;
     text-decoration-thickness: 2px ;
 }
 
-.but-blue{
-    color: white;
-    padding: 5px;
-    padding-right:15px;
-    padding-left:15px;
-    font-weight: bold;
-    transition: color 0.4s linear;
-    border:2px solid black;
-    border-radius: 25px;
-    background-color: #057AFF;
-    max-width: 300px;
-
-}
-
-.but-blue:hover{
-    color: black;
-    text-decoration: underline;
-    text-decoration-thickness: 2px ;
-}
 
 .but-orange{
     color: white;
@@ -154,7 +137,7 @@ a{
     padding-left:15px;
     font-weight: bold;
     transition: color 0.4s linear;
-    border:2px solid black;
+    border:2px solid #FFF7D7;
     border-radius: 25px;
     background-color: #E1A13C;
     max-width: 300px;
@@ -162,7 +145,8 @@ a{
 }
 
 .but-orange:hover{
-    color: black;
+    color: #E1A13C;
+    background-color: white;
     text-decoration: underline;
     text-decoration-thickness: 2px ;
 }

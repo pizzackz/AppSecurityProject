@@ -37,19 +37,14 @@
                </a>
             <br>
             <br>
-            <ul class="text-left list-disc list-inside">
-               <li>Get Food Bundles every month! </li>
-                <li>Get access to Premium Recipes!</li>
-                <li>Get early access to new recipes!</li>
-            </ul>
+            - Get Food Bundles every month!<br>
+            - Get access to Premium Recipes!<br>
+            - Get early access to new recipes!<br><br>
         </div>
 
 </div>
-    <!-- Return Button -->
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="text-center mt-4 center1">
-           <a href={{url_for('general_bp.home')}}> <button id="checkout-button" class="but-orange" name="return" value="True">Return</button></a>
-        </div>
+<br>
+
 
     {% endblock %}
 

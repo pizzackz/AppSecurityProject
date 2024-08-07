@@ -5,30 +5,36 @@
 
 {% block navbar %}{% endblock %}
 
+{% block css %}
+{{ super() }}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/login.css') }}">
+{% endblock %}
+
 {% block content %}
 {% from "includes/_form_helper.html" import render_field %}
+<div class="login-container">
+    <h1>Additional Information</h1>
+    <!-- Short description -->
+    <p>Please provide additional information to complete your profile.</p>
 
-<h1>Additional Information</h1>
-<!-- Short description -->
-<p>Please provide additional information to complete your profile.</p>
-
-<form action="" method="post" id="additional-info-form">
-    {{ form.hidden_tag() }}
-    <div>
-        {{ render_field(form.phone_number, class="form-control") }}
-    </div>
-    <div>
-        {{ render_field(form.address, class="form-control") }}
-    </div>
-    <div>
-        {{ render_field(form.postal_code, class="form-control") }}
-    </div>
-
-    <!-- Submit buttons (Skip, Complete) -->
-    <div>
-        <button type="submit" name="action" value="skip" class="btn btn-light btn-outline-primary rounded-pill">Skip</button>
-        <button type="submit" name="action" value="complete" class="btn btn-primary rounded-pill submit-disabler optional-submit">Complete</button>
-    </div>
-</form>
+    <form action="" method="post" id="additional-info-form">
+        {{ form.hidden_tag() }}
+        <div>
+            {{ render_field(form.phone_number, class="form-control") }}
+        </div>
+        <div>
+            {{ render_field(form.address, class="form-control") }}
+        </div>
+        <div>
+            {{ render_field(form.postal_code, class="form-control") }}
+        </div>
+        <br>
+        <!-- Submit buttons (Skip, Complete) -->
+        <div>
+            <button type="submit" name="action" value="skip" class="but-login-mini-alt">Skip</button>
+            <button type="submit" name="action" value="complete" class="but-login-mini">Complete</button>
+        </div>
+    </form>
+</div>
 
 {% endblock %}
