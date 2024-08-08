@@ -11,8 +11,6 @@
 <script nonce="{{ nonce }}" src="{{ url_for('static', filename='js/recipe/recipe_database_delete.js' ) }}"></script>
 {% endblock %}
 
-{% block navbar %} {% endblock %}
-
 {% block content %}
 
 <!-- Modal -->
@@ -82,6 +80,22 @@
             <img src="{{ url_for('static', filename='images_recipe/' + recipe.picture) }}" class="card-img-top" alt="{{ recipe.name }}">
             <div class="card-body">
               <h6 class="premium">PREMIUM</h6>
+              <h5 class="card-title">{{ recipe.name }}</h5>
+              <p class="card-text">
+                {{ recipe.ingredients }}
+              </p>
+              <a href="{{ url_for('admin_recipe_bp.view_deleted_recipe', recipe_id=recipe.id) }}" class="btn btn-success m-2">View Recipe</a>
+              <a href="{{ url_for('admin_recipe_bp.restore_recipe', recipe_id=recipe.id) }}" class="btn btn-primary m-2">Restore Recipe</a>
+              <a nonce="{{ nonce }}" id="delete_{{ recipe.id }}" class="btn btn-danger m-2 delete-button" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
+              <p class="card-text user">By {{ recipe.user_created }}</p>
+            </div>
+          </div>
+        {% endif %}
+      {% if recipe.type == 'Private' %}
+          <div class="card m-2 recipe_card">
+            <img src="{{ url_for('static', filename='images_recipe/' + recipe.picture) }}" class="card-img-top" alt="{{ recipe.name }}">
+            <div class="card-body">
+              <h6 class="premium">PRIVATE</h6>
               <h5 class="card-title">{{ recipe.name }}</h5>
               <p class="card-text">
                 {{ recipe.ingredients }}

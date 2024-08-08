@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}tastefully | Customise Recipe{% endblock %}
+
+{% block css %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/recipe/recipe_ai_creator.css') }}">
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script nonce="{{ nonce }}" src="{{ url_for('static', filename='js/recipe/recipe_customise.js' ) }}"></script>
+{% endblock %}
+
+{% block content %}
+{% from "includes/_form_helper.html" import render_field, render_field_picture %}
+
+<div class="container">
+  <h1 class="mb-4" id="page_title">Customise Recipe</h1>
+  <h4 id="page_description">Customise Existing Recipes powered by Mr T.</h4>
+  <hr>
+  <h2 id="generate_recipe">Currently Customising: {{ recipe.name }}</h2>
+  <div class="row">
+    <div class="col-md">
+      <form id="form">
+        {{ form.csrf_token }}
+        {{ form.hidden_tag() }}
+            {{ render_field(form.request, class="form-control", id="request", placeholder="Make my dish vegetarian friendly") }}
+        <button type="button" class="btn btn-primary" id="generate_button">Generate</button>
+        <button type="button" class="btn btn-warning" id="reset_button">Reset Output</button>
+      </form>
+    </div>
+    <div class="col-md">
+      <p class="output-title">Recipe</p>
+      <div id="output">
+        Recipe Name: {{ recipe.name }}<br>
+        Ingredients: {{ recipe.ingredients }}<br>
+        Calories: {{ recipe.calories }}<br>
+        Prep time: {{ recipe.prep_time }}<br>
+        Instructions: <br>
+        {{ recipe.instructions | safe }}
+      </div>
+    </div>
+  </div>
+
+
+</div>
+
+{% endblock %}

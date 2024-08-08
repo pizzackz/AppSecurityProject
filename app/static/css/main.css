@@ -92,7 +92,7 @@ nav {
     border-radius: 25px;
     padding-left: 15px;
     padding-right: 15px;
-    max-height: 40px;
+    height: 40px;
 }
 
 .nav-link{

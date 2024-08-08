@@ -71,6 +71,7 @@
             {{ recipe.ingredients }}
           </p>
           <a href="{{ url_for('member_recipe_bp.view_recipe', recipe_id=recipe.id) }}" class="btn btn-success m-2">View Recipe</a>
+          <a href="/customise_recipe/{{ recipe.id }}" class="btn btn-info m-2">Customise Recipe</a>
           {% if recipe.user_created_id == user.id %}
             <a href="{{ url_for('member_recipe_bp.update_recipe', recipe_id=recipe.id) }}" class="btn btn-primary m-2">Edit Recipe</a>
             <a nonce="{{ nonce }}" id="delete_{{ recipe.id }}" class="btn btn-danger m-2 delete_button" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
@@ -90,6 +91,7 @@
           </p>
           {% if current_user.subscription_plan == 'premium' %}
             <a href="{{ url_for('member_recipe_bp.view_recipe', recipe_id=recipe.id) }}" class="btn btn-success m-2">View Recipe</a>
+            <a href="/customise_recipe/{{ recipe.id }}" class="btn btn-info m-2">Customise Recipe</a>
           {% else %}
             <a href="{{ url_for('member_subscription_bp.plan_select') }}" class="btn btn-warning m-2">Upgrade to Premium</a>
           {% endif %}
@@ -107,6 +109,7 @@
             {{ recipe.ingredients }}
           </p>
           <a href="{{ url_for('member_recipe_bp.view_recipe', recipe_id=recipe.id) }}" class="btn btn-success m-2">View Recipe</a>
+          <a href="{{ url_for('member_recipe_bp.customise_recipe', recipe_id=recipe.id }}" class="btn btn-info m-2">Customise Recipe</a>
           <a href="{{ url_for('member_recipe_bp.update_recipe', recipe_id=recipe.id) }}" class="btn btn-primary m-2">Edit Recipe</a>
           <a nonce="{{ nonce }}" id="delete_{{ recipe.id }}" class="btn btn-danger m-2 delete-button" data-bs-toggle="modal" data-bs-target="#exampleModal">Delete</a>
           <p class="card-text user">By {{ recipe.user_created }}</p>

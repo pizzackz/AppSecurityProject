@@ -42,6 +42,8 @@ class AICreateRecipeForm(FlaskForm):
     difficulty = SelectField('Difficulty', choices=[("easy", "Easy"), ("medium", "Medium"), ("hard", "Hard"), ('any', 'Any')], render_kw={"class": "form-control m-2"})
     remarks = TextAreaField('Remarks', render_kw={"class": "form-control m-2"})
 
+class CustomiseRecipeForm(FlaskForm):
+    request = TextAreaField('Request', validators=[Length(max=100)], render_kw={"class": "form-control"})
     """
     cuisine = request.json.get('cuisine')
     ingredients = request.json.get('ingredients')
@@ -51,7 +53,6 @@ class AICreateRecipeForm(FlaskForm):
     difficulty = request.json.get('difficulty')
     remarks = request.json.get('remarks')
     """
-
 
 class CreateFeedback(FlaskForm):
     name = StringField('Your Name', [validators.Length(min=1, max=150), validators.DataRequired(), Regexp(r'^[a-zA-Z]+$', message="Name must contain only letters.")])

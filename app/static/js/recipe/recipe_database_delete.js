@@ -102,8 +102,10 @@ document.addEventListener("DOMContentLoaded", function() {
       var recipeName = card.getAttribute('data-recipe-name');
       var recipeId = card.getAttribute('data-recipe-id');
       confirmdelete(recipeName, recipeId);
-    }
+        }
+    })
 })
+
 
 // Ingredient input autocomplete
 var ingredient_input = document.getElementById('ingredients');
@@ -230,11 +232,11 @@ function overlayoff() {
     overlay.style.display = 'none';
 }
 
-  function confirmdelete(content, id) {
+function confirmdelete(content, id) {
     console.log(content);
     document.getElementById('modal-body').innerHTML = 'Are you sure you want to remove ' + content + '?';
     document.getElementById('delete').onclick = function () {
       window.location.href = "delete_recipe_forever/" + id;
     }
-  }
+}
 

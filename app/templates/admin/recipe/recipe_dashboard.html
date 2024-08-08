@@ -13,6 +13,20 @@
 {% endblock %}
 
 {% block content %}
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body text-center" id="modal-body">
+        Are you sure you want to delete this item?
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-secondary btn-lg" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-danger btn-lg" id="delete">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="container">
   <h1 class="mb-4" id="page_title">Recipe Dashboard</h1>
   <div class="row">
@@ -53,8 +67,8 @@
         <a href="/admin/lock_recipes" class="btn btn-danger mb-2">Lock Recipes</a><br>
       {% endif %}
       <a href="/admin/populate_recipes" class="btn btn-warning mb-2">Repopulate Database</a><br>
-      <a href="/admin/reset_recipes" class="btn btn-danger mb-2">Reset Database</a><br>
-      <a href="/admin/reset_deleted_recipes" class="btn btn-danger mb-2">Reset Deleted Recipes</a><br>
+      <a data-delete="/admin/reset_recipes" data-delete-name="reset all recipes? (They will be in deleted recipes)" class="btn btn-danger mb-2 delete-button" data-bs-toggle="modal" data-bs-target="#exampleModal">Reset Database</a><br>
+      <a data-delete="/admin/reset_deleted_recipes" data-delete-name="reset all deleted recipes" class="btn btn-danger mb-2 delete-button" data-bs-toggle="modal" data-bs-target="#exampleModal">Reset Deleted Recipes</a><br>
 
     </div>
   </div>

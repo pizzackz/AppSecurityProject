@@ -41,3 +41,25 @@ fetch('/api/recipe_info')
   .catch(error => {
     console.error('There was an error fetching the data:', error);
   });
+
+document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("click", function(event) {
+        if (event.target.classList.contains('delete-button')) {
+            var button = event.target;
+            var name = button.getAttribute('data-delete-name');
+            var href = button.getAttribute('data-delete');
+            confirmdelete(name, href);
+        }
+    });
+});
+
+
+
+
+
+function confirmdelete(name, href) {
+    document.getElementById('modal-body').innerHTML = 'Are you sure you want to delete ' + name + '?';
+    document.getElementById('delete').onclick = function() {
+        window.location.href = href
+    }
+}

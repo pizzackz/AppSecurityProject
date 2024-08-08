@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}tastefully | AI Recipe Creator{% endblock %}
+
+{% block css %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/recipe/recipe_ai_creator.css') }}">
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script nonce="{{ nonce }}" src="{{ url_for('static', filename='js/recipe/recipe_ai_creator.js' ) }}"></script>
+{% endblock %}
+
+{% block navbar %} {% include "includes/_admin_navbar.html" %} {% endblock %}
+
+{% block content %}
+{% from "includes/_form_helper.html" import render_field, render_field_picture %}
+
+<div class="container">
+  <h1 class="mb-4" id="page_title">Mr T.</h1>
+  <h4 id="page_description">An AI-powered tool that generates recipes tailored to your tastebuds.</h4>
+  <div id="get_started">
+      <a href="#form" class="btn btn-primary">Get Started</a>
+  </div>
+  <hr>
+  <h2 id="generate_recipe">Generate Recipe</h2>
+  <div class="row">
+    <div class="col-md">
+      <form id="form">
+        {{ form.csrf_token }}
+        {{ form.hidden_tag() }}
+            {{ render_field(form.cuisine, class="form-control", id="cuisine", placeholder="japanese, mediterannean") }}
+            {{ render_field(form.ingredients, class="form-control", id="ingredients", placeholder="salmon, caviar") }}
+            {{ render_field(form.dietary_preference, class="form-control", id="dietary_preference", placeholder="protein rich, vegan") }}
+            {{ render_field(form.allergy, class="form-control", id="allergy", placeholder="nuts, seafood") }}
+            {{ render_field(form.meal_type, class="form-control", id="meal_type", placeholder="appetiser, main, dessert") }}
+            {{ render_field(form.difficulty, class="form-control", id="difficulty", placeholder="difficulty") }}
+            {{ render_field(form.remarks, class="form-control", id="remarks", placeholder="something fun") }}
+        <button type="button" class="btn btn-primary" id="generate_button">Generate</button>
+      </form>
+    </div>
+    <div class="col-md">
+      <p class="output-title">Output</p>
+      <p id="output">
+      </p>
+    </div>
+  </div>
+
+
+</div>
+
+{% endblock %}

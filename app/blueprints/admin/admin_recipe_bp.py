@@ -6,7 +6,9 @@ from flask import (
     redirect,
     flash,
     url_for,
-    jsonify
+    jsonify,
+    abort,
+    make_response
 )
 import re
 import imghdr
@@ -21,14 +23,15 @@ from hashlib import sha256
 from app import limiter
 from ...utils import scan_file_with_virustotal
 from flask_login import current_user
+from sqlalchemy.sql import func
 
 from datetime import datetime, timedelta
-import html
-from app.forms.forms import CreateRecipeForm, RecipeSearch, AICreateRecipeForm
+# import html
+from app.forms.forms import CreateRecipeForm, RecipeSearch, AICreateRecipeForm, CustomiseRecipeForm
 from app import db
 from bs4 import BeautifulSoup
 from flask_limiter import Limiter
-from flask_jwt_extended import JWTManager, jwt_required
+from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity, set_access_cookies
 from flask_limiter.util import get_remote_address
 import google.generativeai as genai
 from flask_login import login_required
@@ -230,7 +233,6 @@ def create_recipe():
                 flash(f'{name} exists in database', 'error')
                 return redirect(url_for('admin_recipe_bp.create_recipe'))
 
-
             # PROCESS INSTRUCTIONS
             instructions = instructions.strip()
             if instructions == '':
@@ -356,18 +358,6 @@ def create_recipe():
             picture2.stream.seek(0)
             picture2.save(os.path.join('app/static/images_recipe', picture_filename))
 
-            # api_key = 'dbdb212116c4942f7006289754600a68a9561dcebfff754f0981ef595aa49fed'
-            # filename = os.path.join('app/static/images_recipe', picture_filename)
-            #
-            # result = scan_image_for_malware(api_key, filename)
-            #
-            # if not is_image_safe(result):
-            #     print(result)
-            #     print("The image is not safe. Proceed with using it.")
-            #     flash('Please reupload the image', 'error')
-            #     os.remove(os.path.join('app/static/images_recipe', picture_filename))
-            #     return redirect(url_for('admin_recipe_bp.create_recipe'))
-
             # Store in database
             new_recipe = Recipe(name=name, ingredients=ingredient_cleaned, instructions=instructions, picture=picture_filename, type=recipe_type, calories=calories, prep_time=prep_time, user_created=current_user.username, user_created_id=current_user.id)
             try:
@@ -388,6 +378,8 @@ def view_recipe(recipe_id):
         # return 401 if user is not admin
         return jsonify({"message": "Unauthorized"}), 401
     recipe = Recipe.query.filter_by(id=recipe_id).first()
+    if recipe == None:
+        abort(404)
     recipe_data = {
        'id': recipe.id,
        'name': recipe.name,
@@ -425,6 +417,8 @@ def delete_recipe(recipe_id):
         print(locked_recipes.status)
         return redirect(url_for('admin_recipe_bp.recipe_database'))
     recipe = Recipe.query.filter_by(id=recipe_id).first()
+    if recipe == None:
+        return redirect(url_for('admin_recipe_bp.recipe_database'))
     flash(f'{recipe.name} was deleted', 'info')
     old_recipe = RecipeDeleted(name=recipe.name, ingredients=recipe.ingredients, instructions=recipe.instructions, picture=recipe.picture, type=recipe.type, calories=recipe.calories, prep_time=recipe.prep_time, user_created=recipe.user_created, user_created_id=recipe.user_created_id , date_created=recipe.date_created)
     db.session.add(old_recipe)
@@ -439,6 +433,8 @@ def update_recipe(recipe_id):
         # return 401 if user is not admin
         return jsonify({"message": "Unauthorized"}), 401
     recipe = Recipe.query.filter_by(id=recipe_id).first()
+    if recipe == None:
+        abort(404)
     form = CreateRecipeForm()
     if request.method == 'POST':
         try:
@@ -591,7 +587,6 @@ def update_recipe(recipe_id):
             picture_filename = picture_name + '.' + picture_filename[1]
             picture2.stream.seek(0)
             picture2.save(os.path.join('app/static/images_recipe', picture_filename))
-        
 
         if name != '':
             recipe.name = name
@@ -673,15 +668,15 @@ def recipe_info():
         return jsonify({"message": "Unauthorized"}), 401
     if request.referrer[request.referrer.rfind('/'):] != '/recipe_dashboard':
         return jsonify({"message": "Unauthorized"}), 401
-    recipes = Recipe.query.all()
-    now = datetime.utcnow()
+
+    now = datetime.now()
     recipe_count_last_12_hours = []
 
     # Loop through the last 12 hours
     for i in range(12, 0, -1):
         start_time = now - timedelta(hours=i)
         end_time = now - timedelta(hours=i - 1)
-        count = sum(1 for recipe in recipes if start_time <= recipe.date_created < end_time)
+        count = Recipe.query.filter(Recipe.date_created >= start_time, Recipe.date_created < end_time).count()
         recipe_count_last_12_hours.append(count)
 
     return jsonify({'content':recipe_count_last_12_hours})
@@ -777,6 +772,9 @@ def reset_deleted_recipes():
 @admin_recipe_bp.route('/admin/deleted_recipe_database', methods=['GET', 'POST'])
 @login_required
 def deleted_recipe_database():
+    if current_user.type != 'admin':
+        # return 401 if user is not admin
+        return jsonify({"message": "Unauthorized"}), 401
     print(db) # Checking Database Status
     form = RecipeSearch()
 
@@ -871,7 +869,12 @@ def deleted_recipe_database():
 @admin_recipe_bp.route('/admin/view_deleted_recipe/<recipe_id>', methods=['GET', 'POST'])
 @login_required
 def view_deleted_recipe(recipe_id):
+    if current_user.type != 'admin':
+        # return 401 if user is not admin
+        return jsonify({"message": "Unauthorized"}), 401
     recipe = RecipeDeleted.query.filter_by(id=recipe_id).first()
+    if recipe == None:
+        abort(404)
     recipe_data = {
        'id': recipe.id,
        'name': recipe.name,
@@ -891,6 +894,9 @@ def view_deleted_recipe(recipe_id):
 @admin_recipe_bp.route('/admin/delete_recipe_forever/<recipe_id>', methods=['GET', 'POST'])
 @login_required
 def delete_recipe_forever(recipe_id):
+    if current_user.type != 'admin':
+        # return 401 if user is not admin
+        return jsonify({"message": "Unauthorized"}), 401
     recipe = RecipeDeleted.query.filter_by(id=recipe_id).first()
     os.remove(os.path.join('app/static/images_recipe', recipe.picture))
     flash(f'{recipe.name} was deleted forever', 'info')
@@ -901,6 +907,9 @@ def delete_recipe_forever(recipe_id):
 @admin_recipe_bp.route('/admin/restore_recipe/<recipe_id>', methods=['GET', 'POST'])
 @login_required
 def restore_recipe(recipe_id):
+    if current_user.type != 'admin':
+        # return 401 if user is not admin
+        return jsonify({"message": "Unauthorized"}), 401
     recipe = RecipeDeleted.query.filter_by(id=recipe_id).first()
     flash(f'{recipe.name} was restored', 'info')
     new_recipe = Recipe(name=recipe.name, ingredients=recipe.ingredients, instructions=recipe.instructions, picture=recipe.picture, type=recipe.type, calories=recipe.calories, prep_time=recipe.prep_time, user_created=recipe.user_created, user_created_id=recipe.user_created_id , date_created=recipe.date_created)
@@ -909,11 +918,38 @@ def restore_recipe(recipe_id):
     db.session.commit()
     return redirect(url_for('admin_recipe_bp.recipe_database'))
 
-@admin_recipe_bp.route('/admin/ai_recipe_creator', methods=['GET', 'POST'])
+@admin_recipe_bp.route('/admin/ai_recipe_creator', methods=['GET'])
 @login_required
 def ai_recipe_creator():
+    if current_user.type != 'admin':
+        # return 401 if user is not admin
+        return jsonify({"message": "Unauthorized"}), 401
     form = AICreateRecipeForm()
-    return render_template('admin/recipe/recipe_ai_creator.html', form=form)
+    identity = {'username': current_user.username, 'user_id': current_user.id}
+    token = create_access_token(identity=identity)
+    response = make_response(render_template('admin/recipe/recipe_ai_creator.html', form=form))
+    set_access_cookies(response, token)
+    return response
+
+@admin_recipe_bp.route('/admin/customise_recipe/<recipe_id>')
+@login_required
+def customise_recipe(recipe_id):
+    if current_user.type != 'admin':
+        # return 401 if user is not admin
+        return jsonify({"message": "Unauthorized"}), 401
+    form = CustomiseRecipeForm()
+    recipe = Recipe.query.filter_by(id=recipe_id).first()
+    if recipe == None:
+        abort(404)
+    identity = {'username': current_user.username, 'user_id': current_user.id}
+    token = create_access_token(identity=identity)
+    response = make_response(render_template('admin/recipe/recipe_customise.html', recipe=recipe, form=form))
+    set_access_cookies(response, token)
+    return response
+
+
+
+
 
 # @admin_recipe_bp.route('/api/recipe-creator-ai', methods=['POST'])
 # @login_required
