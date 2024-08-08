@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+
+{% block title %}Signup{% endblock %}
+
+{% block content %}
+{% from "includes/_form_helper.html" import render_field %}
+<h1>Signup</h1>
+<form action="" method="post">
+    {{ form.csrf_token }}
+    <div>
+        {{ render_field(form.username, class="form-control", placeholder="Enter your username") }}
+    </div>
+    <div>
+        {{ render_field(form.email, class="form-control", placeholder="Enter your email") }}
+    </div>
+    <div>
+        {{ form.submit }}
+    </div>
+</form>
+{% endblock %}

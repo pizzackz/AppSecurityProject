@@ -21,7 +21,7 @@ from flask_uploads import UploadSet, configure_uploads, IMAGES
 from pytz import timezone
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from app.config.config import Config
+from app.config import Config
 
 
 # Load environment variables from .env file

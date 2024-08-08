@@ -157,11 +157,12 @@ def create_post():
             db.session.add(new_post)
             db.session.commit()
 
-            
-            return redirect(url_for('member_forum_bp.subreddit'))
+            print("www")
         except Exception as e:
             logging.error(f"Error creating post: {e}")
             flash(f"Error creating post: {e}", 'danger')
+        
+        return redirect(url_for('member_forum_bp.subreddit'))
 
     return render_template("member/forum/create_post.html", form=forum)
 
