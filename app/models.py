@@ -644,6 +644,7 @@ class Order(db.Model):
     delivery_date = db.Column(db.Date, nullable=False)
     delivery_time = db.Column(db.Time, nullable=False)
     selected_items = db.Column(db.JSON, nullable=False)
+    status = db.Column(db.String(50), default='Order Placed')
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
 
     items = db.relationship("OrderItem", backref="order", lazy=True)

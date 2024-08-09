@@ -266,6 +266,44 @@ def success():
     return render_template('member/order/success.html')
 
 
+@member_order_bp.route('/cancel_order/<int:order_id>', methods=['POST'])
+@login_required
+def cancel_order(order_id):
+    check = check_premium_member(fallback_endpoint='login_auth_bp.login')
+    if check:
+        return check
+
+    csrf_token = request.form.get('csrf_token')
+    logger.info(f"Received CSRF token: {csrf_token}")
+
+    try:
+        order = Order.query.get(order_id)
+        if order and order.user_id == current_user.id:
+            if order.status == 'Delivered':
+                flash('This order has already been delivered and cannot be cancelled.', 'error')
+            elif order.status in ['Order Placed']:
+                order.status = 'Cancelled'
+                db.session.commit()
+                flash('Your order has been successfully cancelled.', 'success')
+            else:
+                flash('Order cannot be cancelled as it has already been sent out or cancelled.', 'error')
+        else:
+            flash('Order not found or you are not authorized to cancel this order.', 'error')
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        logger.error(f"Error cancelling order {order_id}: {e}")
+        flash('An error occurred while trying to cancel your order. Please try again.', 'danger')
+
+    return redirect(url_for('member_order_bp.order_history'))
+
+
+def update_order_status(order):
+    """Update the status of the order if it should be in the 'preparing' stage."""
+    if order.status == 'Order Placed' and order.delivery_date == datetime.utcnow().date() + timedelta(days=1):
+        order.status = 'Preparing'
+        db.session.commit()
+
+
 # Order History Blueprint
 @member_order_bp.route('/order_history', methods=['GET'])
 @login_required
@@ -280,6 +318,7 @@ def order_history():
 
     # Fetch menu item details for each order
     for order in orders:
+        update_order_status(order)
         item_ids = order.selected_items
         order.items_details = MenuItem.query.filter(MenuItem.id.in_(item_ids)).all()
         order.formatted_created_at = pendulum.instance(order.created_at).format("D MMMM YYYY, h:mm A")
@@ -300,6 +339,7 @@ def admin_order_history(user_id):
 
     # Fetch menu item details for each order
     for order in orders:
+        update_order_status(order)
         item_ids = order.selected_items
         order.items_details = MenuItem.query.filter(MenuItem.id.in_(item_ids)).all()
         order.formatted_created_at = pendulum.instance(order.created_at).format("D MMMM YYYY, h:mm A")

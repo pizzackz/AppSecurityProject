@@ -11,9 +11,9 @@
 
 {% block content %}
 <div class="table-container">
-    <a href="{{ url_for('member_control_bp.view_member_details') }}" class="back-link text-blue-500 hover:underline flex items-center">
+    <a href="{{ url_for('member_profile_bp.profile') }}" class="back-link text-blue-500 hover:underline flex items-center">
         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-        Back to member details
+        Back to profile
     </a>
     <br>
     <h1 class="text-center">Order History</h1>
@@ -26,6 +26,7 @@
                     <th>Delivery Date</th>
                     <th>Delivery Time</th>
                     <th>Order Date</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -41,6 +42,7 @@
                     <td>{{ order.delivery_date }}</td>
                     <td>{{ order.delivery_time }}</td>
                     <td>{{ order.formatted_created_at }}</td>
+                    <td>{{ order.status }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
