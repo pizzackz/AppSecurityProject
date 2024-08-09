@@ -49,7 +49,7 @@
                       {% if order.status == 'Delivered' %}
                             <span class="text-muted">Delivered</span>
                         {% elif order.status in ['Order Placed'] %}
-                            <button type="button" class="btn btn-danger" onclick="openModal({{ order.id }})">
+                            <button type="button" class="but-red" onclick="openModal({{ order.id }})">
                                 Cancel Order
                             </button>
                         {% else %}
@@ -70,14 +70,16 @@
  <div id="cancelModal" class="modal">
      <div class="modal-content">
          <span class="close" onclick="closeModal()">&times;</span>
-         <h5>Confirm Cancellation</h5>
-         <p>Are you sure you want to cancel this order?</p>
-         <div class="modal-footer">
+         <div class="center1">
+             <h4>Confirm Cancellation</h4>
+             <br>
+             <p>Are you sure you want to cancel this order?</p>
+            <br>
              <form id="cancelOrderForm" action="{{ url_for('member_order_bp.cancel_order', order_id=1) }}" method="post">
                  <input type="hidden" name="_csrf_token" id="_csrf_token" value="{{ csrf_token() }}">
-                 <button type="submit" class="btn btn-danger">Cancel Order</button>
+                 <button type="submit" class="but-red">Cancel Order</button>
              </form>
-         </div>
+     </div>
      </div>
  </div>
 {% endblock %}

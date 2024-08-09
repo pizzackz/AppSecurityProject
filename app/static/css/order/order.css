@@ -34,3 +34,7 @@
     margin-top: 0.5rem;
     margin-left: 0.5rem; /* Adjust as needed */
 }
+
+.invalid-feedback{
+    text-align: left;
+}

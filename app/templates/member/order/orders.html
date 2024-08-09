@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 {% extends "member/order/order_base.html" %}
-{% block title %}tastefully | Menu {% endblock %}
+{% block title %}tastefully | Delivery Information {% endblock %}
 
 {% block css %}
 {{ super() }}
@@ -45,14 +45,32 @@
             </div>
             <div class="form-group">
                 {{ form.postal_code.label(class="form-label") }}
-                {{ form.postal_code(class="form-control") }}
+                <input type="text" name="{{ form.postal_code.name }}"
+                       id="{{ form.postal_code.id }}"
+                       placeholder="{{ form.postal_code.render_kw['placeholder'] }}"
+                       class="form-control {% if form.postal_code.errors %}is-invalid{% endif %}">
+                {% for error in form.postal_code.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
             </div>
             <div class="form-group">
                 {{ form.phone_number.label(class="form-label") }}
-                {{ form.phone_number(class="form-control") }}
+              <input type="text" name="{{ form.phone_number.name }}"
+                   id="{{ form.phone_number.id }}"
+                   placeholder="{{ form.phone_number.render_kw['placeholder'] }}"
+                   class= "form-control {% if form.phone_number.errors %}is-invalid{% endif %}">
+                {% for error in form.phone_number.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
             </div>
-            <div class="form-group center1">
-                {{ form.recaptcha.label(class="form-label") }} {{ form.recaptcha() }}
+            <div class="form-group">
+                {{ form.recaptcha.label(class="form-label") }}
+                <div class=" {% if form.recaptcha.errors %}is-invalid{% endif %}">
+                    {{ form.recaptcha }}
+                </div>
+                {% for error in form.recaptcha.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
             </div>
             <div class="center1">
             <br>

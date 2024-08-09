@@ -47,6 +47,28 @@ logger = logging.getLogger("tastefully")
 member_order_bp = Blueprint('member_order_bp', __name__)
 
 
+def update_order_status(order):
+    """Update the status of the order if it should be in the 'preparing' stage."""
+    if order.status == 'Order Placed' and order.delivery_date == datetime.utcnow().date() + timedelta(days=1):
+        order.status = 'Preparing'
+        db.session.commit()
+
+
+# Example: Function to retrieve the customer's last order from the database
+def get_previous_order(customer_id):
+    # Replace this with actual database query logic
+    previous_order = {
+        'name': 'John Doe',
+        'address': '123 ABC Street',
+        'postal_code': '123456',
+        'phone_number': '9123 4567',
+        'selected_date': '2024-08-10',
+        'selected_time': '12:00',
+        'selected_items': 'Item 1, Item 2',
+    }
+    return previous_order
+
+
 # Define a custom filter to escape JavaScript strings
 @member_order_bp.app_template_filter('escapejs')
 def escapejs_filter(value):
@@ -120,12 +142,12 @@ def booking():
 
         # Security check: Ensure the user has selected items from the menu
         if not selected_items:
-            flash("An error occurred while processing your request. Please try again.", "error")
+            flash("An error occurred while processing your request", "error")
             return redirect(url_for('member_order_bp.menu'))
         # Security check: Ensure the user has completed the menu step
     except TypeError as t:
         logger.error(f"Invalid session data: {t}")
-        flash("An error occurred while processing your request. Please try again.", "error")
+        flash("An error occurred while processing your request.", "error")
         return redirect(url_for('member_order_bp.menu'))
 
 
@@ -179,7 +201,7 @@ def order():
         delivery_time = session_data.get('delivery_time')
     except TypeError as t:
         logger.error(f"Invalid session data: {t}")
-        flash("An error occurred while processing your request. Please try again.", "error")
+        flash("An error occurred while processing your request.", "error")
         return redirect(url_for('member_order_bp.menu'))
 
     # Security check: Ensure the user has completed the booking step
@@ -193,7 +215,7 @@ def order():
     form.selected_items.data = selected_items
 
     if not selected_items or not delivery_date or not delivery_time:
-        flash('Please select items from the menu and choose a delivery date and time.', 'error')
+        flash('Select item and delivery information.', 'error')
         return redirect(url_for('member_order_bp.menu'))
 
     try:
@@ -201,7 +223,7 @@ def order():
         items = MenuItem.query.filter(MenuItem.id.in_(selected_items)).all()
     except SQLAlchemyError as e:
         logger.error(f"Database error when querying menu items: {e}")
-        flash("An error occurred while processing your request. Please try again.", "error")
+        flash("An error occurred while processing your request.", "error")
         return redirect(url_for('member_order_bp.menu'))
 
     if request.method == 'POST' and form.validate_on_submit():
@@ -236,10 +258,10 @@ def order():
         except SQLAlchemyError as e:
             db.session.rollback()
             logger.error(f"Database error when creating order: {e}")
-            flash("An error occurred while creating your order. Please try again.", "danger")
+            flash("An error occurred while creating your order.", "danger")
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
-            flash("An unexpected error occurred. Please try again.", "danger")
+            flash("An unexpected error occurred.", "danger")
 
         return redirect(url_for('member_order_bp.success'))
 
@@ -286,9 +308,9 @@ def cancel_order(order_id):
                 db.session.commit()
                 flash('Your order has been successfully cancelled.', 'success')
             else:
-                flash('Order cannot be cancelled as it has already been sent out or cancelled.', 'error')
+                flash('Order cannot be cancelled.', 'error')
         else:
-            flash('Order not found or you are not authorized to cancel this order.', 'error')
+            flash('Order not found.', 'error')
     except SQLAlchemyError as e:
         db.session.rollback()
         logger.error(f"Error cancelling order {order_id}: {e}")
@@ -297,11 +319,7 @@ def cancel_order(order_id):
     return redirect(url_for('member_order_bp.order_history'))
 
 
-def update_order_status(order):
-    """Update the status of the order if it should be in the 'preparing' stage."""
-    if order.status == 'Order Placed' and order.delivery_date == datetime.utcnow().date() + timedelta(days=1):
-        order.status = 'Preparing'
-        db.session.commit()
+
 
 
 # Order History Blueprint

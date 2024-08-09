@@ -1,3 +1,5 @@
+/*General styling*/
+
 .table-container {
     width: 90%;
     margin: 0 auto;
@@ -45,6 +47,29 @@ tr:hover {
     margin-right: 5px;
 }
 
+/*Button styling*/
+.but-red{
+    color: white;
+    padding: 5px;
+    padding-right:15px;
+    padding-left:15px;
+    font-weight: bold;
+    transition: color 0.4s linear;
+    border:2px solid #DC143C;
+    border-radius: 25px;
+    background-color: #DC143C;
+    max-width: 300px;
+
+}
+
+.but-red:hover{
+    color: #DC143C;
+    background-color: white;
+    text-decoration: underline;
+    text-decoration-thickness: 2px ;
+}
+
+
 /* Custom Modal Styles */
 .modal {
     display: none;
@@ -86,6 +111,7 @@ tr:hover {
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
+    margin-left: auto;
 }
 
 .close:hover,

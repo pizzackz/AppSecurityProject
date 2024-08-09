@@ -214,7 +214,7 @@ def validate_postal_code(form, field):
 
 # Validators for postal code
 def six_digit_postal_code_validator(form, field):
-    if len(field.data) != 6:
+    if len(str(field.data)) != 6:
         raise ValidationError("Please enter a valid 6-digit postal code.")
     if field.data == "000000":
         raise ValidationError("Please enter a valid 6-digit postal code.")
