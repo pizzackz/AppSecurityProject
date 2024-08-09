@@ -1,6 +1,3 @@
-import random
-import base64
-import string
 import logging
 import hashlib
 import os
@@ -8,7 +5,7 @@ import os
 from datetime import datetime, timedelta, timezone
 from flask_login import UserMixin
 from flask_jwt_extended import create_access_token
-from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, ForeignKey, JSON, LargeBinary
+from sqlalchemy import Column, Integer, String, DateTime, Text, Boolean, ForeignKey, LargeBinary
 from sqlalchemy.sql import func
 from typing import Optional
 

@@ -185,7 +185,13 @@ def login():
     """
     Login route to initiate the login process.
     It validates the login form, cleans inputs and stores intermediate stage in session.
-    """   
+    """
+    # Log message according to where unauthenticated user tried to access
+    if request.args.get("next"):
+        no_access_url = request.args.get("next")
+        logger.warning(f"An unauthorised user tried to access '{no_access_url}'.")
+        return redirect(url_for("login_auth_bp.login"))
+
     # Clear session keys that are not needed
     clear_unwanted_session_keys()
 

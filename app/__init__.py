@@ -172,6 +172,20 @@ def delete_expired_master_keys():
         print(f"Error deleting expired master keys: {e}")
 
 
+# Function to refresh admin keys if they are expired (and send new one to their email)
+def refresh_admin_keys():
+    from app.models import Admin
+    from app.utils import send_email
+    try:
+        admin_list = Admin.query.all()
+        for admin in admin_list:
+            if admin.admin_key_expires_at <= datetime.now():
+                admin.generate_admin_key()
+                send_email(admin.email, "Refreshed Admin Key", f"Your admin key has been refreshed: {admin.admin_key}")
+    except Exception as e:
+        print(f"Error refreshing admin keys: {e}")
+
+
 # Start scheduler function to run functions periodically
 def start_scheduler(app: Flask):
     global scheduler
@@ -179,6 +193,7 @@ def start_scheduler(app: Flask):
         scheduler.add_job(create_app_context_wrapper(app, check_payment_status), 'interval', minutes=10)
         scheduler.add_job(create_app_context_wrapper(app, generate_new_master_keys), 'interval', days=1)
         scheduler.add_job(create_app_context_wrapper(app, delete_expired_master_keys), 'interval', days=1)
+        scheduler.add_job(create_app_context_wrapper(app, refresh_admin_keys), 'interval', days=1)
         scheduler.start()
 
 
@@ -251,6 +266,7 @@ def create_app() -> Flask:
     db.init_app(app)
     login_manager.init_app(app)
     login_manager.login_view = "login_auth_bp.login"
+    login_manager.login_message_category = "error"
     limiter.init_app(app)
     jwt.init_app(app)
     mail.init_app(app)

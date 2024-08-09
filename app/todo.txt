@@ -6,14 +6,16 @@ General:
 
 Signup:
     Implement rate limiting for OTP requests
-
+    Link to guest recipes page
+    
 Recovery:
     Implement log out for active account using same username after successful reset of password
     Implement rate limiting for OTP requests, recovery requests
 
 Login:
     Implement rate limiting for login requests
-
+    Link to guest recipes page
+    
 Password forms:
     Fix password reset/ set buttons not being able to be disabled on frontend
 
@@ -26,12 +28,10 @@ Admin Profile:
 Admin Account Management:
     Implement log out for active account using same username after successful reset of password
     Frontend nonsense (table sorting, filtering)
-    Make sure to link to Jacen's route for viewing activities
 
 Member Account Management:
     Implement log out for active account using same username after successful reset of password
     Frontend nonsense (table sorting, filtering)
-    Make sure to link to Jacen's route for viewing activities
 
 
 Jacen:
