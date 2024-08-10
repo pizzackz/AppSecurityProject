@@ -898,7 +898,10 @@ def delete_recipe_forever(recipe_id):
         # return 401 if user is not admin
         return jsonify({"message": "Unauthorized"}), 401
     recipe = RecipeDeleted.query.filter_by(id=recipe_id).first()
-    os.remove(os.path.join('app/static/images_recipe', recipe.picture))
+    try:
+        os.remove(os.path.join('app/static/images_recipe', recipe.picture))
+    except:
+        print('Picture not found')
     flash(f'{recipe.name} was deleted forever', 'info')
     db.session.delete(recipe)
     db.session.commit()

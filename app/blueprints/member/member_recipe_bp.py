@@ -48,7 +48,6 @@ def is_image(filename):
 
 # Recipe Pages
 @member_recipe_bp.route("/recipe_database", methods=["GET", "POST"])
-@login_required
 def recipe_database():
     print(db)  # Checking Database Status
     form = RecipeSearch()
@@ -98,27 +97,48 @@ def recipe_database():
             search_results = []
 
             print(ingredients)
-            for i in ingredients:
-                print(i)
-                all_recipes = Recipe.query.filter(
-                    or_(
-                        Recipe.ingredients.contains(i),
-                        Recipe.name.contains(i)
-                    ),
-                    and_(
+            try:
+                user_type = current_user.type
+                for i in ingredients:
+                    print(i)
+                    all_recipes = Recipe.query.filter(
                         or_(
-                            Recipe.type == 'Standard',
-                            Recipe.type == 'Premium',
-                            and_ (
-                                Recipe.type == 'Private',
-                                Recipe.user_created_id == current_user.id
+                            Recipe.ingredients.contains(i),
+                            Recipe.name.contains(i)
+                        ),
+                        and_(
+                            or_(
+                                Recipe.type == 'Standard',
+                                Recipe.type == 'Premium',
+                                and_ (
+                                    Recipe.type == 'Private',
+                                    Recipe.user_created_id == current_user.id
+                                )
                             )
                         )
-                    )
-                ).all()
-                for recipe in all_recipes:
-                    if recipe not in search_results:
-                        search_results.append(recipe)
+                    ).all()
+                    for recipe in all_recipes:
+                        if recipe not in search_results:
+                            search_results.append(recipe)
+            except AttributeError:
+                user_type = current_user.type
+                for i in ingredients:
+                    print(i)
+                    all_recipes = Recipe.query.filter(
+                        or_(
+                            Recipe.ingredients.contains(i),
+                            Recipe.name.contains(i)
+                        ),
+                        and_(
+                            or_(
+                                Recipe.type == 'Standard',
+                                Recipe.type == 'Premium'
+                            )
+                        )
+                    ).all()
+                    for recipe in all_recipes:
+                        if recipe not in search_results:
+                            search_results.append(recipe)
 
             # Sort the search results by the ingredients matched count
             search_results = sorted(search_results,
@@ -141,31 +161,45 @@ def recipe_database():
             search_results = search_results[start:end]
 
             return render_template("member/recipe/recipe_database.html", form=form, recipes=search_results,
-                                   total_pages=total_pages, page=page, user=current_user)
+                                   total_pages=total_pages, page=page)
 
     # Get pages
     total_pages = (Recipe.query.count() // per_page) + 1
     print(f'Total pages: {total_pages}')
     print(f'There are {Recipe.query.count()} recipe')
 
-    items_on_page = Recipe.query.filter(
-        or_(
-            Recipe.type == 'Standard',
-            Recipe.type == 'Premium',
-            and_(
-                Recipe.type == 'Private',
-                Recipe.user_created_id == current_user.id
+    try:
+        user_type = current_user.type
+        items_on_page = Recipe.query.filter(
+            or_(
+                Recipe.type == 'Standard',
+                Recipe.type == 'Premium',
+                and_(
+                    Recipe.type == 'Private',
+                    Recipe.user_created_id == current_user.id
+                )
             )
-        )
-    ).order_by(
-        case(
-            (Recipe.type == 'Private', 0),  # Ensure 'Private' recipes appear first
-            else_=1
-        )
-    ).slice(start, end).all()
+        ).order_by(
+            case(
+                (Recipe.type == 'Private', 0),  # Ensure 'Private' recipes appear first
+                else_=1
+            )
+        ).slice(start, end).all()
+    except AttributeError:
+        items_on_page = Recipe.query.filter(
+            or_(
+                Recipe.type == 'Standard',
+                Recipe.type == 'Premium'
+            )
+        ).order_by(
+            case(
+                (Recipe.type == 'Private', 0),  # Ensure 'Private' recipes appear first
+                else_=1
+            )
+        ).slice(start, end).all()
 
     return render_template("member/recipe/recipe_database.html", form=form, recipes=items_on_page,
-                           total_pages=total_pages, page=page, user=current_user)
+                           total_pages=total_pages, page=page)
 
 @member_recipe_bp.route('/create_recipe', methods=['GET', 'POST'])
 @login_required
@@ -351,30 +385,48 @@ def create_recipe():
 
 
 @member_recipe_bp.route('/view_recipe/<recipe_id>', methods=['GET', 'POST'])
-@login_required
 def view_recipe(recipe_id):
     recipe = Recipe.query.filter_by(id=recipe_id).first()
     if recipe == None:
         abort(404)
-    if recipe.type == 'Private' and recipe.user_created_id != current_user.id:
-        flash('Action cannot be done', 'error')
-        return redirect(url_for('member_recipe_bp.recipe_database'))
-    if recipe.type == 'Premium' and current_user.subscription_plan != 'premium':
-        flash('Action cannot be done', 'error')
-        return redirect(url_for('member_recipe_bp.recipe_database'))
-    recipe_data = {
-        'id': recipe.id,
-        'name': recipe.name,
-        'ingredients': (recipe.ingredients).split(','),  # Convert JSON string to Python object
-        'instructions': recipe.instructions,
-        'picture': recipe.picture,
-        'date_created': recipe.date_created,
-        'user_created': recipe.user_created,
-        'type': recipe.type,
-        'calories': recipe.calories,
-        'prep_time': recipe.prep_time,
-        'ingredient_count': len(recipe.ingredients.split(',')),
-    }
+    try:
+        user_type = current_user.type
+        if recipe.type == 'Private' and recipe.user_created_id != current_user.id:
+            flash('Action cannot be done', 'error')
+            return redirect(url_for('member_recipe_bp.recipe_database'))
+        if recipe.type == 'Premium' and current_user.subscription_plan != 'premium':
+            flash('Action cannot be done', 'error')
+            return redirect(url_for('member_recipe_bp.recipe_database'))
+        recipe_data = {
+            'id': recipe.id,
+            'name': recipe.name,
+            'ingredients': (recipe.ingredients).split(','),  # Convert JSON string to Python object
+            'instructions': recipe.instructions,
+            'picture': recipe.picture,
+            'date_created': recipe.date_created,
+            'user_created': recipe.user_created,
+            'type': recipe.type,
+            'calories': recipe.calories,
+            'prep_time': recipe.prep_time,
+            'ingredient_count': len(recipe.ingredients.split(',')),
+        }
+    except AttributeError:
+        if recipe.type == 'Private' or recipe.type == 'Premium':
+            flash('Action cannot be done', 'error')
+            return redirect(url_for('member_recipe_bp.recipe_database'))
+        recipe_data = {
+            'id': recipe.id,
+            'name': recipe.name,
+            'ingredients': (recipe.ingredients).split(','),  # Convert JSON string to Python object
+            'instructions': recipe.instructions,
+            'picture': recipe.picture,
+            'date_created': recipe.date_created,
+            'user_created': recipe.user_created,
+            'type': recipe.type,
+            'calories': recipe.calories,
+            'prep_time': recipe.prep_time,
+            'ingredient_count': len(recipe.ingredients.split(',')),
+        }
     return render_template('member/recipe/recipe_view2.html', recipe=recipe_data)
 
 
