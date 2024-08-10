@@ -3,8 +3,9 @@
     color:rgb(255, 255, 255);
     position:fixed;
     padding: 10px;
-    min-width: 49vh;
-    min-height: 5.4vh;
+    min-width: 33vw;
+    max-width:15rem;
+    min-height: 8vh;
     right: 0px;
     top: 5rem;
     border-radius: 4px;

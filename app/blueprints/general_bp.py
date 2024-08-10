@@ -18,11 +18,27 @@ def home():
     try:
         account_type = user.type
         if account_type == 'member':
-            return render_template('member/home.html')
+            return redirect(url_for('general_bp.member_home'))
         elif account_type == 'admin':
-            return render_template('admin/home.html')
+            return redirect(url_for('general_bp.admin_home'))
     except AttributeError:
-        return redirect(url_for('login_auth_bp.login'))
+        return render_template('guest/home.html')
+
+@general_bp.route('/home')
+@login_required
+def member_home():
+    account_type = current_user.type
+    if account_type == 'admin':
+        return redirect(url_for('general_bp.admin_home'))
+    return render_template('member/home.html')
+
+@general_bp.route('/admin/home')
+@login_required
+def admin_home():
+    account_type = current_user.type
+    if account_type == 'member':
+        return redirect(url_for('general_bp.member_home'))
+    return render_template('admin/home.html')
 
 
 # Logout route

@@ -1,5 +1,4 @@
 p {
-    white-space:pre-line;
     font-size:1.2em;
 }
 ingredient-and-img {
@@ -61,13 +60,19 @@ max-width:fit-content;margin-left:8%
 }
 
 #d ul {
-width: 50%;text-align:center;padding-top:1rem;font-size:1.2rem;
+width: 100%;text-align:left;padding-top:1rem;font-size:1.2rem;list-style-type:circle;
 }
 
 #e {
-padding:1rem;margin:0.2rem;border:rgb(212, 212, 212) 0.5px solid;border-radius:10px;text-align:center
+padding-left:1.5rem;padding-right:1.5rem;padding-bottom:1.5rem;margin:0.2rem;border:rgb(212, 212, 212) 0.5px solid;border-radius:10px;text-align:left;margin-bottom:5rem;
 }
 
-#f {
-padding-top:1rem;
+#e h2 {
+    text-align:center;
+    padding-top:1.5rem;
+    margin-bottom:1.5rem;
+}
+
+#e p {
+    margin:0.2rem;
 }

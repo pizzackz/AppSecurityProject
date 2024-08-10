@@ -275,6 +275,10 @@ def register_all_bp(app: Flask):
     from app.blueprints.general_bp import general_bp
     app.register_blueprint(general_bp)
 
+    # Guest Recipes
+    from app.blueprints.guest.guest_recipe_bp import guest_recipe_bp
+    app.register_blueprint(guest_recipe_bp)
+
     register_auth_bp(app)
     register_member_bp(app)
     register_admin_bp(app)
