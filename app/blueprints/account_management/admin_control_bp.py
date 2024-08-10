@@ -13,7 +13,7 @@ from app import db
 from app.models import Admin, MasterKey, LockedAccount, PasswordResetToken, Log_account, Log_transaction, Log_general
 from app.forms.forms import CreateAdminForm, LockAdminForm, DeleteAdminForm
 from app.forms.auth_forms import OtpForm
-from app.utils import logout_if_logged_in, clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_session_keys, check_expired_session, set_session_data, check_auth_stage, check_jwt_values, get_image_url
+from app.utils import invalidate_user_sessions, logout_if_logged_in, clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_session_keys, check_expired_session, set_session_data, check_auth_stage, check_jwt_values, get_image_url
 
 
 # Initialise variables
@@ -352,7 +352,11 @@ def lock_admin():
             if Admin.lock_account(id_to_lock=admin_id, locked_reason=reason):
                 clear_unwanted_session_keys(ADMIN_SPECIFIC_ESSENTIAL_KEYS)
                 flash("Successfully locked admin account!", "success")
-                logger.info(f"Successfully locked admin with admin id of '{id}' with reason:\n{reason}")
+                logger.info(f"Successfully locked admin with admin id of '{id}' with reason:\n{reason}")        
+
+                # Invalidate all logged in sessions except for current
+                invalidate_user_sessions(admin_id, False)
+
                 return redirect(url_for("admin_control_bp.view_admin_details"))
             else:
                 clear_unwanted_session_keys(ADMIN_SPECIFIC_ESSENTIAL_KEYS)
@@ -503,7 +507,9 @@ def delete_admin():
             Admin.delete(admin_id)
             clear_unwanted_session_keys(ESSENTIAL_KEYS)
             flash("Successfully deleted admin account!", "success")
-            logger.info(f"Successfully deleted admin with admin id of '{id}'")
+            logger.info(f"Successfully deleted admin with admin id of '{id}'")        
+            # Invalidate all logged in sessions except for current
+            invalidate_user_sessions(admin_id, False)
             return redirect(url_for("admin_control_bp.view_admins"))
         else:
             flash("An error occurred while deleting the account.")

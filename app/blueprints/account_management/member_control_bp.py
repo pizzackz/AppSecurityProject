@@ -10,7 +10,7 @@ from flask_login import login_required, current_user
 
 from app.models import Member, LockedAccount, PasswordResetToken, Log_account, Log_general, Log_transaction
 from app.forms.forms import LockDeleteMemberForm
-from app.utils import clean_input, send_email, check_admin, check_session_keys, clear_unwanted_session_keys, get_image_url
+from app.utils import invalidate_user_sessions, clean_input, send_email, check_admin, check_session_keys, clear_unwanted_session_keys, get_image_url
 
 
 # Initialise variables
@@ -274,6 +274,8 @@ def lock_member():
                 clear_unwanted_session_keys(MEMBER_SPECIFIC_ESSENTIAL_KEYS)
                 flash("Successfully locked member account!", "success")
                 logger.info(f"Admin '{current_user.username}' successfully locked member with member id of '{id}' with reason:\n{reason}")
+                # Invalidate all logged in sessions except for current
+                invalidate_user_sessions(member_id, False)
                 return redirect(url_for("member_control_bp.view_member_details"))
             else:
                 clear_unwanted_session_keys(MEMBER_SPECIFIC_ESSENTIAL_KEYS)
@@ -426,6 +428,8 @@ def revoke_plan():
             clear_unwanted_session_keys(MEMBER_SPECIFIC_ESSENTIAL_KEYS)
             flash("Successfully revoked member account subscription!", "success")
             logger.info(f"Admin '{current_user.username}' successfully revoked member subscription with member id of '{id}' with reason:\n{reason}")
+            # Invalidate all logged in sessions except for current
+            invalidate_user_sessions(member_id, False)
             return redirect(url_for("member_control_bp.view_member_details"))
         else:
             clear_unwanted_session_keys(MEMBER_SPECIFIC_ESSENTIAL_KEYS)
@@ -505,6 +509,8 @@ def delete_member():
             clear_unwanted_session_keys(ESSENTIAL_KEYS)
             flash("Successfully deleted member account!", "success")
             logger.info(f"Admin '{current_user.username}' successfully deleted member with member id of '{id}'")
+            # Invalidate all logged in sessions except for current
+            invalidate_user_sessions(member_id, False)
             return redirect(url_for("member_control_bp.view_members"))
         else:
             flash("An error occurred while deleting the account.", "error")

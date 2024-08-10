@@ -51,12 +51,12 @@
                 <input type="file" name="profile_picture" id="profile_picture" class="form-control" disabled />
                 <br>
                 <button type="button" name="action" value="reset_profile_picture" class="btn btn-danger rounded-pill mr-2">Reset</button>
-                <button type="button" name="action" value="upload_profile_picture" class="btn btn-primary rounded-pill ml-2">Edit</button>
+                <button type="button" name="action" value="upload_profile_picture" class="btn btn-primary rounded-pill ml-2">Update</button>
             </div>
         {% endif %}
         <div class="text-center mt-4">
             <!-- Send user key link -->
-            <a href="{{ url_for('admin_profile_bp.profile', action='send_admin_key') }}">Send admin key</a>
+            <a href="">Send admin key</a>
         </div>
     </div>
 
@@ -66,7 +66,7 @@
             <div id="content-header" class="text-center mb-4">
                 <h2 class="mb-4">Account Details</h2>
                 {% if user.google_id %}
-                    <p>If you want to change your profile picture here, you will need to <a href="{{ url_for('admin_profile_bp.profile', action='unlink_account') }}">unlink</a> from Google.</p>
+                    <p>If you want to change your profile picture here, you will need to <a href="">unlink</a> from Google.</p>
                 {% else %}
                     <p>If you want to link to Google, choose to Sign-in with Google in the future.</p>
                 {% endif %}
@@ -121,9 +121,9 @@
             <!-- Allow setting of password if user has no password & is google linked -->
             <div id="extra-details" class="text-center">
                 {% if user.password_hash %}
-                    <p>Click <a href="{{ url_for('admin_profile_bp.profile', action='reset_password') }}">here</a> to change your password.</p>
+                    <p>Click <a href="">here</a> to change your password.</p>
                 {% elif user.google_id %}
-                    <p>We highly recommend setting a password <a href="{{ url_for('admin_profile_bp.profile', action='set_password') }}">here</a> so you can also login through normal means without using your Google account.</p>
+                    <p>We highly recommend setting a password <a href="">here</a> so you can also login through normal means without using your Google account.</p>
                 {% endif %}
                 <p>To help keep your account safe, we want to make sure it's really you trying to update your profile.</p>
                 <p>So we will send you a verification email after you click 'Next'.</p>

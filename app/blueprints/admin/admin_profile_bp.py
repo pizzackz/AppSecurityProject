@@ -15,7 +15,7 @@ from app import db
 from app.models import User, Admin, ProfileImage
 from app.forms.profile_forms import ProfileForm
 from app.forms.auth_forms import OtpForm, ResetPasswordForm, PasswordForm
-from app.utils import clean_input, generate_otp, send_email, check_auth_stage, check_jwt_values, check_admin, clear_unwanted_session_keys, get_image_url, upload_pfp, reset_pfp
+from app.utils import invalidate_user_sessions, clean_input, generate_otp, send_email, check_auth_stage, check_jwt_values, check_admin, clear_unwanted_session_keys, get_image_url, upload_pfp, reset_pfp
 
 
 admin_profile_bp: Blueprint = Blueprint("admin_profile_bp", __name__, url_prefix="/admin/profile")
@@ -269,7 +269,7 @@ def send_otp():
     set_access_cookies(response, new_token)
 
     # Try sending email using utility send_email function
-    email_body = render_template("emails/otp_email.html", username=identity['username'], otp=otp)
+    email_body = render_template("emails/otp_email.html", username=current_user.username, otp=otp)
     profile_update_stage = session.get("profile_update_stage")
     if send_email(identity['email'], "Your OTP Code", email_body):
         flash_msg = "OTP has been sent to your email address."
@@ -596,7 +596,10 @@ def set_password():
         except Exception as e:
             flash_message = ["An error occurred when saving your password. Please try again later", "error"]
             log_message = [f"Error saving password for user '{user.username}': {e}", "error"]
-        
+                
+        # Invalidate all logged in sessions except for current
+        invalidate_user_sessions(user.id, True)
+
         # Clear admin update stage data & jwt data, redirect back to admin profile
         session.pop("profile_update_stage")
         response = redirect(url_for('admin_profile_bp.profile'))
@@ -701,6 +704,9 @@ def reset_password():
         except Exception as e:
             flash_message = ["An error occurred when resetting your password. Please try again later", "error"]
             log_message = [f"Error saving password for user '{user.username}' when resetting it: {e}", "error"]
+        
+        # Invalidate all logged in sessions except for current
+        invalidate_user_sessions(user.id, True)
 
         # Clear admin update stage data & jwt data, redirect back to admin profile
         session.pop("profile_update_stage")

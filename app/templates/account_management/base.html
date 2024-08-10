@@ -79,13 +79,18 @@
             }, 20000); // 20 seconds
         });
     </script>
+    <script nonce="{{ nonce }}">
+        document.getElementsByClassName('profile-img').onerror = function() {
+            this.src = "{{ url_for('static', filename='uploads/profile_pictures/default.png') }}";
+        };
+    </script>
 
     {% if 'admin_control_bp' in request.endpoint and request.endpoint != 'admin_control_bp.start' %}
     <!-- Inactivity Timer to do session timeout only for Admin control panel pages -->
     <script nonce="{{ nonce }}">
         document.addEventListener('DOMContentLoaded', function() {
             let timeout;
-            const inactivityLimit = 15 * 1000;  // 10mins
+            const inactivityLimit = 10 * 60 * 1000;  // 10mins
 
             function resetTimer() {
                 clearTimeout(timeout);

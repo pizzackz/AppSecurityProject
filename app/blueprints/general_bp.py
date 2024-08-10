@@ -28,13 +28,14 @@ def home():
 # Logout route
 @general_bp.route("/logout")
 def logout():
-    # Display logout messages
-    flash("You have been successfully logged out!", "success")
-    logger.info(f"User '{current_user.username}' has been logged out successfully.")
+    if current_user.is_authenticated:
+        # Display logout messages
+        flash("You have been successfully logged out!", "success")
+        logger.info(f"User '{current_user.username}' has been logged out successfully.")
 
-    # Log user out
-    current_user.login_details.logout()
-    logout_user()
+        # Log user out
+        current_user.login_details.logout()
+        logout_user()
 
     # Remove any jwt cookies stored
     response = redirect(url_for("general_bp.home"))

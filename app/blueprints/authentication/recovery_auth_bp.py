@@ -10,7 +10,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
 from app.models import User, LockedAccount, PasswordResetToken
 from app.forms.auth_forms import EmailForm, OtpForm, RecoverOptionsForm, ResetPasswordForm
-from app.utils import logout_if_logged_in, clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_auth_stage, check_jwt_values
+from app.utils import invalidate_user_sessions, logout_if_logged_in, clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_auth_stage, check_jwt_values
 
 
 # Initialise flask blueprint - 'login_aut_bp'
@@ -496,6 +496,9 @@ def reset_password():
         # Invalidate token in db by deleting it
         db.session.delete(recovery_token)
         db.session.commit()
+
+        # Invalidate all logged in sessions except for current
+        invalidate_user_sessions(user.id, False)
 
         flash("Your password has been reset successfully. Please log in with your new password.", "success")
         logger.info(f"Password reset successfully for user: {email}")

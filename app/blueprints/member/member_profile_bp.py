@@ -15,7 +15,7 @@ from app import db
 from app.models import User, Member, ProfileImage
 from app.forms.profile_forms import ProfileForm, DeleteMemberForm
 from app.forms.auth_forms import OtpForm, ResetPasswordForm, PasswordForm
-from app.utils import clean_input, generate_otp, send_email, check_auth_stage, check_jwt_values, check_member, clear_unwanted_session_keys, get_image_url, upload_pfp, reset_pfp
+from app.utils import invalidate_user_sessions, clean_input, generate_otp, send_email, check_auth_stage, check_jwt_values, check_member, clear_unwanted_session_keys, get_image_url, upload_pfp, reset_pfp
 
 
 member_profile_bp: Blueprint = Blueprint("member_profile_bp", __name__, url_prefix="/profile")
@@ -61,7 +61,7 @@ def profile():
 
         # Store jwt data
         response = redirect(url_for('member_profile_bp.send_otp'))
-        identity = {'email': user.email}
+        identity = {'email': user.email, 'email_verified': True}
         token = create_access_token(identity=identity, additional_claims={"update_option": update_option})
         set_access_cookies(response, token)
 
@@ -286,7 +286,7 @@ def send_otp():
     set_access_cookies(response, new_token)
 
     # Try sending email using utility send_email function
-    email_body = render_template("emails/otp_email.html", username=identity['username'], otp=otp)
+    email_body = render_template("emails/otp_email.html", username=current_user.username, otp=otp)
     profile_update_stage = session.get("profile_update_stage")
     if send_email(identity['email'], "Your OTP Code", email_body):
         flash_msg = "OTP has been sent to your email address."
@@ -613,7 +613,10 @@ def set_password():
         except Exception as e:
             flash_message = ["An error occurred when saving your password. Please try again later", "error"]
             log_message = [f"Error saving password for user '{user.username}': {e}", "error"]
-        
+
+        # Invalidate all logged in sessions except for current
+        invalidate_user_sessions(user.id, True)
+
         # Clear member update stage data & jwt data, redirect back to member profile
         session.pop("profile_update_stage")
         response = redirect(url_for('member_profile_bp.profile'))
@@ -654,7 +657,7 @@ def reset_password():
         logger.info(f"Mmeber '{current_user.username}' opted to cancel password reset.")
         return response
 
-    # Check session not expired & profile_update_stage == save_changes
+    # Check session not expired & profile_update_stage == reset_password
     check = check_auth_stage(
         auth_process="profile_update_stage",
         allowed_stages=['reset_password'],
@@ -719,6 +722,9 @@ def reset_password():
             flash_message = ["An error occurred when resetting your password. Please try again later", "error"]
             log_message = [f"Error saving password for user '{user.username}' when resetting it: {e}", "error"]
         
+        # Invalidate all logged in sessions except for current
+        invalidate_user_sessions(user.id, True)
+
         # Clear member update stage data & jwt data, redirect back to member profile
         session.pop("profile_update_stage")
         response = redirect(url_for('member_profile_bp.profile'))

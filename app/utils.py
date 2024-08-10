@@ -13,10 +13,10 @@ import requests
 from datetime import datetime, timezone
 from logging import Logger
 from functools import wraps
+from sqlalchemy import Table, MetaData, delete
 from typing import Optional, List, Set, Dict
 
 from flask import Response, session, redirect, url_for, flash, make_response, current_app
-from flask_mail import Message
 from flask_login import current_user, logout_user
 from flask_jwt_extended import get_jwt, get_jwt_identity, unset_jwt_cookies
 from werkzeug.datastructures import FileStorage
@@ -172,14 +172,14 @@ def generate_otp(length: int = 6) -> str:
     return otp
 
 
-
+# Clear session keys that are considered "unwanted", default is to clear all but "_permanent", "_csrf_token", "_flashes"
 def clear_unwanted_session_keys(extra_keys_to_keep: Optional[Set[str]] = None):
     """
     Utility function to clear specific session keys that are not needed.
-    
+
     Parameters:
     - keys_to_keep (set): A set of keys that should be retained in the session. Default is None.
-    
+
     Returns:
     - None
     """
@@ -772,13 +772,65 @@ def scan_file_with_virustotal(file: FileStorage, api_key: str) -> dict:
         return {}
 
 
+# Invalidate sessions (used for admin actions on accounts that have been logged in with multiple sessions)
+def invalidate_user_sessions(user_id: int, exclude_current: bool = False) -> None:
+    """
+    Clears all sessions for the given user_id.
+
+    Args:
+        user_id (int): The ID of the user whose sessions are to be cleared.
+        exclude_current (bool): Whether to exclude the current session from being cleared.
+    """
+    try:
+        # Reflect the sessions table
+        metadata = MetaData()
+        sessions_table = Table('sessions', metadata, autoload_with=db.engine)
+
+        # Get the current session ID if excluding the current session
+        current_session_id = session.get('_id') if exclude_current else None
+        print(f"current session id = {current_session_id}")
+
+        # Query all sessions
+        user_sessions = db.session.query(sessions_table).all()
+
+        for user_session in user_sessions:
+            record_id = user_session[0]  # Assuming 'id' is at index 0
+            session_id = user_session[1]  # Assuming 'session_id' is at index 1
+            session_data = user_session[2]  # Assuming 'data' is at index 2
+
+            print(f"Raw session data (truncated): {session_data[:100]}")
+            try:
+                # Decode the session data into a string
+                session_data_str = session_data.decode('utf-8', errors='ignore')
+                print(f"session data string = {session_data_str}")
+
+                # Check if the user_id exists in the session data string
+                if f"_user_id{user_id}" in session_data_str:
+                    # Exclude the current session if specified
+                    if exclude_current and session_id == current_session_id:
+                        continue
+                    # Delete the session using the 'id' column
+                    delete_stmt = delete(sessions_table).where(sessions_table.c.id == record_id)
+                    db.session.execute(delete_stmt)
+            except Exception as e:
+                print(f"Failed to process session data for session with id {record_id}: {e}")
+        
+        db.session.commit()
+        
+        user_sessions = db.session.query(sessions_table).all()
+        print(f"remaining sessions = {user_sessions}")
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error clearing sessions: {e}")
+
+
 def general_log_setter(): 
     logging.basicConfig(level=logging.INFO, filename="general.log", filemode="a", format="%(asctime)s||%(message)s")
     
 
 def transaction_log_setter():
     logging.basicConfig(level=logging.INFO, filename="transaction.log", filemode="a", format="%(asctime)s||%(message)s")
-    
+
 
 def account_log_setter():
     logging.basicConfig(level=logging.INFO, filename="account.log", filemode="a", format="%(asctime)s||%(message)s")

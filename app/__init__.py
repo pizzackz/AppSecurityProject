@@ -14,7 +14,6 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_login import LoginManager
 from flask_session import Session
-from flask_mail import Mail
 from flask_jwt_extended import JWTManager
 from flask_uploads import UploadSet, configure_uploads, IMAGES
 
@@ -27,13 +26,12 @@ from app.config.config import Config
 # Load environment variables from .env file
 load_dotenv()
 
-# Initialise CSRF protection, SQLAlchemy, LoginManager, Rate Limiter, Mail, Uploads
+# Initialise CSRF protection, SQLAlchemy, LoginManager, Rate Limiter, Uploads, Scheduler
 csrf: CSRFProtect = CSRFProtect()
 db: SQLAlchemy = SQLAlchemy()
 jwt: JWTManager = JWTManager()
 login_manager: LoginManager = LoginManager()
 limiter: Limiter = Limiter(key_func=get_remote_address, default_limits=Config.RATELIMIT_DEFAULT, storage_uri=Config.RATELIMIT_STORAGE_URL)
-mail: Mail = Mail()
 profile_pictures = UploadSet("profilepictures", IMAGES)
 scheduler = BackgroundScheduler()
 
@@ -293,10 +291,10 @@ def create_app() -> Flask:
     db.init_app(app)
     login_manager.init_app(app)
     login_manager.login_view = "login_auth_bp.login"
-    login_manager.login_message_category = "error"
+    login_manager.login_message = "You must be logged in to access this page. If you've been logged out, it may be due to administrative action. Please check your email for more details."
+    login_manager.login_message_category = "warning"
     limiter.init_app(app)
     jwt.init_app(app)
-    mail.init_app(app)
     configure_uploads(app, profile_pictures)
     start_scheduler(app)
 

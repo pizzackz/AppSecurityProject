@@ -72,12 +72,15 @@
                 <input type="file" name="profile_picture" id="profile_picture" class="form-control" disabled />
                 <br>
                 <button type="button" name="action" value="reset_profile_picture" class="btn btn-danger rounded-pill mr-2">Reset</button>
-                <button type="button" name="action" value="upload_profile_picture" class="btn btn-primary rounded-pill ml-2">Edit</button>
+                <button type="button" name="action" value="upload_profile_picture" class="btn btn-primary rounded-pill ml-2">Update</button>
             </div>
         {% endif %}
+        <br>
         <!-- View own order history only for premium members -->
         {% if user.subscription_plan == "premium" %}
-            <a href="" class="w-full text-center text-blue-500 hover:underline block">View Order History</a>
+        <a href="" class="center1">
+            <div class="but-blue">View Order History</div>
+        </a>
         {% endif %}
     </div>
 

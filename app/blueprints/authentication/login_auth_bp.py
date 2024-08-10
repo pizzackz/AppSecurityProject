@@ -188,6 +188,7 @@ def login():
     """
     # Log message according to where unauthenticated user tried to access
     if request.args.get("next"):
+        print(f"session = {session}")
         no_access_url = request.args.get("next")
         logger.warning(f"An unauthorised user tried to access '{no_access_url}'.")
         return redirect(url_for("login_auth_bp.login"))
@@ -701,6 +702,7 @@ def final_login():
     login_details = user.login_details
     login_details.update_login()
     login_user(user)
+    session['user_id'] = user.id
 
     # Display messages
     flash(claims.get("flash_message"), "success")
