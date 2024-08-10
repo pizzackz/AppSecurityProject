@@ -747,7 +747,7 @@ def send_admin_key():
             return redirect(url_for('login_auth_bp.login'))
 
         # Check if the admin key is expired or near expiry and regenerate if necessary
-        if not user.admin_key_expires_at or user.admin_key_expires_at < datetime.utcnow():
+        if not user.admin_key_expires_at or user.admin_key_expires_at < datetime.now():
             user.generate_admin_key()
             db.session.commit()
             logger.info(f"Admin key has been re-generated for admin user '{user.username}'.")
