@@ -777,8 +777,8 @@ def delete():
         reason = clean_input(form.reason.data)
 
         # Try sending email using utility send_email function
-        email_body = f"Your account has been deleted. The reason is:\n{reason}"
-        if send_email(current_user.email, "Deleted Account", email_body):
+        email_body = render_template("emails/delete_email.html", username=current_user.username, reason=reason)
+        if send_email(current_user.email, "Account Deletion", html_body=email_body):
             Member.delete(current_user.id)
             clear_unwanted_session_keys(ESSENTIAL_KEYS)
             flash("Successfully deleted your account!", "success")

@@ -268,7 +268,7 @@ def lock_member():
             return not_valid_admin_key
 
         # Try sending email using utility send_email function
-        email_body = f"Your account has been locked. The reason is:\n{reason}"
+        email_body = render_template("emails/lock_email.html", username=current_user.username, reason=reason)
         if send_email(member.email, "Account Locked", email_body):
             if Member.lock_account(id_to_lock=member_id, locked_reason=reason, locker_id=current_user.id):
                 clear_unwanted_session_keys(MEMBER_SPECIFIC_ESSENTIAL_KEYS)
@@ -329,7 +329,7 @@ def unlock_member():
         return redirect(url_for("member_control_bp.view_member_details"))
 
     # Try sending email using utility send_email function
-    email_body = "Your account has been unlocked."
+    email_body = render_template("emails/unlock_email.html", username=current_user.username)
     if send_email(member.email, "Account Unlocked", email_body):
         if Member.unlock_account(member_id):
             clear_unwanted_session_keys(MEMBER_SPECIFIC_ESSENTIAL_KEYS)
@@ -423,7 +423,7 @@ def revoke_plan():
             return redirect(url_for("member_control_bp.view_admin_details"))
         
         # Try sending email using utility send_email function
-        email_body = f"Your account subscription has been revoked. The reason is:\n{reason}"
+        email_body = render_template("emails/subscription_revoke.html", username=current_user.username, reason=reason)
         if send_email(member.email, "Subscription revoked", email_body):
             clear_unwanted_session_keys(MEMBER_SPECIFIC_ESSENTIAL_KEYS)
             flash("Successfully revoked member account subscription!", "success")
@@ -503,7 +503,7 @@ def delete_member():
             return not_valid_admin_key
         
         # Try sending email using utility send_email function
-        email_body = f"Your account has been deleted. The reason is:\n{reason}"
+        email_body = render_template("emails/delete_email.html", username=current_user.username, reason=reason)
         if send_email(member.email, "Deleted Account", email_body):
             Member.delete(member_id)
             clear_unwanted_session_keys(ESSENTIAL_KEYS)
@@ -567,7 +567,7 @@ def send_password_link():
     reset_url = url_for('recovery_auth_bp.reset_password', token=token, _external=True)
 
     # Try sending email using utility send_email function
-    email_body = f'Click the link to reset your password: <a href="{reset_url}" rel="noreferrer">{reset_url}</a>'
+    email_body = render_template("emails/password_link_email.html", username=current_user.username, reset_url=reset_url)
     if send_email(email, "Password Reset Request", email_body):
         clear_unwanted_session_keys(MEMBER_SPECIFIC_ESSENTIAL_KEYS)
         response = redirect(url_for("member_control_bp.view_member_details"))

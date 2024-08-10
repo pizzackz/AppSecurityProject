@@ -9,7 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.models import MenuItem, Order, OrderItem
 from app.forms.forms import OrderForm, MenuForm
 from app import db, csrf, limiter
-from app.utils import clean_input, get_session_data, set_session_data, clear_session_data, check_admin, check_premium_member
+from app.utils import clean_input, get_session_data, set_session_data, clear_session_data, check_admin, check_premium_member, send_email
 from datetime import datetime, timedelta
 from io import BytesIO
 from flask_limiter import Limiter
@@ -221,6 +221,7 @@ def order():
     try:
         # Cleaning inputs + Parameterized Queries
         items = MenuItem.query.filter(MenuItem.id.in_(selected_items)).all()
+        item_names = [item.name for item in items]  # Extract item names for email
     except SQLAlchemyError as e:
         logger.error(f"Database error when querying menu items: {e}")
         flash("An error occurred while processing your request.", "error")
@@ -249,6 +250,37 @@ def order():
                 )
                 db.session.add(order_item)
             db.session.commit()
+
+            # Generate Email
+            try:
+                # Retrieve the latest order for the current user
+                latest_order = Order.query.filter_by(user_id=current_user.id).order_by(Order.created_at.desc()).first()
+
+                if not latest_order:
+                    flash('No recent order found.', 'error')
+                    return redirect(url_for('member_order_bp.menu'))
+
+                # Retrieve the details from the order
+                address = latest_order.address
+                postal_code = latest_order.postal_code
+                phone_number = latest_order.phone_number
+            except SQLAlchemyError as e:
+                logger.error(f"Database error when retrieving the latest order: {e}")
+                flash('An error occurred while processing your request.', 'danger')
+                return redirect(url_for('member_order_bp.menu'))
+
+            email_body = render_template("emails/order_email.html",
+                                         username=current_user.username,
+                                         item=", ".join(item_names),
+                                         address=address,
+                                         postal_code=postal_code,
+                                         phone_number=phone_number,
+                                         delivery_date=delivery_date,
+                                         delivery_time=delivery_time)
+
+            if send_email(current_user.email, "Order Receipt", html_body=email_body):
+                flash("A receipt has been sent to your email address.", 'info')
+                logger.info(f"Receipt sent to {current_user.email}")
 
             logger.info(f"Order {new_order.id} created successfully for customer {new_order.customer_name}.")
             print(f"Order {new_order.id} created successfully for customer {new_order.customer_name}.")

@@ -323,9 +323,9 @@ def send_username():
     # Try sending email using utility send_email function
     username = user.username
     response = redirect(url_for('recovery_auth_bp.recover_username'))
-    email_body = f"Your username is {username}."
+    email_body = render_template("emails/recovery_email.html", username=username)
     recovery_stage = session.get("recovery_stage")
-    if send_email(identity['recovery_email'], "Your Username", email_body):
+    if send_email(identity['recovery_email'], "Username Recovery", html_body=email_body):
         flash_msg = "Your username has been sent to your email address."
         log_msg = f"Username send to {identity['recovery_email']}"
 
@@ -434,8 +434,8 @@ def send_password_link():
     reset_url = url_for('recovery_auth_bp.reset_password', token=token, _external=True)
 
     # Try sending email using utility send_email function
-    email_body = f'Click the link to reset your password: <a href="{reset_url}" rel="noreferrer">{reset_url}</a>'
-    if send_email(identity['recovery_email'], "Password Reset Request", email_body):
+    email_body = render_template("emails/password_link_email.html", username=user.username, reset_url=reset_url)
+    if send_email(identity['recovery_email'], "Password Reset Request", html_body=email_body):
         session.clear()
         response = redirect(url_for("login_auth_bp.login"))
         unset_jwt_cookies(response)

@@ -752,18 +752,10 @@ def send_admin_key():
             db.session.commit()
             logger.info(f"Admin key has been re-generated for admin user '{user.username}'.")
 
-        # Prepare the email body
-        email_body = (
-            f"Dear {user.username},\n\n"
-            f"Here is your admin key: {user.admin_key}\n"
-            f"Please keep this key secure and do not share it with anyone.\n"
-            f"Remember to delete this email after securely storing the key.\n\n"
-            f"Best regards,\n"
-            f"tastefully"
-        )
 
         # Send the email
-        if send_email(user.email, "Your Admin Key", email_body):
+        email_body = render_template("emails/admin_key_email.html", username=current_user.username, admin_key=user.admin_key)
+        if send_email(user.email, "Your Admin Key", html_body=email_body):
             flash("Your personal admin key has been sent to your email.", "info")
             logger.info(f"Admin user '{user.username}' has been sent their personal admin key.")
         else:

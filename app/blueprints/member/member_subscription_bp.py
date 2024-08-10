@@ -7,6 +7,7 @@ from flask import Blueprint, request, redirect, url_for, render_template, jsonif
 from app import db, csrf
 from sqlalchemy.sql import func
 from app.models import Payment, Member
+from app.utils import send_email
 from datetime import datetime, timedelta,timezone
 
 from flask_login import login_required, current_user
@@ -151,6 +152,13 @@ def success():
 
             db.session.add(new_payment)
             db.session.commit()
+
+            # Send email receipt
+            email_body = render_template("emails/sub_email.html", username=current_user.username)
+
+            if send_email(current_user.email, "Subscription Receipt", html_body=email_body):
+                flash("A receipt has been sent to your email address.", 'info')
+                logger.info(f"Subscription Receipt sent to {current_user.email}")
 
         else:
             logger.error("No invoice found for the subscription")

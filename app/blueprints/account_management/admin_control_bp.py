@@ -347,8 +347,8 @@ def lock_admin():
         reason = clean_input(form.reason.data)
 
         # Try sending email using utility send_email function
-        email_body = f"Your account has been locked. The reason is:\n{reason}"
-        if send_email(admin.email, "Account Locked", email_body):
+        email_body = render_template("emails/admin_lock_email.html", username=admin.username, reason=reason)
+        if send_email(admin.email, "Account Locked", html_body=email_body):
             if Admin.lock_account(id_to_lock=admin_id, locked_reason=reason):
                 clear_unwanted_session_keys(ADMIN_SPECIFIC_ESSENTIAL_KEYS)
                 flash("Successfully locked admin account!", "success")
@@ -409,8 +409,8 @@ def unlock_admin():
         return redirect(url_for("admin_control_bp.view_admin_details"))
 
     # Try sending email using utility send_email function
-    email_body = "Your account has been unlocked."
-    if send_email(admin.email, "Account Unlocked", email_body):
+    email_body = render_template("emails/admin_unlock_email.html", username=admin.username)
+    if send_email(admin.email, "Account Unlocked", html_body=email_body):
         if Admin.unlock_account(admin_id):
             clear_unwanted_session_keys(ADMIN_SPECIFIC_ESSENTIAL_KEYS)
             flash("Successfully unlocked admin account!", "success")
@@ -502,7 +502,7 @@ def delete_admin():
             return response
 
         # Try sending email using utility send_email function
-        email_body = "Your account has been deleted."
+        email_body = render_template("emails/admin_delete_email.html", username=admin.username)
         if send_email(admin.email, "Deleted Account", email_body):
             Admin.delete(admin_id)
             clear_unwanted_session_keys(ESSENTIAL_KEYS)
@@ -562,7 +562,7 @@ def send_password_link():
     reset_url = url_for('recovery_auth_bp.reset_password', token=token, _external=True)
 
     # Try sending email using utility send_email function
-    email_body = f'Click the link to reset your password: <a href="{reset_url}" rel="noreferrer">{reset_url}</a>'
+    email_body = render_template("emails/admin_password_link_email.html", username=admin.username, reset_url=reset_url)
     if send_email(email, "Password Reset Request", email_body):
         clear_unwanted_session_keys(ADMIN_SPECIFIC_ESSENTIAL_KEYS)
         response = redirect(url_for("admin_control_bp.view_admin_details"))
@@ -615,7 +615,7 @@ def generate_admin_key():
     
     # Generate a new admin key & try to send email
     admin_key = admin.generate_admin_key()
-    email_body = f"A new admin key has been generated: {admin_key}. Use this to perform administrative actions."
+    email_body = render_template("emails/admin_key_email.html", username=admin.username, admin_key=admin_key)
     if send_email(admin.email, "New Admin Key", email_body):
         clear_unwanted_session_keys(ADMIN_SPECIFIC_ESSENTIAL_KEYS)
         flash("Successfully generated a new admin key!", "success")

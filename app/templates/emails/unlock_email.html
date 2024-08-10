@@ -3,15 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your OTP Code</title>
+    <title>Important: Account Locked</title>
 </head>
 <body>
     <img src="https://i.imgur.com/AaUuxo9.png" style="height: 2.5rem; width: auto; text-align: center;">
     <p>Dear {{ username }},</p>
-    <p>Your OTP code is <strong>{{ otp }}</strong>. It will expire in {% if admin_control %}5{% else %}10{% endif %} minutes.</p>
-    <p>If you did not request this, please ignore this email.</p>
+    <p>This is an automated message to inform you that your account for tastefully has been unlocked.</p>
+    <br>
+    <p>You can now log in using your existing credentials. If you continue to experience any issues, please contact our support team.</P>
+    <p>Thank you for your patience.</p>
     <p>Best regards, <br>Tastefully</p>
     <hr>
     <p>If you need require any assistance, please contact us at 6222 6999 or email us at contacttastefully@gmail.com . </p>
+
 </body>
 </html>
