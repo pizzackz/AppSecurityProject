@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     function passwordsMatch() {
-        return newPasswordInput.value === confirmPasswordInput.value;
+        return newPasswordInput.value.length != 0 && newPasswordInput.value === confirmPasswordInput.value;
     }
 
     function validateForm() {

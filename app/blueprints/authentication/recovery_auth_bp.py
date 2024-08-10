@@ -62,6 +62,12 @@ def recovery():
                 flash("Your account is currently locked. A request to unlock your account has been sent to support. Please wait for further instructions.", "info")
                 logger.info(f"Unlock request sent for locked account with email: {email}")
                 return redirect(url_for('login_auth_bp.login'))
+        
+        # Check if account is google linked and has no password set
+        if user.google_id and not user.password_hash:
+            flash("Your account is linked to Google. Please recover your account via Google.", "info")
+            logger.info(f"Attempted to manually recover account details for google linked account '{user.username}' without password set.")
+            return redirect(url_for("login_auth_bp.login"))
 
         # Create JWT token for sensitive data
         response = redirect(url_for('recovery_auth_bp.send_otp'))

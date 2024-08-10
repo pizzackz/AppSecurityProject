@@ -191,8 +191,8 @@ def start_scheduler(app: Flask):
     global scheduler
     with app.app_context():
         scheduler.add_job(create_app_context_wrapper(app, check_payment_status), 'interval', minutes=10)
-        scheduler.add_job(create_app_context_wrapper(app, generate_new_master_keys), 'interval', days=1)
-        scheduler.add_job(create_app_context_wrapper(app, delete_expired_master_keys), 'interval', days=1)
+        scheduler.add_job(create_app_context_wrapper(app, generate_new_master_keys), 'interval', days=7)
+        scheduler.add_job(create_app_context_wrapper(app, delete_expired_master_keys), 'interval', days=7)
         scheduler.add_job(create_app_context_wrapper(app, refresh_admin_keys), 'interval', days=1)
         scheduler.add_job(create_app_context_wrapper(app, update_order_statuses), 'interval', minutes=10)
         scheduler.start()

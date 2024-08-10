@@ -2,21 +2,32 @@
 {% extends 'base.html' %}
 
 {% block title %}Link Google Account{% endblock %}
+{% from "includes/_form_helper.html" import render_field %}
 
-{% block navbar %}{% endblock %}
+{% block css %}
+{{ super() }}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/login.css') }}">
+{% endblock %}
+
+{% block navbar %}
+{% include "includes/_new_navbar.html" %}
+{% endblock %}
 
 {% block content %}
-{% from "includes/_form_helper.html" import render_field %}
-<h1>Link Google Account</h1>
-<p>Do you want to link your existing account with your Google account?<br>
-    Your username and profile picture will change to those in your Google account.</p>
-
-<form action="" method="post" id="google-account-linking-form">
-    {{ form.hidden_tag() }}
-    <div>
-        {{ form.confirm }}
-    </div>
-    <!-- Submit button -->
-    <button type="submit" class="btn btn-primary rounded-pill submit-disabler">Confirm</button>
-</form>
+<div class="login-container">
+    <h1>Link Google Account</h1>
+    <p>Do you want to link your existing account with your Google account?<br>
+        Your username and profile picture will change to those in your Google account.</p>
+    
+    <form action="" method="post" id="google-account-linking-form">
+        {{ form.hidden_tag() }}
+        <div>
+            {{ form.confirm }}
+        </div>
+        <!-- Submit button -->
+        <div class="center1">
+        <button type="submit" class="btn btn-primary rounded-pill submit-disabler">Confirm</button>
+        </div>
+    </form>
+</div>
 {% endblock %}

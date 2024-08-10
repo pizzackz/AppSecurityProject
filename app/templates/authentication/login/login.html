@@ -2,11 +2,11 @@
 {% extends "base.html" %}
 
 {% block title %}tastefully | Login{% endblock %}
-
 {% from "includes/_form_helper.html" import render_field %}
-{% include "includes/_new_navbar.html" %}
 
-{% block navbar %}{% endblock %}
+{% block navbar %}
+{% include "includes/_new_navbar.html" %}
+{% endblock %}
 
 {% block css %}
 {{ super() }}
@@ -43,6 +43,7 @@
         </div>
 
         <br>
+
         <div class="center1">
             <button type="submit" class="but-login ">Sign in</button>
         </div>

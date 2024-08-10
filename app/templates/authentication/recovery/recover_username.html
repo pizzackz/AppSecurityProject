@@ -1,22 +1,31 @@
 <!DOCTYPE html>
 {% extends "base.html" %}
+
 {% block title %}Username Recovery{% endblock %}
+{% from "includes/_form_helper.html" import render_field %}
 
-{% block navbar %}{% endblock %}
+{% block css %}
+{{ super() }}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/login.css') }}">
+{% endblock %}
 
-{% block content %} {% from "includes/_form_helper.html" import render_field %}
+{% block navbar %}
+{% include "includes/_new_navbar.html" %}
+{% endblock %}
 
-<h1>Username Recovery</h1>
-<!-- Message -->
-<p>
-    Your username has been sent to your email. If you want to change your password instead, please click
-    <a href="{{ url_for('recovery_auth_bp.recover_username', action='reset_password') }}">here</a>.
-</p>
-
-<!-- Action buttons (Resend, Sign in) -->
-<div>
-    <a href="{{ url_for('recovery_auth_bp.send_username', action='resend') }}" class="btn btn-light btn-outline-primary rounded-pill">Resend it</a>
-    <a href="{{ url_for('recovery_auth_bp.recover_username', action='login') }}" class="btn btn-primary rounded-pill submit-disabler">Sign In</a>
+{% block content %} 
+<div class="login-container">
+    <h1>Username Recovery</h1>
+    <!-- Message -->
+    <p>
+        Your username has been sent to your email. If you want to change your password instead, please click
+        <a href="{{ url_for('recovery_auth_bp.recover_username', action='reset_password') }}">here</a>.
+    </p>
+    
+    <!-- Action buttons (Resend, Sign in) -->
+    <div>
+        <a href="{{ url_for('recovery_auth_bp.send_username', action='resend') }}" class="btn btn-light btn-outline-primary rounded-pill">Resend it</a>
+        <a href="{{ url_for('recovery_auth_bp.recover_username', action='login') }}" class="btn btn-primary rounded-pill">Sign In</a>
+    </div>
 </div>
-
 {% endblock %}

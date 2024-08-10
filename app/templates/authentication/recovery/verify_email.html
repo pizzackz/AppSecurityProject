@@ -2,29 +2,37 @@
 {% extends "base.html" %}
 
 {% block title %}Verify Email{% endblock %}
-
-{% block navbar %}{% endblock %}
-
-{% block content %}
 {% from "includes/_form_helper.html" import render_field %}
 
-<h1>Verify Email</h1>
-<!-- Message with resend otp below -->
-<p>We have sent you a verification email, please verify your email address.</p>
+{% block css %}
+{{ super() }}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/login.css') }}">
+{% endblock %}
 
-<a href="{{ url_for('recovery_auth_bp.send_otp', action='resend') }}">Resend it</a>
+{% block navbar %}
+{% include "includes/_new_navbar.html" %}
+{% endblock %}
 
-<form action="" method="post" id="verify-otp-form">
-    {{ form.hidden_tag() }}
-    <div>
-        {{ render_field(form.otp, class="form-control", placeholder="Enter the code") }}
-    </div>
+{% block content %}
+<div class="login-container">
+    <h1>Verify Email</h1>
+    <!-- Message with resend otp below -->
+    <p>We have sent you a verification email, please verify your email address.</p>
+    
+    <form action="" method="post" id="verify-otp-form">
+        {{ form.hidden_tag() }}
+        <div>
+            {{ render_field(form.otp, class="form-control", placeholder="Enter the code") }}
+            <a href="{{ url_for('recovery_auth_bp.send_otp', action='resend') }}">Resend it</a>
+        </div>
 
-    <!-- Submit buttons (Back, Next) -->
-    <div>
-        <a href="{{ url_for('recovery_auth_bp.verify_email', action='back') }}" class="btn btn-light btn-outline-primary rounded-pill">Back</a>
-        <button type="submit" name="action" value="next" class="btn btn-primary rounded-pill submit-disabler">Next</button>
-    </div>
-</form>
-
+        <br>
+    
+        <!-- Submit buttons (Back, Next) -->
+        <div>
+            <a href="{{ url_for('recovery_auth_bp.verify_email', action='back') }}" class="btn btn-light btn-outline-primary rounded-pill">Back</a>
+            <button type="submit" name="action" value="next" class="btn btn-primary rounded-pill submit-disabler">Next</button>
+        </div>
+    </form>
+</div>
 {% endblock %}

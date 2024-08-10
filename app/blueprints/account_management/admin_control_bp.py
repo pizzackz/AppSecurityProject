@@ -426,8 +426,7 @@ def delete_admin():
     # Redirect to view admins & clear temp data in session & jwt when pressed 'back'
     if 'action' in request.args and request.args.get('action') == 'back':
         # Clear session and JWT data
-        keys_to_keep = {key for key in ESSENTIAL_KEYS}.add("admin_id")
-        clear_unwanted_session_keys(keys_to_keep)
+        clear_unwanted_session_keys(ADMIN_SPECIFIC_ESSENTIAL_KEYS)
         response = redirect(url_for('admin_control_bp.view_admin_details'))
         unset_jwt_cookies(response)
         flash("Admin deletion process cancelled.", "info")

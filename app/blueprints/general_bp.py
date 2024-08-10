@@ -1,6 +1,6 @@
 import requests
 import logging
-from flask import Blueprint, render_template, request, session, redirect, flash, url_for, jsonify
+from flask import Blueprint, render_template, request, session, redirect, flash, url_for, jsonify, make_response
 from flask_login import login_required, current_user, logout_user
 from flask_jwt_extended import unset_jwt_cookies
 from flask_limiter.errors import RateLimitExceeded
@@ -28,7 +28,7 @@ def home():
 # Logout route
 @general_bp.route("/logout")
 def logout():
-    # Display logout messages    
+    # Display logout messages
     flash("You have been successfully logged out!", "success")
     logger.info(f"User '{current_user.username}' has been logged out successfully.")
 
@@ -46,6 +46,16 @@ def logout():
 @general_bp.route('/about')
 def about():
     return render_template('about.html')
+
+
+# Bad request
+@general_bp.errorhandler(400)
+def bad_request(e):
+    session.clear()
+    response = make_response(render_template("authentication/login.html"))
+    unset_jwt_cookies(response)
+    flash("An error occurred. Please try again!", "error")
+    return response
 
 
 # Page not Found

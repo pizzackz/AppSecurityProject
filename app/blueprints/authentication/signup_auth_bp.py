@@ -299,7 +299,7 @@ def extra_info():
                 member.postal_code = clean_input(form.postal_code.data)
             db.session.commit()
         elif request.form['action'] == 'skip':
-            flash_msg = ["Skipped adding additional information. You can update them later after loggin in.", "success"]
+            flash_msg = ["Skipped adding additional information. You can update them later after logging in.", "success"]
             log_msg = f"User skipped additional information: {identity['email']}"
 
         # Clear session and JWT cookies

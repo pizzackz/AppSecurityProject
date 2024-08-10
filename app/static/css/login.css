@@ -63,7 +63,7 @@
 }
 /* General Styling*/
 
-.form-control {
+.form-control:not(textarea) {
     border-radius: 25px;
     padding-left: 15px;
     padding-right: 15px;

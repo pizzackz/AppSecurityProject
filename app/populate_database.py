@@ -226,7 +226,6 @@ def create_fake_logs(model, num_logs):
     fake = Faker()
     users=User.query.all()
     now = datetime.now()
-    print(list(users))
     for _ in range(num_logs):
         log = model(
             log_datetime=now - timedelta(hours=fake.random_int(min=0, max=24)),

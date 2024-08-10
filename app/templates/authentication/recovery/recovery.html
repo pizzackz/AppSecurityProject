@@ -2,27 +2,37 @@
 {% extends "base.html" %}
 
 {% block title %}Account Recovery{% endblock %}
-
-{% block navbar %}{% endblock %}
-
-{% block content %}
 {% from "includes/_form_helper.html" import render_field %}
 
-<h1>Account Recovery</h1>
-<!-- Message -->
-<p>To help keep your account safe, we want to make sure it's really you trying to recover your account</p>
+{% block css %}
+{{ super() }}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/login.css') }}">
+{% endblock %}
 
-<form action="" method="post" id="send-email-form">
-    {{ form.hidden_tag() }}
-    <div>
-        {{ render_field(form.email, class="form-control", placeholder="Enter your email") }}
-    </div>
+{% block navbar %}
+{% include "includes/_new_navbar.html" %}
+{% endblock %}
 
-    <!-- Submit buttons (Back, Next) -->
-    <div>
-        <a href="{{ url_for('recovery_auth_bp.recovery', action='back') }}" class="btn btn-light btn-outline-primary rounded-pill">Back</a>
-        <button type="submit" class="btn btn-primary rounded-pill submit-disabler">Next</button>
-    </div>
-</form>
+{% block content %}
+<div class="login-container">
+    <h1>Account Recovery</h1>
 
+    <!-- Message -->
+    <p>To help keep your account safe, we want to make sure it's really you trying to recover your account</p>
+    
+    <form action="" method="post" id="send-email-form">
+        {{ form.hidden_tag() }}
+        <div>
+            {{ render_field(form.email, class="form-control", placeholder="Enter your email") }}
+        </div>
+
+        <br>
+    
+        <!-- Submit buttons (Back, Next) -->
+        <div>
+            <a href="{{ url_for('recovery_auth_bp.recovery', action='back') }}" class="btn btn-light btn-outline-primary rounded-pill">Back</a>
+            <button type="submit" class="btn btn-primary rounded-pill submit-disabler">Next</button>
+        </div>
+    </form>
+</div>
 {% endblock %}

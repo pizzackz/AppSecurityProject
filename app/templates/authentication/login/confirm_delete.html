@@ -6,6 +6,7 @@
 
 {% block css %}
 {{ super() }}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/login.css') }}">
 <style nonce="{{ nonce }}">
     textarea {
         max-width: 50%;
@@ -15,49 +16,52 @@
 </style>
 {% endblock %}
 
-{% block navbar %}{% endblock %}
+{% block navbar %}
+{% include "includes/_new_navbar.html" %}
+{% endblock %}
 
 {% block content %}
-<h1>Locked Account</h1>
+<div class="login-container">
+    <h1>Locked Account</h1>
 
-<form action="" method="post" id="delete-account-form">
-    {{ form.hidden_tag() }}
-
-    <!-- Messages to let user know that deleting is permanent -->
-    <div id="messages" class="mt-4">
-        <p class="text-bold">Your account is currently locked. The reason is:<br>
-            &quot;{{ locked_reason or "Unknown reason" }}&quot;<br>
-            If you wish to unlock your account, you can contact our support team for assistance or proceed to delete your account directly.</p>
-        
-        <!-- Contact information -->
-        <div class="contact-info mb-3">
-            <p class="text-muted">To contact support, please use the following details:<br>
-                <strong>Email:</strong> <a href="mailto:itastefully@gmail.com" target="_blank" rel="noopener noreferrer">itastefully@gmail.com</a><br>
-                <strong>Phone:</strong> +65 9824 5934
-            </p>
-        </div>
-
-        <!-- Disclaimer -->
-        <div class="disclaimer mt-3">
-            <p class="text-danger">Disclaimer: Deleting your account is a permanent action and cannot be undone.<br>
-                All your data will be permanently removed from our system.<br>
-                Please make sure you want to proceed before confirming your decision.</p>
-        </div>
-    </div>
-
-    <div class="form-group mt-3">
-        {{ render_field(form.reason, class="form-control", rows=5, placeholder="Enter reason", wrap="soft") }}
-    </div>
+    <form action="" method="post" id="delete-account-form">
+        {{ form.hidden_tag() }}
     
-    {{ render_field(form.recaptcha) }}
-
-    <br>
-
-    <!-- Submit buttons (Cancel, Confirm Delete) -->
-    <div>
-        <a href="{{ url_for('login_auth_bp.confirm_delete', action='back') }}" class="btn btn-secondary rounded-pill">Cancel</a>
-        <button type="submit" class="btn btn-danger rounded-pill submit-disabler">Confirm Delete</button>
-    </div>
-</form>
-
+        <!-- Messages to let user know that deleting is permanent -->
+        <div id="messages" class="mt-4">
+            <p class="text-bold">Your account is currently locked. The reason is:<br>
+                &quot;{{ locked_reason or "Unknown reason" }}&quot;<br>
+                If you wish to unlock your account, you can contact our support team for assistance or proceed to delete your account directly.</p>
+            
+            <!-- Contact information -->
+            <div class="contact-info mb-3">
+                <p class="text-muted">To contact support, please use the following details:<br>
+                    <strong>Email:</strong> <a href="mailto:itastefully@gmail.com" target="_blank" rel="noopener noreferrer">itastefully@gmail.com</a><br>
+                    <strong>Phone:</strong> +65 9824 5934
+                </p>
+            </div>
+    
+            <!-- Disclaimer -->
+            <div class="disclaimer mt-3">
+                <p class="text-danger">Disclaimer: Deleting your account is a permanent action and cannot be undone.<br>
+                    All your data will be permanently removed from our system.<br>
+                    Please make sure you want to proceed before confirming your decision.</p>
+            </div>
+        </div>
+    
+        <div class="form-group mt-3">
+            {{ render_field(form.reason, class="form-control", rows=5, placeholder="Enter reason", wrap="soft") }}
+        </div>
+        
+        {{ render_field(form.recaptcha) }}
+    
+        <br>
+    
+        <!-- Submit buttons (Cancel, Confirm Delete) -->
+        <div>
+            <a href="{{ url_for('login_auth_bp.confirm_delete', action='back') }}" class="btn btn-secondary rounded-pill">Cancel</a>
+            <button type="submit" class="btn btn-danger rounded-pill submit-disabler">Confirm Delete</button>
+        </div>
+    </form>
+</div>
 {% endblock %}
