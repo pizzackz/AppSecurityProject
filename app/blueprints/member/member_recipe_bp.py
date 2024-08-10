@@ -1,11 +1,8 @@
 from flask import (
-    Flask,
-    current_app,
     Blueprint,
     render_template,
     request,
     redirect,
-    session,
     flash,
     url_for,
     jsonify,
@@ -14,7 +11,6 @@ from flask import (
 )
 import re
 import imghdr
-import imageio
 from app.models import Recipe, User, RecipeConfig
 import os
 from sqlalchemy import or_, and_, case
@@ -23,7 +19,7 @@ from app import limiter
 from ...utils import scan_file_with_virustotal
 from hashlib import sha256
 from app.forms.forms import CreateRecipeFormMember, RecipeSearch, AICreateRecipeForm, CustomiseRecipeForm
-from app import db, JWTManager
+from app import db
 from bs4 import BeautifulSoup
 import google.generativeai as genai
 from datetime import datetime

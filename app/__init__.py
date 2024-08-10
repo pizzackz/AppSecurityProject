@@ -7,11 +7,12 @@ from datetime import datetime, timedelta
 from logging import Logger, StreamHandler, Formatter
 from dotenv import load_dotenv
 
-from flask import Flask, Response, g
+from flask import Flask, Response, g, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_limiter.errors import RateLimitExceeded
 from flask_login import LoginManager
 from flask_session import Session
 from flask_jwt_extended import JWTManager
@@ -278,6 +279,31 @@ def register_all_bp(app: Flask):
     # Guest Recipes
     from app.blueprints.guest.guest_recipe_bp import guest_recipe_bp
     app.register_blueprint(guest_recipe_bp)
+
+    # Error Handler
+    @app.errorhandler(404)
+    def page_not_found(e):
+        return render_template('error/error_404.html'), 404
+
+    # Internal Server Error
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        return render_template('error/error_500.html'), 500
+
+    # Unauthorized
+    @app.errorhandler(401)
+    def unauthorized(e):
+        return render_template('error/error_401.html'), 401
+
+    # Forbidden
+    @app.errorhandler(403)
+    def forbidden(e):
+        return render_template('error/error_403.html'), 403
+
+    @app.errorhandler(RateLimitExceeded)
+    def rate_limit_exceeded(e):
+        if request.endpoint == 'recipe-creator-ai':
+            return jsonify({'content': 'Please wait for a moment before making another request.'}), 429
 
     register_auth_bp(app)
     register_member_bp(app)

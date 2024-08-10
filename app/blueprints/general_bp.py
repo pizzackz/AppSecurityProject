@@ -73,33 +73,3 @@ def bad_request(e):
     unset_jwt_cookies(response)
     flash("An error occurred. Please try again!", "error")
     return response
-
-
-# Page not Found
-@general_bp.errorhandler(404)
-def page_not_found(e):
-    return render_template('error/error_404.html'), 404
-
-
-# Internal Server Error
-@general_bp.errorhandler(500)
-def internal_server_error(e):
-    return render_template('error/error_500.html'), 500
-
-
-# Unauthorized
-@general_bp.errorhandler(401)
-def unauthorized(e):
-    return render_template('error/error_401.html'), 401
-
-
-# Forbidden
-@general_bp.errorhandler(403)
-def forbidden(e):
-    return render_template('error/error_403.html'), 403
-
-
-@general_bp.errorhandler(RateLimitExceeded)
-def rate_limit_exceeded(e):
-    if request.endpoint == 'recipe-creator-ai':
-        return jsonify({'content': 'Please wait for a moment before making another request.'}), 429

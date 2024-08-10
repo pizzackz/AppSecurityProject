@@ -172,4 +172,4 @@ def view_recipe(recipe_id):
         'prep_time': recipe.prep_time,
         'ingredient_count': len(recipe.ingredients.split(',')),
     }
-    return render_template('member/recipe/recipe_view2.html', recipe=recipe_data)
+    return render_template('guest/recipe/recipe_view2.html', recipe=recipe_data)

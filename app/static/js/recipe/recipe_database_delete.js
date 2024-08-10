@@ -113,7 +113,6 @@ var ingredient_input = document.getElementById('ingredients');
 function autocompletion() {
     var ingredient = ingredient_input.value;
     ingredient = ingredient.toLowerCase();
-    console.log(ingredient);
     const add_item = document.getElementById("add_ingredient");
     add_item.classList.remove('disabled');
     if (ingredient == "") {
@@ -169,7 +168,6 @@ function select_autocomplete(word) {
     var allexceptLast = arr.slice(0, arr.length - 1);
     allexceptLast.push(word);
     document.getElementById('ingredients').value = allexceptLast.join(',');
-    console.log('clicked selected');
     autocompletion();
 }
 
@@ -198,7 +196,6 @@ function hide_popup() {
 
 // Checking ingredient list before sending POST request
 function search_ingredients() {
-    console.log(ingredient_list)
     if (ingredient_list.length == 0) {
         display_popup('Ingredient list is empty!', 'error');
     }
@@ -233,7 +230,6 @@ function overlayoff() {
 }
 
 function confirmdelete(content, id) {
-    console.log(content);
     document.getElementById('modal-body').innerHTML = 'Are you sure you want to remove ' + content + '?';
     document.getElementById('delete').onclick = function () {
       window.location.href = "delete_recipe_forever/" + id;

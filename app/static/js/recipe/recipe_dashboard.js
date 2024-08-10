@@ -1,15 +1,9 @@
 const ctx = document.getElementById('myChart')
 
-// Jacen's part: Fetch data from endpoint api/performance, data is in JSON format
-// Fetch data from endpoint api/performance, data is in JSON format
 fetch('/api/recipe_info')
   .then(response => response.json())
   .then(data => {
-
-    // Use data.content to access the content list
     var log_list = data.content;
-
-    // Construct the data for the chart
     var logData = {
       labels: [
         '12 hours ago', '11 hours ago', '10 hours ago', '9 hours ago', '8 hours ago',
@@ -52,10 +46,6 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 });
-
-
-
-
 
 function confirmdelete(name, href) {
     document.getElementById('modal-body').innerHTML = 'Are you sure you want to delete ' + name + '?';

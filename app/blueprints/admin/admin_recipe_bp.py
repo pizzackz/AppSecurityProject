@@ -1,5 +1,4 @@
 from flask import (
-    current_app,
     Blueprint,
     render_template,
     request,
@@ -12,30 +11,23 @@ from flask import (
 )
 import re
 import imghdr
-import imageio
-import requests
-from werkzeug.utils import secure_filename
 from app.models import Recipe, RecipeDeleted, RecipeConfig
 import os
-from sqlalchemy import or_, and_, case
+from sqlalchemy import or_, and_
 from app.populate_recipes import populate_recipes
 from hashlib import sha256
-from app import limiter
 from ...utils import scan_file_with_virustotal
 from flask_login import current_user
-from sqlalchemy.sql import func
 
 from datetime import datetime, timedelta
-# import html
 from app.forms.forms import CreateRecipeForm, RecipeSearch, AICreateRecipeForm, CustomiseRecipeForm
 from app import db
 from bs4 import BeautifulSoup
-from flask_limiter import Limiter
-from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity, set_access_cookies
-from flask_limiter.util import get_remote_address
+from flask_jwt_extended import jwt_required, create_access_token, set_access_cookies
 import google.generativeai as genai
 from flask_login import login_required
 
+# import html
 # import json
 # from PIL import Image
 # import flask_sqlalchemy
@@ -58,22 +50,6 @@ def is_image(filename):
     else:
         return False, None
 
-
-# def scan_image_for_malware(api_key, filename):
-#     url = 'https://www.virustotal.com/vtapi/v2/file/scan'
-#     params = {'apikey': api_key}
-#     with open(filename, 'rb') as file:
-#         files = {'file': file}
-#         response = requests.post(url, files=files, params=params)
-#         result = response.json()
-#     return result
-
-
-# def is_image_safe(result):
-#     if 'response_code' in result and result['response_code'] == 1:
-#         if 'positives' in result and result['positives'] == 0:
-#             return True
-#     return False
 
 
 # Recipe Pages
@@ -658,10 +634,15 @@ def recipe_dashboard():
     locked_recipes = locked_recipe_object.status
     print(locked_recipes)
 
-    return render_template('admin/recipe/recipe_dashboard.html', recipes=recipes, locked_recipes=locked_recipes, data=data, deletedrecipes=deletedrecipes)
+    identity = {'username': current_user.username, 'user_id': current_user.id}
+    token = create_access_token(identity=identity)
+    response = make_response(render_template('admin/recipe/recipe_dashboard.html', recipes=recipes, locked_recipes=locked_recipes, data=data, deletedrecipes=deletedrecipes))
+    set_access_cookies(response, token)
+    return response
 
 @admin_recipe_bp.route('/api/recipe_info', methods=['GET'])
 @login_required
+@jwt_required()
 def recipe_info():
     if current_user.type != 'admin':
         # return 401 if user is not admin

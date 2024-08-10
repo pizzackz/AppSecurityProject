@@ -59,10 +59,8 @@ document.addEventListener("DOMContentLoaded", function() {
         else {
             var regex = /^[a-zA-Z\s,]+$/;
             var arr = ingredient.split(',');
-            console.log(arr)
             if (regex.test(ingredient)) {
                 for (i=0;i<arr.length;i++) {
-                    console.log(arr[i]);
                     if (ingredient_list.includes(arr[i])) {
                         display_popup(arr[i] + ' is already added.', 'error');
                     }
@@ -96,7 +94,6 @@ var ingredient_input = document.getElementById('ingredients');
 function autocompletion() {
     var ingredient = ingredient_input.value;
     ingredient = ingredient.toLowerCase();
-    console.log(ingredient);
     const add_item = document.getElementById("add_ingredient");
     add_item.classList.remove('disabled');
     if (ingredient == "") {
@@ -152,7 +149,6 @@ function select_autocomplete(word) {
     allexceptLast.push(word);
 
     document.getElementById('ingredients').value = allexceptLast.join(',');
-    console.log('clicked selected');
     autocompletion();
 }
 
