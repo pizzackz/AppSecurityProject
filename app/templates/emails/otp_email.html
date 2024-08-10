@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your OTP Code</title>
+</head>
+<body>
+    <p>Dear {{ username }},</p>
+    <p>Your OTP code is <strong>{{ otp }}</strong>. It will expire in {% if admin_control %}5{% else %}10{% endblock %} minutes.</p>
+    <p>If you did not request this, please ignore this email.</p>
+    <p>Best regards,</p>
+    <p>Tastefully</p>
+</body>
+</html>

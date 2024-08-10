@@ -726,7 +726,7 @@ def send_otp():
     set_access_cookies(response, new_token)
 
     # Try sending email using utility send_email function
-    email_body = f"Your OTP is {otp}. It will expire in 5 minutes."
+    email_body = render_template("emails/otp_email.html", username=identity['username'], otp=otp, admin_control=True)
     create_admin_stage = session.get("create_admin_stage")
     if send_email(identity['email'], "Your OTP Code", email_body):
         flash_msg = "OTP has been sent to your email address."

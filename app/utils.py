@@ -42,26 +42,73 @@ EMAIL_PASSWORD = Config.EMAIL_PASSWORD
 FROM_EMAIL = Config.FROM_EMAIL
 
 
-def send_email(to_email: str, subject: str, body) -> bool:
+# Send email function to send emails
+def send_email(to_email: str, subject: str, plaintext_body: Optional[str] = None, html_body: Optional[str] = None) -> bool:
+    """
+    Sends an email to the specified recipient with either a plain text body, 
+    an HTML body, or both.
+
+    This function uses the SMTP protocol to send an email. The email can be 
+    sent as plain text, HTML, or a multipart message that includes both 
+    plain text and HTML versions. The function also handles various SMTP 
+    exceptions and logs errors accordingly.
+
+    Args:
+        to_email (str): The recipient's email address.
+        subject (str): The subject line of the email.
+        plaintext_body (Optional[str]): The plain text version of the email body. 
+            Defaults to None.
+        html_body (Optional[str]): The HTML version of the email body. 
+            Defaults to None.
+
+    Returns:
+        bool: Returns True if the email was sent successfully, otherwise returns False.
+
+    Raises:
+        SMTPAuthenticationError: If the authentication with the SMTP server fails.
+        SMTPConnectError: If the connection to the SMTP server fails.
+        SMTPException: For other SMTP-related errors.
+        Exception: For other general exceptions.
+        
+    Notes:
+        - At least one of `plaintext_body` or `html_body` must be provided.
+        - The function logs information about the email sending process, 
+          including errors and successful email transmissions.
+    """
     try:
-        # Create the email
-        msg = MIMEMultipart()
+        # Create the email container with 'alternative' MIME type
+        msg = MIMEMultipart("alternative")
         msg['From'] = FROM_EMAIL
         msg['To'] = to_email
         msg['Subject'] = subject
-        msg.attach(MIMEText(body, 'plain'))
 
-        # Connect to the SMTP server
+        # Attach plain text and/or HTML parts
+        if plaintext_body:
+            part1 = MIMEText(plaintext_body, 'plain')
+            msg.attach(part1)
+
+        if html_body:
+            part2 = MIMEText(html_body, 'html')
+            msg.attach(part2)
+        
+        # Ensure at least one body is provided
+        if not plaintext_body and not html_body:
+            logger.error("No email body provided")
+            return False
+
+        # Send the email
         server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
         server.starttls()
         server.login(EMAIL_USERNAME, EMAIL_PASSWORD)
-        text = msg.as_string()
-        server.sendmail(FROM_EMAIL, to_email, text)
+        server.sendmail(FROM_EMAIL, to_email, msg.as_string())
         server.quit()
         logger.info(f"Email sent to {to_email}")
 
-        # For testing purposes
-        print(f"Mail body:\n{str(body)}")
+        # For debugging purposes
+        if html_body:
+            print(f"HTML Mail body:\n{str(html_body)}")
+        elif plaintext_body:
+            print(f"Plain Text Mail body:\n{str(plaintext_body)}")
 
         return True
 
