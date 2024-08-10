@@ -11,7 +11,6 @@ from flask import (
     jsonify
 )
 from flask_login import login_required, current_user
-from datetime import datetime
 import praw
 import logging
 import sqlite3
@@ -41,14 +40,16 @@ reddit = praw.Reddit(
 )
 
 
-scopes = ['read', 'identity', 'submit', 'comment'] 
+scopes = ['read', 'identity', 'submit', 'comment']
 
 
 def store_refresh_token(token, current_user):
     try:
+         # Store the refresh token with the associated user ID
         new_token = Token(user_id=current_user.id, refresh_token=token)
         db.session.add(new_token)
         db.session.commit()
+        logging.debug(f"Stored token for user_id {current_user.id}: {token}")
     except Exception as e:
         logging.error(f"Error storing refresh token: {e}")
         db.session.rollback()
@@ -56,6 +57,7 @@ def store_refresh_token(token, current_user):
 
 
 def get_refresh_token(user_id):
+    # Retrieve the latest refresh token for the user
     token = Token.query.filter_by(user_id=user_id).order_by(Token.id.desc()).first()
     return token.refresh_token if token else None
 
@@ -63,7 +65,9 @@ def get_refresh_token(user_id):
 @member_forum_bp.route('/authorize')
 @login_required
 def authorize():
-    auth_url = reddit.auth.url(scopes, os.urandom(16).hex(), 'permanent')
+    state = os.urandom(16).hex()
+    session['oauth_state'] = state
+    auth_url = reddit.auth.url(scopes, state, 'permanent')
     logging.debug(f"Authorization URL: {auth_url}")
     print(auth_url)
     return redirect(auth_url)
@@ -73,24 +77,32 @@ def authorize():
 @login_required
 def authorize_callback():
     code = request.args.get('code')
-    if not code:
+    state = request.args.get('state')
+    stored_state = session.get('oauth_state')
+
+    if not code or state != stored_state:
         return "Error: No code returned", 400
     logging.debug(f"Authorization code: {code}")
+
     try:
         # Get the refresh token
         refresh_token = reddit.auth.authorize(code)
         logging.debug(f"Refresh Token: {refresh_token}")
 
-        # Ensure only one token per user
+        # Clear old tokens and store new token
         Token.query.filter_by(user_id=current_user.id).delete()
         db.session.commit()
+        store_refresh_token(refresh_token, current_user.id)
 
-        # Store the refresh token securely associated with the current user
-        # Assuming you have access to the current user's ID
-        store_refresh_token(refresh_token, current_user)
         return redirect(url_for('member_forum_bp.subreddit'))
+    except praw.exceptions.InvalidRequest as e:
+        logging.error(f"Invalid request error: {e}")
+        return f"Invalid request: {e}", 400
+    except praw.exceptions.PRAWException as e:
+        logging.error(f"PRAWException: {e}")
+        return f"PRAWException: {e}", 500
     except Exception as e:
-        logging.error(f"Error during authorization: {e}")
+        logging.error(f"Unexpected error: {e}")
         return f"Error during authorization: {e}", 500
 
 
