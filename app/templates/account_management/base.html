@@ -66,7 +66,7 @@
     {% block scripts %}
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script nonce="{{ nonce }}" src="{{ url_for('static', filename='js/submit_disabler.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/submit_disabler.js') }}"></script>
     <script nonce="{{ nonce }}">
         document.addEventListener('DOMContentLoaded', function() {
             // Automatically close flash messages after 20 seconds
@@ -79,6 +79,28 @@
             }, 20000); // 20 seconds
         });
     </script>
+
+    {% if 'admin_control_bp' in request.endpoint and request.endpoint != 'admin_control_bp.start' %}
+    <!-- Inactivity Timer to do session timeout only for Admin control panel pages -->
+    <script nonce="{{ nonce }}">
+        document.addEventListener('DOMContentLoaded', function() {
+            let timeout;
+            const inactivityLimit = 15 * 1000;  // 10mins
+
+            function resetTimer() {
+                clearTimeout(timeout);
+                timeout = setTimeout(function() {
+                    window.location.href = "{{ url_for('admin_control_bp.start', inactivity_timeout='True') }}";
+                }, inactivityLimit);
+            }
+
+            // Events to detect user activity
+            window.onload = resetTimer;
+            document.onmousemove = resetTimer;
+            document.onkeypress = resetTimer;
+        });
+    </script>
+    {% endif %}
     {% endblock %}
 </body>
 </html>

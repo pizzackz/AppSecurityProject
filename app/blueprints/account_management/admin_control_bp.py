@@ -87,6 +87,14 @@ def start():
         response = redirect(url_for('admin_control_bp.start'))
         unset_jwt_cookies(response)
         return response
+    
+    # Check whether user got redirected due to inactivity
+    if request.args.get("inactivity_timeout") == "True":
+        flash("You have been inactive for 10mins and need to re-authenticate again to access.", "info")
+        logger.info("Session has been timed-out due to inactivity and user has been redirected back to reauthenticate.")
+        response = redirect(url_for("admin_control_bp.start"))
+        unset_jwt_cookies(response)
+        return response
 
     if request.method == "POST":
         form_data = request.form.get("master_key")

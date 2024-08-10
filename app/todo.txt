@@ -3,7 +3,6 @@ General:
     Write handlers for possible status codes (401, 404, 421, 429, 500)
     Review & enhance session handling mechanisms
     Allow messages to be displayed when accessing pages that user is not allowed to
-    Allow send_email to send html instead of just plaintext string
 
 Signup:
     Implement rate limiting for OTP requests
@@ -25,7 +24,6 @@ Admin Profile:
 
 Admin Account Management:
     Implement log out for active account using same username after successful reset of password
-    Session logout for being idle for 10min
     Frontend nonsense (table sorting, filtering)
 
 Member Account Management:

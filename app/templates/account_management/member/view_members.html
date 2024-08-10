@@ -10,7 +10,7 @@
 {% block css %}
 {{ super() }}
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/account_table.css') }}" />
-<style>
+<style nonce="{{ nonce }}">
     #no-member-details {
         text-align: center;
     }
