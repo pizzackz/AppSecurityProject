@@ -187,7 +187,7 @@ def create_members():
 
         # Create demo members with actual emails
         for i, email in enumerate(DEMO_EMAILS[2:]):  # Using remaining emails for demo members
-            Member.create(username=f"member{i+1}", email=email, subscription_plan="premium", password_hash=hashed_password)
+            Member.create(username=f"member{i+1}", email=email, subscription_plan="premium", password_hash=hashed_password, subscription_end_date=datetime.now(timezone.utc) + timedelta(days=30))
 
         # Create additional fake members
         faker = Faker()

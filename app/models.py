@@ -128,12 +128,16 @@ class Member(User):
     # Methods for CRUD functionalities
     # Create new member
     @staticmethod
-    def create(username: str, email: str, password_hash: str, subscription_plan: str = "standard"):
+    def create(username: str, email: str, password_hash: str, subscription_plan: str = "standard", subscription_end_date: Optional[str] = None):
         try:
             # Create new member object
             new_member = Member(username=username, email=email, password_hash=password_hash, subscription_plan=subscription_plan, type="member")
             db.session.add(new_member)
             db.session.flush()
+
+            if subscription_end_date:
+                new_member.subscription_end_date = subscription_end_date
+                db.session.flush()
 
             acc_status = AccountStatus.create(id=new_member.id)
             if not acc_status:

@@ -321,38 +321,6 @@ def register_all_bp(app: Flask):
     from app.blueprints.guest.guest_recipe_bp import guest_recipe_bp
     app.register_blueprint(guest_recipe_bp)
 
-    # Error Handler
-    @app.errorhandler(404)
-    def page_not_found(e):
-        return render_template('error/error_404.html'), 404
-
-    # Internal Server Error
-    @app.errorhandler(500)
-    def internal_server_error(e):
-        return render_template('error/error_500.html'), 500
-
-    # Unauthorized
-    @app.errorhandler(401)
-    def unauthorized(e):
-        return render_template('error/error_401.html'), 401
-
-    # Forbidden
-    @app.errorhandler(403)
-    def forbidden(e):
-        return render_template('error/error_403.html'), 403
-
-    # Bad Request
-    @app.errorhandler(400)
-    def forbidden(e):
-        return render_template('error/error_403.html'), 400
-
-    @app.errorhandler(RateLimitExceeded)
-    def rate_limit_exceeded(e):
-        if request.endpoint == 'recipe-creator-ai' or request.endpoint == 'recipe-customise-ai':
-            return jsonify({'content': 'Please wait for a moment before making another request.'}), 429
-        elif request.endpoint == 'create-recipe' and request.method == 'POST':
-            flash("Please wait for a while before creating another recipe", "error")
-
     register_auth_bp(app)
     register_member_bp(app)
     register_admin_bp(app)
@@ -403,6 +371,33 @@ def create_app() -> Flask:
     app.before_request(set_nonce)
     app.context_processor(inject_nonce)
     app.after_request(set_security_headers)
+
+    
+    # Error handlers
+    @app.errorhandler(404)
+    def page_not_found(e):
+        return render_template('error/error_404.html'), 404
+
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        return render_template('error/error_500.html'), 500
+
+    @app.errorhandler(401)
+    def unauthorized(e):
+        return render_template('error/error_401.html'), 401
+
+    @app.errorhandler(403)
+    def forbidden(e):
+        return render_template('error/error_403.html'), 403
+
+    @app.errorhandler(400)
+    def bad_request(e):
+        return render_template('error/error_400.html'), 400
+
+    @app.errorhandler(RateLimitExceeded)
+    def rate_limit_exceeded(e):
+        if request.endpoint == 'recipe-creator-ai':
+            return jsonify({'content': 'Please wait for a moment before making another request.'}), 429
 
     # Return Flask app instance
     return app
