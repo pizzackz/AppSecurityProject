@@ -24,15 +24,17 @@ def admin_feedback():
         return jsonify({"message": "Unauthorized"}), 401
     
     feedback = Feedback.query.all()
-    print(feedback)
     return render_template("admin/feedback/admin_feedback.html", feedback=feedback)
 
-# @admin_feedback_bp.route('/admin/delete_feedback')
-# @login_required
-# def delete_feedback(feedback_id):
-#     if current_user != 'admin':
-#         # return 401 if user is not admin
-#         return jsonify({"message": "Unauthorized"}), 401
+@admin_feedback_bp.route('/admin/delete_feedback')
+@login_required
+def delete_feedback(feedback_id):
+    if current_user != 'admin':
+        # return 401 if user is not admin
+        return jsonify({"message": "Unauthorized"}), 401
     
-#     feedback_id = Feedback.id
-    
+    feedback = Feedback.query.get_or_404(feedback_id)
+    db.session.delete(feedback)
+    db.session.commit()
+    flash("Feedback deleted successfully", "success")
+    return redirect(url_for("admin_feedback_bp.admin_feedback"))

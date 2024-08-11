@@ -3,7 +3,7 @@
 
 {% block css %}
   {{ super() }}
-  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='forum/forum.css')}}">
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/forum/forum.css')}}">
 {% endblock %}
 
 {% block scripts %}
@@ -11,15 +11,22 @@
 {% endblock %}
 
 {% block content %}
-  <h1>Hot Posts from /r/tastefullyfood</h1>
+  <h1>Hot Posts from r/tastefullyfood</h1>
   <div>
+    <table>
       {% for post in posts %}
+      <tr>
+        <td>
           <div class="post">
-              <h2>{{ post.title }}</h2>
-              <div class="buttons">
-                  <a href="{{ url_for('member_forum_bp.post_details', post_id=post.id) }}">Comments</a>
-              </div>
+            <h2>{{ post.title }}</h2>
+            <div class="buttons">
+              <a href="{{ url_for('member_forum_bp.post_details', post_id=post.id) }}">Comments</a>
+            </div>
           </div>
+        </td>
+      </tr>
       {% endfor %}
+    </table>
   </div>
+  <a href="{{ url_for('member_forum_bp.load_more_posts')}}">Load More</a>
 {% endblock %}

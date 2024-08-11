@@ -19,10 +19,11 @@ from bleach import clean
 
 from app import db
 from app.models import Token, Post
-
+from app import limiter
 from app.forms.forms import ForumPost, PostComment
 
 member_forum_bp = Blueprint("member_forum_bp", __name__)
+
 
 # Set up logging for debugging
 logging.basicConfig(level=logging.DEBUG)
@@ -210,3 +211,37 @@ def post_details(post_id):
     except Exception as e:
         logging.error(f"Unexpected error: {e}")
         return f"Error fetching post information: {e}", 500
+
+
+@member_forum_bp.route('/load_more_posts', methods=['GET'])
+@limiter.limit("5 per minute")
+@login_required
+def load_more_posts():
+    user_id = current_user.id
+    reddit_user = get_reddit_instance(user_id)
+    if not reddit_user:
+        return redirect(url_for('member_forum_bp.authorize'))
+
+    try:
+        after = request.args.get('after', None)
+        limit = int(request.args.get('limit', 10))
+        if limit > 10:
+            limit = 10  # Cap the limit to 10 posts per request
+
+        reddit_user = get_reddit_instance()
+        subreddit = reddit_user.subreddit('tastefullyfood')
+
+        posts = subreddit.hot(limit=limit, params={'after': after})
+
+        posts_list = []
+        for post in posts:
+            posts_list.append({
+                'title': post.title,
+                'url': post.url,
+                'id': post.id,
+                'after': post.name,  # Use the 'name' attribute for pagination
+            })
+
+        return jsonify(posts_list)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

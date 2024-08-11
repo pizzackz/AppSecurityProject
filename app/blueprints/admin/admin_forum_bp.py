@@ -124,7 +124,7 @@ scopes = ['read', 'identity', 'submit', 'comment','modposts']
 @admin_forum_bp.route("/admin/forum")
 @login_required
 def admin_forum():
-    if current_user != 'admin':
+    if current_user.type != 'admin':
         # return 401 if user is not admin
         return jsonify({"message": "Unauthorized"}), 401
     

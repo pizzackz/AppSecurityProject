@@ -3,22 +3,25 @@
 
 {% block css %}
   {{ super() }}
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/forum/post_details.css')}}">
 {% endblock %}
 
 {% block content %}
-<h3>{{ post.title }}</h3>
-<p>{{ post.body }}</p>
-{% from "includes/_form_helper.html" import render_field %}
-  <form method="post" action="">
-    {{ form.hidden_tag() }}
-    <div class="form-group">{{ render_field(form.comment, class="form-control", size=80) }}</div>     
-    <button type="submit" class="btn btn-primary">Submit</button>
-  </form>
-
-  <h2>Comments:</h2>
-    <ul>
-        {% for comment in comments %}
-        <li>{{ comment.body }}</li>
-        {% endfor %}
-    </ul>
+<div>
+  <h3>{{ post.title }}</h3>
+  <p>{{ post.body }}</p>
+  {% from "includes/_form_helper.html" import render_field %}
+    <form method="post" action="">
+      {{ form.hidden_tag() }}
+      <div class="form-group">{{ render_field(form.comment, class="form-control", size=80) }}</div>     
+      <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+  
+    <h2>Comments:</h2>
+      <ul class="comment">
+          {% for comment in comments %}
+          <li>{{ comment.body }}</li>
+          {% endfor %}
+      </ul>
+</div>
 {% endblock %}

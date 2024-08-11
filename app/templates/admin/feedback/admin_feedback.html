@@ -33,7 +33,7 @@
                 <td>{{ Feedback.comment }}</td>
                 <td>{{ Feedback.created_at }}</td>
                 <td>
-                    <form action="" method="POST">
+                    <form action="{{ url_for('admin_feedback_bp.delete_feedback', feedback_id=feedback.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this feedback?');">
                         <input type="submit" value="Delete" class="btn btn-danger">
                     </form>
                 </td>
