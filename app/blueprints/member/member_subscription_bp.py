@@ -72,10 +72,10 @@ def create_checkout_session():
         return redirect(stripe_session.url, code=303)
     except stripe.error.StripeError as e:
         logger.error(f"Stripe error: {e.user_message}")
-        return jsonify(error=e.user_message), 403
+        return render_template('error/error_403.html'), 403
     except Exception as e:
         logger.error(f"Error: {str(e)}")
-        return jsonify(error=str(e)), 403
+        return render_template('error/error_403.html'), 403
 
 
 @member_subscription_bp.route('/success', methods=['POST', 'GET'])
@@ -98,7 +98,6 @@ def success():
     try:
         # Retrieve the Stripe session details
         stripe_session = stripe.checkout.Session.retrieve(stripe_session_id)
-        logger.info(f"Retrieved Stripe session: {stripe_session}")
 
         user = Member.query.get(user_id)
         if user:
@@ -127,13 +126,13 @@ def success():
             db.session.commit()
         else:
             logger.error(f"No user found with ID {user_id}")
-            return jsonify({'error': 'User not found'}), 404
+            return render_template('error/error_404.html'), 404
 
         # Ensure that the payment_intent exists in the stripe_session
         subscription_id = stripe_session.subscription
         if not subscription_id:
             logger.error("Subscription ID is missing in the Stripe session")
-            return jsonify({'error': 'Subscription ID is missing in the Stripe session'}), 400
+            return render_template('error/error_400.html'), 400
 
         subscription = stripe.Subscription.retrieve(subscription_id)
         latest_invoice_id = subscription.latest_invoice
@@ -162,14 +161,18 @@ def success():
 
         else:
             logger.error("No invoice found for the subscription")
-            return jsonify({'error': 'No invoice found for the subscription'}), 404
+            return render_template('error/error_404.html'), 404
 
     except stripe.error.InvalidRequestError as e:
         logger.error(f"Invalid Stripe session ID: {stripe_session_id}")
-        return jsonify({'error': f'Invalid Stripe session ID: {e.user_message}'}), 400
+        return render_template('error/error_400.html'), 400
     except Exception as e:
+        db.session.rollback()  # Rollback the session to avoid any partial insertions
+        if "Duplicate entry" in str(e):
+            logger.error(f"Duplicate entry: {str(e)}")
+            return render_template('error/error_400.html'), 400
         logger.error(f"Error retrieving Stripe session: {e}")
-        return jsonify({'error': f'Error retrieving Stripe session: {str(e)}'}), 500
+        return render_template('error/error_500.html'), 500
     except:
         logger.error(f"Invalid stripe session ID: {stripe_session_id}")
         flash("An error occurred while processing your request. Please try again.", "error")

@@ -301,6 +301,11 @@ def register_all_bp(app: Flask):
     def forbidden(e):
         return render_template('error/error_403.html'), 403
 
+    # Bad Request
+    @app.errorhandler(400)
+    def forbidden(e):
+        return render_template('error/error_403.html'), 400
+
     @app.errorhandler(RateLimitExceeded)
     def rate_limit_exceeded(e):
         if request.endpoint == 'recipe-creator-ai':
