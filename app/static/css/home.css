@@ -1,0 +1,102 @@
+/*Home CSS*/
+
+header {
+    padding: 20px;
+    text-align: center;
+    border-bottom: 2px solid #333;
+}
+
+
+/* Main Content Layout */
+main {
+    display: flex;
+    justify-content: space-between; /* Added to align sections side by side */
+    padding: 20px;
+    line-height: 1.6;
+    gap: 20px; /* Added to create space between the sections */
+}
+
+/* Update News Section */
+.update-news {
+    display: flex;
+    justify-content: space-between; /* Ensures image and text are side by side */
+    padding: 20px;
+    border-radius: 10px;
+    background-color: #F9EDCA; /* Added to match the card-like appearance */
+    width: 100%; /* Adjusted width to 70% of the main container */
+}
+
+
+
+
+/* Useful Links Sections */
+.useful-links {
+    width: 25%; /* Adjusted each section width to 25% */
+    padding: 20px;
+    border-radius: 10px;
+    background-color: #F9EDCA; /* Added background color for card-like appearance */
+}
+
+
+.useful-links h2 {
+    color: #36A3FF;
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+.useful-links ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.useful-links ul li {
+    margin-bottom: 10px;
+}
+
+
+.useful-links ul li a {
+    color: #36A3FF;
+    text-decoration: none;
+}
+
+/* Set Container */
+.set-container {
+    display: flex;
+    align-items: center;
+    background-color: #fff; /* Adjust to match your theme */
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.set-container img {
+    width: 50px;
+    height: auto;
+    margin-right: 10px;
+    border-radius: 5px;
+}
+
+/* Useful Links */
+.useful-links ul li a {
+    display: block;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #fff; /* Background for individual links */
+    text-decoration: none;
+    color: #36A3FF;
+    transition: background-color 0.3s ease;
+}
+
+.useful-links ul li a:hover {
+    background-color: #36A3FF;
+    color: #fff;
+}
+
+
+footer {
+    text-align: center;
+    padding: 10px;
+    background-color: #F9EDCA;
+    color: #ccc;
+    border-top: 2px solid #333;
+}
