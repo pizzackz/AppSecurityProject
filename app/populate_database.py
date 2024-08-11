@@ -11,6 +11,16 @@ from faker import Faker
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("tastefully")
 
+# Demo emails to use
+DEMO_EMAILS = [
+    "232161M@mymail.nyp.edu.sg",
+    "220930k@mymail.nyp.edu.sg",
+    "ongzhaohan03@gmail.com",
+    "ongzhaohan04@gmail.com",
+    "3rvynlok@gmail.com",
+    "rayfeer8@gmail.com",
+    "jacenratnam131@gmail.com"
+]
 
 # Generalised function to create all tables & seed database
 def seed_database():
@@ -146,29 +156,23 @@ def create_menu_items():
 # Create test data for admins
 def create_admins():
     """Create test data for admins."""
-    # Clear the database to avoid duplicate entries
-    try:
-        admins: list[Admin] = Admin.query.all()
-
-        for admin in admins:
-            db.session.delete(admin)
-        
-        db.session.commit()
-        logger.info(f"Deleted {len(admins)} rows from Admin table.")
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"An error occurred while clearing Admin table: {e}")
-
     # Check if the test data already exists to avoid duplicate entries
     if Admin.query.count() == 0:
-        # Create sample admin
         password = "password"
-        Admin.create(username="admin1", email="admin1@gmail.com", password_hash=generate_password_hash(password)),
-        Admin.create(username="admin2", email="admin2@gmail.com", password_hash=generate_password_hash(password))
+        hashed_password = generate_password_hash(password)
 
-        # Commit the session to the database
+        # Create demo admins with actual emails
+        for i, email in enumerate(DEMO_EMAILS[:2]):  # Using only first 2 emails for demo admins
+            Admin.create(username=f"admin{i+1}", email=email, password_hash=hashed_password)
+
+        # Create additional fake admins
+        faker = Faker()
+        for _ in range(3):  # Create 3 additional fake admins
+            fake_email = faker.email()
+            Admin.create(username=faker.user_name(), email=fake_email, password_hash=hashed_password)
+
         db.session.commit()
-        logger.info("Admins test data added!")
+        logger.info("Admins test data added.")
     else:
         logger.info("Admins test data already exists.")
 
@@ -176,47 +180,28 @@ def create_admins():
 # Create test data for members
 def create_members():
     """Create test data for members."""
-    # Clear the database to avoid duplicate entries
-    try:
-        members = Member.query.all()
-
-        for member in members:
-            db.session.delete(member)
-
-        db.session.commit()
-        logger.info(f"Deleted {len(members)} rows from Member table.")
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"An error occurred while clearing Member table: {e}")
-
     # Check if the test data already exists to avoid duplicate entries
     if Member.query.count() == 0:
-        # Create sample members
         password = "password"
         hashed_password = generate_password_hash(password)
 
-        sample_members = [
-            Member.create(
-                username="member1",
-                email="member1@gmail.com",
-                subscription_plan="premium",
-                password_hash=hashed_password
-            ),
-            Member.create(
-                username="member2",
-                email="member2@gmail.com",
-                subscription_plan="standard",
-                password_hash=hashed_password
-            ),
-        ]
+        # Create demo members with actual emails
+        for i, email in enumerate(DEMO_EMAILS[2:]):  # Using remaining emails for demo members
+            Member.create(username=f"member{i+1}", email=email, subscription_plan="premium", password_hash=hashed_password)
 
-        # Commit the session to the database
+        # Create additional fake members
+        faker = Faker()
+        for _ in range(10):  # Create 10 additional fake members
+            fake_email = faker.email()
+            Member.create(username=faker.user_name(), email=fake_email, subscription_plan="standard", password_hash=hashed_password)
+
         db.session.commit()
 
-        sample_members[0].subscription_end_date = datetime.now(timezone.utc) + timedelta(days=30)
+        # Assign premium subscription to the first demo member
+        Member.query.filter_by(email=DEMO_EMAILS[2]).first().subscription_end_date = datetime.now(timezone.utc) + timedelta(days=30)
         db.session.commit()
 
-        logger.info("Members test data added!")
+        logger.info("Members test data added.")
     else:
         logger.info("Members test data already exists.")
 
