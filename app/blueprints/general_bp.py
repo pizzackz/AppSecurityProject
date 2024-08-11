@@ -24,6 +24,7 @@ def home():
     except AttributeError:
         return render_template('guest/home.html')
 
+
 @general_bp.route('/home')
 @login_required
 def member_home():
@@ -31,6 +32,7 @@ def member_home():
     if account_type == 'admin':
         return redirect(url_for('general_bp.admin_home'))
     return render_template('member/home.html')
+
 
 @general_bp.route('/admin/home')
 @login_required
