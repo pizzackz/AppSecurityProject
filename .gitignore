@@ -7,3 +7,4 @@ app/config/google_client_secret.json
 **/*.log
 app/static/uploads/profile_pictures/7c24e63d0394680fce9600aaa68e1db7880353b47a503a98ca2b8af9ebca4425.png
 /app/static/images_recipe
+/app/static/images/images_recipe_populate

@@ -1,4 +1,5 @@
 import os
+import shutil
 import secrets
 import string
 import bleach
@@ -879,3 +880,16 @@ def decode_non_whitelisted_tags(html_content, whitelist):
     print(non_whitelisted_pattern)
     decoded_html = re.sub(non_whitelisted_pattern, lambda m: html.unescape(m.group()), html_content)
     return decoded_html
+
+
+def copy_directory(src, dst):
+    # Ensure the destination directory exists
+    if not os.path.exists(dst):
+        os.makedirs(dst)
+    for item in os.listdir(src):
+        src_path = os.path.join(src, item)
+        dst_path = os.path.join(dst, item)
+        if os.path.isdir(src_path):
+            copy_directory(src_path, dst_path)
+        else:
+            shutil.copy2(src_path, dst_path)
