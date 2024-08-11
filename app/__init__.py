@@ -180,7 +180,8 @@ def refresh_admin_keys():
         for admin in admin_list:
             if admin.admin_key_expires_at <= datetime.now():
                 admin.generate_admin_key()
-                send_email(admin.email, "Refreshed Admin Key", f"Your admin key has been refreshed: {admin.admin_key}")
+                email_body = render_template("emails/admin_key_email.html", username=admin.username, admin_key=admin.admin_key)
+                send_email(admin.email, "Refreshed Admin Key", html_body=email_body)
     except Exception as e:
         print(f"Error refreshing admin keys: {e}")
 

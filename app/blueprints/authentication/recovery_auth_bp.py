@@ -136,9 +136,9 @@ def send_otp():
     set_access_cookies(response, new_token)
 
     # Try sending email using utility send_email function
-    email_body = f"Your OTP is {otp}. It will expire in 10 minutes."
+    email_body = render_template("emails/otp_email.html", username=user.username, otp=otp)
     recovery_stage = session.get("recovery_stage")
-    if send_email(identity['recovery_email'], "Your OTP Code", email_body):
+    if send_email(identity['recovery_email'], "Your OTP Code", html_body=email_body):
         flash_msg = "OTP has been sent to your email address."
         log_msg = f"OTP sent to {identity['recovery_email']}"
 
@@ -323,7 +323,7 @@ def send_username():
     # Try sending email using utility send_email function
     username = user.username
     response = redirect(url_for('recovery_auth_bp.recover_username'))
-    email_body = render_template("emails/recovery_email.html", username=username)
+    email_body = render_template("emails/recover_username_email.html", username=username)
     recovery_stage = session.get("recovery_stage")
     if send_email(identity['recovery_email'], "Username Recovery", html_body=email_body):
         flash_msg = "Your username has been sent to your email address."

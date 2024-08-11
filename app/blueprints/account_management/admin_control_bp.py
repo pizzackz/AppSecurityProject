@@ -503,7 +503,7 @@ def delete_admin():
 
         # Try sending email using utility send_email function
         email_body = render_template("emails/admin_delete_email.html", username=admin.username)
-        if send_email(admin.email, "Deleted Account", email_body):
+        if send_email(admin.email, "Deleted Account", html_body=email_body):
             Admin.delete(admin_id)
             clear_unwanted_session_keys(ESSENTIAL_KEYS)
             flash("Successfully deleted admin account!", "success")
@@ -563,7 +563,7 @@ def send_password_link():
 
     # Try sending email using utility send_email function
     email_body = render_template("emails/admin_password_link_email.html", username=admin.username, reset_url=reset_url)
-    if send_email(email, "Password Reset Request", email_body):
+    if send_email(email, "Password Reset Request", html_body=email_body):
         clear_unwanted_session_keys(ADMIN_SPECIFIC_ESSENTIAL_KEYS)
         response = redirect(url_for("admin_control_bp.view_admin_details"))
         unset_jwt_cookies(response)
@@ -616,7 +616,7 @@ def generate_admin_key():
     # Generate a new admin key & try to send email
     admin_key = admin.generate_admin_key()
     email_body = render_template("emails/admin_key_email.html", username=admin.username, admin_key=admin_key)
-    if send_email(admin.email, "New Admin Key", email_body):
+    if send_email(admin.email, "New Admin Key", html_body=email_body):
         clear_unwanted_session_keys(ADMIN_SPECIFIC_ESSENTIAL_KEYS)
         flash("Successfully generated a new admin key!", "success")
         logger.info(f"Successfully generated a new admin key for admin account '{admin.username}'")
@@ -742,7 +742,7 @@ def send_otp():
     # Try sending email using utility send_email function
     email_body = render_template("emails/otp_email.html", username=identity['username'], otp=otp, admin_control=True)
     create_admin_stage = session.get("create_admin_stage")
-    if send_email(identity['email'], "Your OTP Code", email_body):
+    if send_email(identity['email'], "Your OTP Code", html_body=email_body):
         flash_msg = "OTP has been sent to your email address."
         log_msg = f"OTP sent to {identity['email']}"
 

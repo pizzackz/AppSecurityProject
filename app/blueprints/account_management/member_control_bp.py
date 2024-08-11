@@ -269,7 +269,7 @@ def lock_member():
 
         # Try sending email using utility send_email function
         email_body = render_template("emails/lock_email.html", username=current_user.username, reason=reason)
-        if send_email(member.email, "Account Locked", email_body):
+        if send_email(member.email, "Account Locked", html_body=email_body):
             if Member.lock_account(id_to_lock=member_id, locked_reason=reason, locker_id=current_user.id):
                 clear_unwanted_session_keys(MEMBER_SPECIFIC_ESSENTIAL_KEYS)
                 flash("Successfully locked member account!", "success")
@@ -330,7 +330,7 @@ def unlock_member():
 
     # Try sending email using utility send_email function
     email_body = render_template("emails/unlock_email.html", username=current_user.username)
-    if send_email(member.email, "Account Unlocked", email_body):
+    if send_email(member.email, "Account Unlocked", html_body=email_body):
         if Member.unlock_account(member_id):
             clear_unwanted_session_keys(MEMBER_SPECIFIC_ESSENTIAL_KEYS)
             flash("Successfully unlocked member account!", "success")
@@ -424,7 +424,7 @@ def revoke_plan():
         
         # Try sending email using utility send_email function
         email_body = render_template("emails/subscription_revoke.html", username=current_user.username, reason=reason)
-        if send_email(member.email, "Subscription revoked", email_body):
+        if send_email(member.email, "Subscription revoked", html_body=email_body):
             clear_unwanted_session_keys(MEMBER_SPECIFIC_ESSENTIAL_KEYS)
             flash("Successfully revoked member account subscription!", "success")
             logger.info(f"Admin '{current_user.username}' successfully revoked member subscription with member id of '{id}' with reason:\n{reason}")
@@ -504,7 +504,7 @@ def delete_member():
         
         # Try sending email using utility send_email function
         email_body = render_template("emails/delete_email.html", username=current_user.username, reason=reason)
-        if send_email(member.email, "Deleted Account", email_body):
+        if send_email(member.email, "Deleted Account", html_body=email_body):
             Member.delete(member_id)
             clear_unwanted_session_keys(ESSENTIAL_KEYS)
             flash("Successfully deleted member account!", "success")
@@ -568,7 +568,7 @@ def send_password_link():
 
     # Try sending email using utility send_email function
     email_body = render_template("emails/password_link_email.html", username=current_user.username, reset_url=reset_url)
-    if send_email(email, "Password Reset Request", email_body):
+    if send_email(email, "Password Reset Request", html_body=email_body):
         clear_unwanted_session_keys(MEMBER_SPECIFIC_ESSENTIAL_KEYS)
         response = redirect(url_for("member_control_bp.view_member_details"))
         unset_jwt_cookies(response)
