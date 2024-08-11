@@ -47,6 +47,7 @@
                 {{ form.postal_code.label(class="form-label") }}
                 <input type="text" name="{{ form.postal_code.name }}"
                        id="{{ form.postal_code.id }}"
+                       value="{{ form.postal_code.data }}"
                        placeholder="{{ form.postal_code.render_kw['placeholder'] }}"
                        class="form-control {% if form.postal_code.errors %}is-invalid{% endif %}">
                 {% for error in form.postal_code.errors %}
@@ -57,6 +58,7 @@
                 {{ form.phone_number.label(class="form-label") }}
               <input type="text" name="{{ form.phone_number.name }}"
                    id="{{ form.phone_number.id }}"
+                       value="{{ form.phone_number.data }}"
                    placeholder="{{ form.phone_number.render_kw['placeholder'] }}"
                    class= "form-control {% if form.phone_number.errors %}is-invalid{% endif %}">
                 {% for error in form.phone_number.errors %}

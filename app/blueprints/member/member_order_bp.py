@@ -209,10 +209,19 @@ def order():
         flash('Please complete the booking step first.', 'error')
         return redirect(url_for('member_order_bp.booking'))
 
-    # Pre-fill the form with session data
+    # Storing delivery metadata from session data
     form.selected_date.data = delivery_date
     form.selected_time.data = delivery_time
     form.selected_items.data = selected_items
+
+    # Retrieve and pre-fill data
+    form.name.data = current_user.username
+    if current_user.address:
+        form.address.data = current_user.address
+    if current_user.postal_code:
+        form.postal_code.data = current_user.postal_code
+    if current_user.phone_number:
+        form.phone_number.data = current_user.phone_number
 
     if not selected_items or not delivery_date or not delivery_time:
         flash('Select item and delivery information.', 'error')
@@ -297,7 +306,7 @@ def order():
 
         return redirect(url_for('member_order_bp.success'))
 
-    else:
+    elif request.method == "POST":
         for field, errors in form.errors.items():
             for error in errors:
                 flash(f"Error in the {getattr(form, field).label.text} field - {error}", 'error')
@@ -349,9 +358,6 @@ def cancel_order(order_id):
         flash('An error occurred while trying to cancel your order. Please try again.', 'danger')
 
     return redirect(url_for('member_order_bp.order_history'))
-
-
-
 
 
 # Order History Blueprint
