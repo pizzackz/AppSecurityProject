@@ -828,25 +828,10 @@ def invalidate_user_sessions(user_id: int, exclude_current: bool = False) -> Non
         print(f"Error clearing sessions: {e}")
 
 
-def general_log_setter(): 
-    logging.basicConfig(level=logging.INFO, filename="general.log", filemode="a", format="%(asctime)s||%(message)s")
-    
-
-def transaction_log_setter():
-    logging.basicConfig(level=logging.INFO, filename="transaction.log", filemode="a", format="%(asctime)s||%(message)s")
-
-
-def account_log_setter():
-    logging.basicConfig(level=logging.INFO, filename="account.log", filemode="a", format="%(asctime)s||%(message)s")
-
-
 # Store logs for 3 kinds (general, transaction based, account related) of logs in database
 def log_trans(priority_level, category, user_id, info):
     # Get the subdirectory (without the root directory)
     subdirectory = os.path.dirname(__file__)
-    root_directory = '/path/to/your/directory'
-    if subdirectory.startswith(root_directory):
-        subdirectory = subdirectory[len(root_directory):].lstrip(os.path.sep)
     if category=='general':
         new_log = Log_general(priority_level=priority_level, user_id=user_id, file_subdir=subdirectory, log_info=info)
     elif category=='transaction':
