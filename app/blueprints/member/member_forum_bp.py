@@ -57,9 +57,9 @@ def store_refresh_token(token, current_user):
         raise
 
 
-def get_refresh_token(current_user):
+def get_refresh_token(user_id: int):
     # Retrieve the latest refresh token for the user
-    token = Token.query.filter_by(user_id=current_user).order_by(Token.id.desc()).first()
+    token = Token.query.filter_by(user_id=user_id).order_by(Token.id.desc()).first()
     return token.refresh_token if token else None
 
 
@@ -108,7 +108,7 @@ def authorize_callback():
         return f"Error during authorization: {e}", 500
 
 
-def get_reddit_instance(user_id):
+def get_reddit_instance(user_id: int):
     """Create a Reddit instance using the stored refresh token."""
     refresh_token = get_refresh_token(user_id)
     if refresh_token:
@@ -228,7 +228,6 @@ def load_more_posts():
         if limit > 10:
             limit = 10  # Cap the limit to 10 posts per request
 
-        reddit_user = get_reddit_instance()
         subreddit = reddit_user.subreddit('tastefullyfood')
 
         posts = subreddit.hot(limit=limit, params={'after': after})

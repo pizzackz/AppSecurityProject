@@ -16,9 +16,9 @@ from google_auth_oauthlib.flow import Flow
 
 from app import db, login_manager, limiter
 from app.config.config import Config
-from app.models import User, Member, Admin, LockedAccount, DeletedAccount
+from app.models import User, Member, Admin, LockedAccount
 from app.forms.auth_forms import LoginForm, OtpForm, ConfirmNewMemberForm, ConfirmGoogleLinkForm, ConfirmDeleteForm
-from app.utils import logout_if_logged_in, clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_auth_stage, check_jwt_values
+from app.utils import logout_if_logged_in, clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_auth_stage, check_jwt_values, log_trans
 
 
 login_auth_bp: Blueprint = Blueprint("login_auth_bp", __name__, url_prefix="/login")
@@ -73,6 +73,7 @@ def load_user(user_id: int) -> Union[User, Member, Admin]:
 # Display case-based messages
 def display_case_messages(flash_message: str, log_message: str):
     flash(flash_message, "error")
+    log_trans("Error", "account", None, log_message)
     logger.error(log_message)
     return redirect(url_for('login_auth_bp.login'))
 
@@ -283,6 +284,7 @@ def login():
         if not check_password_hash(user.password_hash, password):
             user.account_status.increment_failed_logins()  # Track failed login attempts
             logger.warning(f"Incorrect password attempt for username: {username}")
+            log_trans("Warning", "account", user.id, f"Incorrect password attempt for username: {username}")
 
             # Check if account should be locked (attempts >= 7)
             if user.account_status.failed_login_attempts >= 2:
@@ -765,6 +767,7 @@ def final_login():
 
     # Display messages
     flash(claims.get("flash_message"), "success")
+    log_trans("Info", "account", user.id, claims.get("log_message"))
     logger.info(claims.get("log_message"))
 
     return response

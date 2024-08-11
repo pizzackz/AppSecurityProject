@@ -1,24 +1,6 @@
 General:
     Replace logging mechanisms to use logger provided by Jacen
 
-Models:
-    Replace deletion logic to just be a simple flag stating deletion
-
-Signup:
-    Implement rate limiting for OTP requests
-
-Recovery:
-    Implement rate limiting for OTP requests, recovery requests
-
-Login:
-    Implement rate limiting for login requests
-
-Admin Account Management:
-    Frontend nonsense (table sorting, filtering)
-
-Member Account Management:
-    Frontend nonsense (table sorting, filtering)
-
 
 Jacen:
     Have more charts that collect a wider range of data

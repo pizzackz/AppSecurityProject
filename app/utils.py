@@ -841,18 +841,18 @@ def account_log_setter():
 
 
 # Store logs for 3 kinds (general, transaction based, account related) of logs in database
-def log_trans(priority_level, category, user_id, action, info):
+def log_trans(priority_level, category, user_id, info):
     # Get the subdirectory (without the root directory)
     subdirectory = os.path.dirname(__file__)
     root_directory = '/path/to/your/directory'
     if subdirectory.startswith(root_directory):
         subdirectory = subdirectory[len(root_directory):].lstrip(os.path.sep)
     if category=='general':
-        new_log = Log_general(priority_level=priority_level, category=category, user=user_id, action=action, message_info=info)
+        new_log = Log_general(priority_level=priority_level, user_id=user_id, file_subdir=subdirectory, log_info=info)
     elif category=='transaction':
-        new_log = Log_transaction(priority_level=priority_level, category=category, user=user_id, action=action, message_info=info)
+        new_log = Log_transaction(priority_level=priority_level, user_id=user_id, file_subdir=subdirectory, log_info=info)
     elif category=='account':
-        new_log = Log_account(priority_level=priority_level, category=category, user=user_id, action=action, message_info=info)
+        new_log = Log_account(priority_level=priority_level, user_id=user_id, file_subdir=subdirectory, log_info=info)
     else:
         print("Error! category can only be: \'general\', \'transactions\' or \'account\'")
     
