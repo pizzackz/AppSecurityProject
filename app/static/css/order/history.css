@@ -94,6 +94,18 @@ tr:hover {
     animation: slide-down 0.3s ease-out;
 }
 
+/* Optional: Add a backdrop for the modal */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 1049; /* Just below the modal */
+    display: none;
+}
+
 @keyframes slide-down {
     from {
         transform: translateY(-20%);

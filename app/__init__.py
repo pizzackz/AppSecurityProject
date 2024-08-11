@@ -127,7 +127,6 @@ def get_payment_intents_to_check():
 # Function to check payment status and update database
 def check_payment_status():
     from app.models import Member  # Importing here to avoid circular dependency
-    # Replace with the logic to get relevant payment intent IDs
     payment_intents = get_payment_intents_to_check()
     for payment_intent_id in payment_intents:
         intent = stripe.PaymentIntent.retrieve(payment_intent_id)
@@ -216,6 +215,8 @@ def update_order_statuses():
             # If it's one day before the delivery date, mark as 'Preparing'
             elif order.status == 'Order Placed' and order.delivery_date == today + timedelta(days=1):
                 order.status = 'Preparing'
+            elif order.delivery_date < today:
+                order.status = 'Delivered'
 
         db.session.commit()
         print(f"Order statuses updated to 'Preparing' and 'Delivered' where applicable.")
