@@ -103,3 +103,33 @@ tbody tr:nth-child(even) {
 tbody tr:nth-child(odd) {
     background-color: #d3d3d333;
 }
+
+.sorting{
+    cursor: pointer;
+    color: white;
+    padding: 5px;
+    padding-right:15px;
+    padding-left:15px;
+    font-weight: bold;
+    transition: color 0.4s linear;
+    background-color: #DC143C;
+    height: 50px;
+}
+
+.sorting:hover {
+    color: #DC143C;
+    background-color: white;
+    text-decoration: underline;
+    text-decoration-thickness: 2px ;
+}
+
+.detail{
+    color: white;
+    padding: 5px;
+    padding-right:15px;
+    padding-left:15px;
+    font-weight: bold;
+    transition: color 0.4s linear;
+    background-color: #DC143C;
+    height: 50px;
+}

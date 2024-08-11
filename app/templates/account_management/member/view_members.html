@@ -42,13 +42,13 @@
             <table>
                 <thead>
                     <tr>
-                        <th colspan="2">Username</th>
-                        <th>Email</th>
-                        <th>Created</th>
-                        <th>Last Login</th>
-                        <th>Account Status</th>
-                        <th>Subscription Plan</th>
-                        <th>View Details</th>
+                        <th colspan="2" data-sort="username" class="sorting">Username</th>
+                        <th data-sort="email" class="sorting">Email</th>
+                        <th data-sort="created_at" class="sorting">Created</th>
+                        <th data-sort="last_login" class="sorting">Last Login</th>
+                        <th data-sort="account_status" class="sorting">Account Status</th>
+                        <th data-sort="subscription_plan" class="sorting">Subscription Plan</th>
+                        <th class="detail">View Details</th>
                     </tr>
                 </thead>
 
@@ -92,4 +92,51 @@
     </main>
     {% endif %}
 </div>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script nonce="{{ nonce }}">
+    document.addEventListener('DOMContentLoaded', function () {
+        const table = document.querySelector('table');
+        const headers = table.querySelectorAll('th[data-sort]');
+        const tbody = table.querySelector('tbody');
+
+        headers.forEach(header => {
+            header.addEventListener('click', () => {
+                const sortOrder = header.dataset.order = -(header.dataset.order || -1);
+                const index = [...headers].indexOf(header);
+                const type = header.dataset.sort;
+
+                const rows = [...tbody.querySelectorAll('tr')];
+
+                rows.sort((a, b) => {
+                    let aText = a.children[index].textContent.trim();
+                    let bText = b.children[index].textContent.trim();
+
+                    // Debugging to check values being compared
+                    console.log(`Comparing: ${aText} with ${bText}`);
+
+                    // Handle different data types
+                    if (type === 'created_at' || type === 'last_login') {
+                        aText = new Date(aText);
+                        bText = new Date(bText);
+                    } else if (type === 'account_status') {
+                        aText = aText.includes('Locked') ? 1 : 0;
+                        bText = bText.includes('Locked') ? 1 : 0;
+                    } else if (!isNaN(aText) && !isNaN(bText)) {
+                        aText = parseFloat(aText);
+                        bText = parseFloat(bText);
+                    }
+
+                    // Debugging to check parsed values
+                    console.log(`Parsed: ${aText} with ${bText}`);
+
+                    return sortOrder * ((aText > bText) - (bText > aText));
+                });
+
+                rows.forEach(row => tbody.appendChild(row));
+            });
+        });
+    });
+</script>
 {% endblock %}
