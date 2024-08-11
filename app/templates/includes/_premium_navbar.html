@@ -19,6 +19,7 @@
                 <!-- Dropdown for Orders -->
                 <li class="nav-item active dropdown">
                     <a class="nav-link" href="{{ url_for('member_order_bp.menu') }}" >Menu</a>
+                </li>
 
                 <!-- Dropdown for Recipes -->
                 <li class="nav-item active dropdown">
@@ -34,6 +35,10 @@
                             <a class="dropdown-item" href="{{ url_for('member_recipe_bp.ai_recipe_creator') }}">Mr T.</a>
                         </li>
                     </ul>
+                </li>
+               <!-- Dropdown for Feedback-->
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('member_feedback_bp.feedback')}}" >Feedback</a>
                 </li>
                 <!-- Dropdown for Others -->
                 <li class="nav-item active dropdown">
