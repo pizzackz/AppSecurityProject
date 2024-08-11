@@ -31,7 +31,7 @@ class User(UserMixin, db.Model):
     postal_code = Column(String(20), nullable=True)
     created_at = Column(DateTime, default=func.current_timestamp(), nullable=False)
     updated_at = Column(DateTime, default=func.current_timestamp(), onupdate=func.current_timestamp(), nullable=False)
-    
+
     type = Column(String(50), default="member", nullable=False)  # "member" or "admin", defaulted to 'member'
 
     # Defining relationships with other models
@@ -39,6 +39,11 @@ class User(UserMixin, db.Model):
     login_details = db.relationship("LoginDetails", back_populates="user", uselist=False, cascade="all, delete-orphan")
     locked_accounts = db.relationship("LockedAccount", back_populates="user", uselist=False, cascade="all, delete-orphan")
     profile_images = db.relationship("ProfileImage", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    deleted_account = db.relationship("DeletedAccount", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    token = db.relationship("Token", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    general_log = db.relationship("Log_general", backref="user", uselist=False, cascade="all, delete-orphan")
+    account_log = db.relationship("Log_account", backref="user", uselist=False, cascade="all, delete-orphan")
+    transaction_log = db.relationship("Log_transaction", backref="user", uselist=False, cascade="all, delete-orphan")
 
     # Joined Table Inheritance polymorphic properties
     __mapper_args__ = {"polymorphic_identity": "user", "polymorphic_on": type}
@@ -190,17 +195,42 @@ class Member(User):
             print(f"Error revoking subscription plan: {e}")
             return False
     
-    # Delete member
+    # Mark member for deletion
     @staticmethod
-    def delete(id: Column[int]):
+    def mark_for_deletion(id: int, reason: str):
         try:
             member = Member.query.get(id)
+            if not member:
+                raise ValueError(f"Member with id '{id}' not found.")
+            deleted_account = DeletedAccount(id=member.id, reason=reason)
+            db.session.add(deleted_account)
+            member.account_status.mark_for_deletion()
+            db.session.commit()
+            return member
+        except Exception as e:
+            db.session.rollback()
+            print(f"An error occurred while marking member with id '{id}' for deletion: {e}")
+            return None
+    
+    # Actual deletion of member & associated records
+    @staticmethod
+    def delete(id: int):
+        try:
+            member = Member.query.get(id)
+            if not member:
+                raise ValueError(f"Member with id '{id}' not found.")
+
+            # Delete associated log records
+            Log_general.query.filter_by(user_id=id).delete()
+            Log_account.query.filter_by(user_id=id).delete()
+            Log_transaction.query.filter_by(user_id=id).delete()
+
             db.session.delete(member)
             db.session.commit()
             return member
         except Exception as e:
             db.session.rollback()
-            logger.error(f"An error occurred while deleting admin with id '{id}'")
+            print(f"Error occurred while deleting member with id '{id}': {e}")
             return None
 
 
@@ -286,19 +316,43 @@ class Admin(User):
             logger.error(f"An error occurred while creating admin: {e}")
             return None
 
-    # To delete admin
+    # Mark admin for deletion
     @staticmethod
-    def delete(id: Column[int]):
+    def mark_for_deletion(id: int, reason: str):
         try:
             admin = Admin.query.get(id)
+            if not admin:
+                raise ValueError(f"Admin with id '{id}' not found.")
+            deleted_account = DeletedAccount(id=admin.id, reason=reason)
+            db.session.add(deleted_account)
+            admin.account_status.mark_for_deletion()
+            db.session.commit()
+            return admin
+        except Exception as e:
+            db.session.rollback()
+            print(f"An error occurred while marking admin with id '{id}' for deletion: {e}")
+            return None
+
+    # Acutal deletion of admin
+    @staticmethod
+    def delete(id: int):
+        try:
+            admin = Admin.query.get(id)
+            if not admin:
+                raise ValueError(f"Admin with id '{id}' not found.")
+
+            # Delete associated log records
+            Log_general.query.filter_by(user_id=id).delete()
+            Log_account.query.filter_by(user_id=id).delete()
+            Log_transaction.query.filter_by(user_id=id).delete()
+
             db.session.delete(admin)
             db.session.commit()
             return admin
         except Exception as e:
             db.session.rollback()
-            logger.error(f"An error occurred while deleting admin with id '{id}'")
+            print(f"Error occurred while deleting admin with id '{id}': {e}")
             return None
-
 
     # Generate dynamic one-time use admin key
     def generate_admin_key(self):
@@ -322,6 +376,7 @@ class AccountStatus(db.Model):
     # ForeignKey reference to 'user.id' and primary key for 'account_status'
     id = Column(Integer, ForeignKey("user.id"), primary_key=True, nullable=False)
     is_locked = Column(Boolean, default=False, nullable=False)
+    is_deleted = Column(Boolean, default=False, nullable=False)
     failed_login_attempts = Column(Integer, default=0, nullable=False)
     last_failed_login_attempt = Column(DateTime, nullable=True)
 
@@ -334,7 +389,7 @@ class AccountStatus(db.Model):
     # Methods for CRUD functionalities
     # Create
     @staticmethod
-    def create(id: Column[int]):
+    def create(id: int):
         try:
             account_status: AccountStatus = AccountStatus(id=id)
             db.session.add(account_status)
@@ -357,6 +412,12 @@ class AccountStatus(db.Model):
         self.failed_login_attempts = 0
         db.session.commit()
 
+    # Mark account for deletion
+    def mark_for_deletion(self):
+        self.is_deleted = True
+        db.session.commit()
+
+
 # ProfileImage model to store profile images about user accounts
 class ProfileImage(db.Model):
     __tablename__ = "profile_images"
@@ -377,7 +438,7 @@ class ProfileImage(db.Model):
     # Static methods for CRUD functionalities
     # Create
     @staticmethod
-    def create(id: Column[int]):
+    def create(id: int):
         try:
             profile_image: ProfileImage = ProfileImage(id=id)
             db.session.add(profile_image)
@@ -390,7 +451,7 @@ class ProfileImage(db.Model):
 
     # Create by google
     @staticmethod
-    def create_by_google(id: Column[int], google_url: Column[Text]):
+    def create_by_google(id: int, google_url: Column[Text]):
         try:
             profile_image: ProfileImage = ProfileImage(id=id, source="google", google_url=google_url)
             db.session.add(profile_image)
@@ -450,7 +511,7 @@ class LoginDetails(db.Model):
     # Static methods for CRUD functionalities
     # Create
     @staticmethod
-    def create(id: Column[int]):
+    def create(id: int):
         try:
             login_details: LoginDetails = LoginDetails(id=id)
             db.session.add(login_details)
@@ -496,7 +557,7 @@ class LockedAccount(db.Model):
     # Static methods
     # Create
     @staticmethod
-    def create(id: Column[int], locked_reason: str, locker_id: Optional[Column[int]] = None):
+    def create(id: int, locked_reason: str, locker_id: Optional[int] = None):
         try:
             locked_account: LockedAccount = LockedAccount(id=id, locker_id=locker_id, locked_reason=locked_reason)
             db.session.add(locked_account)
@@ -506,6 +567,21 @@ class LockedAccount(db.Model):
             db.session.rollback()
             print(f"Error occurred when locking account: {e}")
             return None
+
+
+# DeletedAccount model to store reason for all "deleted" accounts, will be scheduled for deletion once every 30 days
+class DeletedAccount(db.Model):
+    __tablename__ = "deleted_accounts"
+
+    id = db.Column(Integer, ForeignKey("user.id"), primary_key=True, nullable=False)
+    reason = db.Column(Text, nullable=False)
+    deleted_at = db.Column(DateTime, default=func.current_timestamp(), nullable=False)
+
+    # Relationship back to 'User'
+    user = db.relationship("User", back_populates="deleted_account", uselist=False)
+
+    def __repr__(self):
+        return f"<DeletedAccount(id='{self.id}', reason='{self.reason}', deleted_at='{self.deleted_at}')>"
 
 
 # PassowrdResetToken model to store allowed password reset tokens whenever password reset is requested
@@ -672,6 +748,8 @@ class Token(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     refresh_token = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp(), nullable=False)
+    
+    user = db.relationship("User", back_populates="token", uselist=False)
 
 
 class Post(db.Model):

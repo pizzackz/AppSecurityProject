@@ -1,8 +1,5 @@
 import logging
 import hashlib
-import uuid
-import os
-
 from datetime import datetime, timedelta, timezone
 from logging import Logger
 
@@ -13,7 +10,7 @@ from flask_limiter import RateLimitExceeded
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import db, limiter
-from app.models import User, Admin, ProfileImage
+from app.models import User, Admin, ProfileImage, DeletedAccount
 from app.forms.profile_forms import ProfileForm
 from app.forms.auth_forms import OtpForm, ResetPasswordForm, PasswordForm
 from app.utils import invalidate_user_sessions, clean_input, generate_otp, send_email, check_auth_stage, check_jwt_values, check_admin, clear_unwanted_session_keys, get_image_url, upload_pfp, reset_pfp
@@ -34,19 +31,12 @@ def handle_rate_limit_exceeded(e):
     logger.warning(f"Rate limit exceeded for {request.endpoint} in admin_profile_bp")
 
     match request.endpoint:
-        case 'admin_profile_bp.profile':
-            flash("Too many attempts to access your profile. Please wait before trying again.", "error")
-            logger.warning(f"Rate limit exceeded on profile route.")
-            return redirect(url_for("general_bp.home"))
         case 'admin_profile_bp.send_otp':
             flash("Too many OTP requests. Please wait before trying again.", "error")
             logger.warning(f"Rate limit exceeded on send OTP route.")
         case 'admin_profile_bp.verify_email':
             flash("Too many OTP verification attempts. Please wait before trying again.", "error")
             logger.warning(f"Rate limit exceeded on verify email route.")
-        case 'admin_profile_bp.save_changes':
-            flash("Too many attempts to save changes. Please wait before trying again.", "error")
-            logger.warning(f"Rate limit exceeded on save changes route.")
         case 'admin_profile_bp.set_password':
             flash("Too many attempts to set your password. Please wait before trying again.", "error")
             logger.warning(f"Rate limit exceeded on set password route.")
@@ -67,7 +57,6 @@ def handle_rate_limit_exceeded(e):
 # Base profile route
 @admin_profile_bp.route("/", methods=['GET', 'POST'])
 @login_required
-@limiter.limit("15 per hour")
 def profile():
     clear_unwanted_session_keys(ESSENTIAL_KEYS)
 
@@ -86,6 +75,14 @@ def profile():
         flash("An unexpected error occurred. Please log in again.", "error")
         logger.warning(f"Anonymous user tried entering admin profile page without an existing user id")
         return redirect(url_for('login_auth_bp.login'))
+    
+    # Check whether member is marked as deleted
+    deleted_account = DeletedAccount.query.get(current_user.id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("Your account is already deleted. Check your inbox for more details.", "error")
+        logger.warning(f"User tried to view profile for an admin marked for deletion with ID '{current_user.id}'.")
+        return redirect(url_for("login_auth_bp.login"))
 
     # Redirect to allow reset of password or setting of password (for google sign-in users)
     if action in ("reset_password", "set_password"):
@@ -236,12 +233,20 @@ def profile():
 @admin_profile_bp.route("/send_otp", methods=['GET'])
 @jwt_required()
 @login_required
-@limiter.limit("5 per 10 minutes")
+@limiter.limit("10 per 10 minutes")
 def send_otp():
     # Check if the user is a admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
     if check:
         return check
+    
+    # Check whether admin is marked as deleted
+    deleted_account = DeletedAccount.query.get(current_user.id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("Your account is already deleted. Check your email inbox for more details.", "error")
+        logger.warning(f"User tried to send otp for an admin marked for deletion with ID '{current_user.id}'.")
+        return redirect(url_for("login_auth_bp.login"))
 
     # Check if the session is expired
     if 'profile_update_stage' not in session:
@@ -342,12 +347,20 @@ def send_otp():
 @admin_profile_bp.route("/verify_email", methods=["GET", "POST"])
 @jwt_required()
 @login_required
-@limiter.limit("5 per 10 minutes")
+@limiter.limit("10 per 10 minutes")
 def verify_email():
     # Check if the user is a admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
     if check:
         return check
+    
+    # Check whether admin is marked as deleted
+    deleted_account = DeletedAccount.query.get(current_user.id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("Your account is already deleted. Check your email inbox for more details.", "error")
+        logger.warning(f"User tried to verify email for an admin marked for deletion with ID '{current_user.id}'.")
+        return redirect(url_for("login_auth_bp.login"))
 
     # Redirect to profile & clear temp data in session & jwt when pressed 'back'
     if 'action' in request.args and request.args.get('action') == 'back':
@@ -466,12 +479,19 @@ def verify_email():
 @admin_profile_bp.route("/save_changes", methods=['GET'])
 @jwt_required()
 @login_required
-@limiter.limit("10 per hour")
 def save_changes():
     # Check if the user is a admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
     if check:
         return check
+    
+    # Check whether admin is marked as deleted
+    deleted_account = DeletedAccount.query.get(current_user.id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("Your account is already deleted. Check your email inbox for more details.", "error")
+        logger.warning(f"User tried to save changes for an admin marked for deletion with ID '{current_user.id}'.")
+        return redirect(url_for("login_auth_bp.login"))
 
     # Check session not expired & profile_update_stage == save_changes
     check = check_auth_stage(
@@ -558,12 +578,20 @@ def save_changes():
 @admin_profile_bp.route("/set_password", methods=['GET', 'POST'])
 @jwt_required()
 @login_required
-@limiter.limit("5 per hour")
+@limiter.limit("10 per hour")
 def set_password():
     # Check if user is admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
     if check:
         return check
+    
+    # Check whether admin is marked as deleted
+    deleted_account = DeletedAccount.query.get(current_user.id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("Your account is already deleted. Check your email inbox for more details.", "error")
+        logger.warning(f"User tried to set a password for an admin marked for deletion with ID '{current_user.id}'.")
+        return redirect(url_for("login_auth_bp.login"))
 
     # Redirect to profile & clear temp data in session & jwt when pressed 'back'
     if 'action' in request.args and request.args.get('action') == 'back':
@@ -667,12 +695,20 @@ def set_password():
 @admin_profile_bp.route("/reset_password", methods=['GET', 'POST'])
 @jwt_required()
 @login_required
-@limiter.limit("5 per hour")
+@limiter.limit("10 per hour")
 def reset_password():
     # Check if user is admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
     if check:
         return check
+    
+    # Check whether admin is marked as deleted
+    deleted_account = DeletedAccount.query.get(current_user.id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("Your account is already deleted. Check your email inbox for more details.", "error")
+        logger.warning(f"User tried to reset their password for an admin marked for deletion with ID '{current_user.id}'.")
+        return redirect(url_for("login_auth_bp.login"))
 
     # Redirect to profile & clear temp data in session & jwt when pressed 'back'
     if 'action' in request.args and request.args.get('action') == 'back':
@@ -775,7 +811,7 @@ def reset_password():
 # Send admin key route
 @admin_profile_bp.route("/send_admin_key", methods=['GET'])
 @login_required
-@limiter.limit("3 per hour")
+@limiter.limit("6 per hour")
 def send_admin_key():
     # Check if the user is a admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
@@ -790,13 +826,20 @@ def send_admin_key():
             flash("User not found.", "error")
             logger.error(f"User not found in the database for ID: {current_user.id}")
             return redirect(url_for('login_auth_bp.login'))
+    
+        # Check whether admin is marked as deleted
+        deleted_account = DeletedAccount.query.get(current_user.id)
+        if deleted_account:
+            clear_unwanted_session_keys(ESSENTIAL_KEYS)
+            flash("Your account is already deleted. Check your email inbox for more details.", "error")
+            logger.warning(f"User tried to send an admin key for an admin marked for deletion with ID '{current_user.id}'.")
+            return redirect(url_for("login_auth_bp.login"))
 
         # Check if the admin key is expired or near expiry and regenerate if necessary
         if not user.admin_key_expires_at or user.admin_key_expires_at < datetime.now():
             user.generate_admin_key()
             db.session.commit()
             logger.info(f"Admin key has been re-generated for admin user '{user.username}'.")
-
 
         # Send the email
         email_body = render_template("emails/admin_key_email.html", username=current_user.username, admin_key=user.admin_key)

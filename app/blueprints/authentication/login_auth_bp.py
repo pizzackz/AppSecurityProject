@@ -16,7 +16,7 @@ from google_auth_oauthlib.flow import Flow
 
 from app import db, login_manager, limiter
 from app.config.config import Config
-from app.models import User, Member, Admin, LockedAccount
+from app.models import User, Member, Admin, LockedAccount, DeletedAccount
 from app.forms.auth_forms import LoginForm, OtpForm, ConfirmNewMemberForm, ConfirmGoogleLinkForm, ConfirmDeleteForm
 from app.utils import logout_if_logged_in, clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_auth_stage, check_jwt_values
 
@@ -186,10 +186,6 @@ def handle_rate_limit_exceeded(e):
     logger.warning(f"Rate limit exceeded for {request.endpoint} in login_auth_bp")
 
     match request.endpoint:
-        case 'login_auth_bp.login':
-            flash("Too many login attempts. Please wait a moment before trying again.", "error")
-            logger.warning(f"User exceeded rate limit on login route.")
-            return redirect(url_for("general_bp.home"))
         case 'login_auth_bp.send_otp':
             flash("Too many OTP requests. Please wait a moment before trying again.", "error")
             logger.warning(f"User exceeded rate limit on send OTP route.")
@@ -208,9 +204,6 @@ def handle_rate_limit_exceeded(e):
         case 'login_auth_bp.confirm_new_member_account':
             flash("Too many attempts to confirm new account. Please wait before trying again.", "error")
             logger.warning(f"User exceeded rate limit on confirm new member account route.")
-        case 'login_auth_bp.final_login':
-            flash("Too many login attempts. Please wait a moment before trying again.", "error")
-            logger.warning(f"User exceeded rate limit on final login route.")
         case 'login_auth_bp.confirm_delete':
             flash("Too many attempts to delete the account. Please wait before trying again.", "error")
             logger.warning(f"User exceeded rate limit on confirm delete route.")
@@ -224,7 +217,6 @@ def handle_rate_limit_exceeded(e):
 
 # Initial login route
 @login_auth_bp.route("/", methods=['GET', 'POST'])
-@limiter.limit("5 per minute")
 @logout_if_logged_in
 def login():
     """
@@ -254,6 +246,14 @@ def login():
             flash("Invalid username or password. Please try again.", "error")
             logger.warning(f"Login attempt with non-existent username: {username}")
             return redirect(url_for("login_auth_bp.login"))
+    
+        # Check if account is deleted
+        if user.account_status.is_deleted:
+            flash("Invalid username or password. Please try again.", "error")
+            logger.warning(f"Login attempt for account marked for deletion with username of '{username}'.")
+            response = redirect(url_for("login_auth_bp.login"))
+            unset_jwt_cookies(response)
+            return response
 
         # Check if account is locked and retrieve the lock reason
         if user.account_status.is_locked:
@@ -315,7 +315,7 @@ def login():
 
 # Send otp route
 @login_auth_bp.route("/send_otp", methods=['GET'])
-@limiter.limit("3 per 10 minutes")
+@limiter.limit("10 per 10 minutes")
 @jwt_required()
 def send_otp():
     # Check if the session is expired
@@ -389,7 +389,7 @@ def send_otp():
 
 # Verify email route
 @login_auth_bp.route("/verify_email", methods=["GET", "POST"])
-@limiter.limit("3 per 10 minutes")
+@limiter.limit("10 per 10 minutes")
 @jwt_required()
 def verify_email():
     # Redirect to login & clear temp data in session & jwt when pressed 'back'
@@ -699,7 +699,6 @@ def link_google():
 
 # Final login route
 @login_auth_bp.route("/final_login", methods=['GET'])
-@limiter.limit("10 per hour")
 @jwt_required()
 def final_login():
     # Check for correct JWT identity keys
@@ -727,6 +726,14 @@ def final_login():
         unset_jwt_cookies(response)
         return response
     
+    # Check if account is deleted
+    if user.account_status.is_deleted:
+        flash("Invalid username or password. Please try again.", "error")
+        logger.warning(f"Login attempt for account marked for deletion with username of '{identity['username']}'.")
+        response = redirect(url_for("login_auth_bp.login"))
+        unset_jwt_cookies(response)
+        return response
+
     # Check if account is locked and retrieve the lock reason
     if user.account_status.is_locked:
         locked_account = LockedAccount.query.filter_by(id=user.id).first()
@@ -818,13 +825,12 @@ def confirm_delete():
         reason = clean_input(form.reason.data)
 
         # Try sending email using utility send_email function
-
         email_body = render_template("emails/delete_email.html", username=user.username, reason=reason)
         if send_email(user.email, "Account Deletion", html_body=email_body):
-            Member.delete(user.id)
+            Member.mark_for_deletion(id=user.id, reason=reason)
             session.clear()
             flash("Successfully deleted your account. We wish to see you again!", "success")
-            logger.info(f"Successfully deleted member '{user.username}'")
+            logger.info(f"Successfully marked user '{user.username}' as deleted.")
         else:
             flash("An error occurred while deleting your account. Please try again later", "error")
             logger.error(f"Failed to send email to inform member '{user.username}' that their account has been deleted.")

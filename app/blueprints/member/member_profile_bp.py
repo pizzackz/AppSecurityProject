@@ -13,7 +13,7 @@ from flask_limiter import RateLimitExceeded
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import db, limiter
-from app.models import User, Member, ProfileImage
+from app.models import User, Member, ProfileImage, DeletedAccount
 from app.forms.profile_forms import ProfileForm, DeleteMemberForm
 from app.forms.auth_forms import OtpForm, ResetPasswordForm, PasswordForm
 from app.utils import invalidate_user_sessions, clean_input, generate_otp, send_email, check_auth_stage, check_jwt_values, check_member, clear_unwanted_session_keys, get_image_url, upload_pfp, reset_pfp
@@ -33,19 +33,12 @@ def handle_rate_limit_exceeded(e):
     logger.warning(f"Rate limit exceeded for {request.endpoint} in member_profile_bp")
 
     match request.endpoint:
-        case 'member_profile_bp.profile':
-            flash("Too many attempts to access your profile. Please wait before trying again.", "error")
-            logger.warning(f"Rate limit exceeded on profile route.")
-            return redirect(url_for("general_bp.home"))
         case 'member_profile_bp.send_otp':
             flash("Too many OTP requests. Please wait before trying again.", "error")
             logger.warning(f"Rate limit exceeded on send OTP route.")
         case 'member_profile_bp.verify_email':
             flash("Too many OTP verification attempts. Please wait before trying again.", "error")
             logger.warning(f"Rate limit exceeded on verify email route.")
-        case 'member_profile_bp.save_changes':
-            flash("Too many attempts to save changes. Please wait before trying again.", "error")
-            logger.warning(f"Rate limit exceeded on save changes route.")
         case 'member_profile_bp.set_password':
             flash("Too many attempts to set your password. Please wait before trying again.", "error")
             logger.warning(f"Rate limit exceeded on set password route.")
@@ -66,7 +59,6 @@ def handle_rate_limit_exceeded(e):
 # Base profile route
 @member_profile_bp.route("/", methods=['GET', 'POST'])
 @login_required
-@limiter.limit("15 per hour")
 def profile():
     clear_unwanted_session_keys(ESSENTIAL_KEYS)
 
@@ -86,6 +78,14 @@ def profile():
         flash("An unexpected error occurred. Please log in again.", "error")
         logger.warning(f"Anonymous user tried entering member profile page without an existing user id")
         return redirect(url_for('login_auth_bp.login'))
+    
+    # Check whether member is marked as deleted
+    deleted_account = DeletedAccount.query.get(current_user.id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("Your account is already deleted. Check your inbox for more details.", "error")
+        logger.warning(f"User tried to view profile for member marked for deletion with ID '{current_user.id}'.")
+        return redirect(url_for("login_auth_bp.login"))
 
     # Redirect to allow reset of password or setting of password (for google sign-in users)
     if action in ("reset_password", "set_password"):
@@ -252,12 +252,20 @@ def profile():
 @member_profile_bp.route("/send_otp", methods=['GET'])
 @jwt_required()
 @login_required
-@limiter.limit("5 per 10 minutes")
+@limiter.limit("10 per 10 minutes")
 def send_otp():
     # Check if the user is a member
     check = check_member(fallback_endpoint='login_auth_bp.login')
     if check:
         return check
+    
+    # Check whether member is marked as deleted
+    deleted_account = DeletedAccount.query.get(current_user.id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("Your account is already deleted. Check your email inbox for more details.", "error")
+        logger.warning(f"User tried to send otp for a member marked for deletion with ID '{current_user.id}'.")
+        return redirect(url_for("login_auth_bp.login"))
 
     # Check if the session is expired
     if 'profile_update_stage' not in session:
@@ -358,12 +366,20 @@ def send_otp():
 @member_profile_bp.route("/verify_email", methods=["GET", "POST"])
 @jwt_required()
 @login_required
-@limiter.limit("5 per 10 minutes")
+@limiter.limit("10 per 10 minutes")
 def verify_email():
     # Check if the user is a member
     check = check_member(fallback_endpoint='login_auth_bp.login')
     if check:
         return check
+    
+    # Check whether member is marked as deleted
+    deleted_account = DeletedAccount.query.get(current_user.id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("Your account is already deleted. Check your email inbox for more details.", "error")
+        logger.warning(f"User tried to verify email for a member marked for deletion with ID '{current_user.id}'.")
+        return redirect(url_for("login_auth_bp.login"))
 
     # Redirect to profile & clear temp data in session & jwt when pressed 'back'
     if 'action' in request.args and request.args.get('action') == 'back':
@@ -482,12 +498,19 @@ def verify_email():
 @member_profile_bp.route("/save_changes", methods=['GET'])
 @jwt_required()
 @login_required
-@limiter.limit("10 per hour")
 def save_changes():
     # Check if the user is a member
     check = check_member(fallback_endpoint='login_auth_bp.login')
     if check:
         return check
+    
+    # Check whether member is marked as deleted
+    deleted_account = DeletedAccount.query.get(current_user.id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("Your account is already deleted. Check your inbox for more details.", "error")
+        logger.warning(f"User tried to save changes for a member marked for deletion with ID '{current_user.id}'.")
+        return redirect(url_for("login_auth_bp.login"))
 
     # Check session not expired & profile_update_stage == save_changes
     check = check_auth_stage(
@@ -574,12 +597,20 @@ def save_changes():
 @member_profile_bp.route("/set_password", methods=['GET', 'POST'])
 @jwt_required()
 @login_required
-@limiter.limit("5 per hour")
+@limiter.limit("10 per hour")
 def set_password():
     # Check if user is member
     check = check_member(fallback_endpoint='login_auth_bp.login')
     if check:
         return check
+    
+    # Check whether member is marked as deleted
+    deleted_account = DeletedAccount.query.get(current_user.id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("Your account is already deleted. Check your inbox for more details.", "error")
+        logger.warning(f"User tried to set a password for a member marked for deletion with ID '{current_user.id}'.")
+        return redirect(url_for("login_auth_bp.login"))
 
     # Redirect to profile & clear temp data in session & jwt when pressed 'back'
     if 'action' in request.args and request.args.get('action') == 'back':
@@ -683,12 +714,20 @@ def set_password():
 @member_profile_bp.route("/reset_password", methods=['GET', 'POST'])
 @jwt_required()
 @login_required
-@limiter.limit("5 per hour")
+@limiter.limit("10 per hour")
 def reset_password():
     # Check if user is member
     check = check_member(fallback_endpoint='login_auth_bp.login')
     if check:
         return check
+    
+    # Check whether member is marked as deleted
+    deleted_account = DeletedAccount.query.get(current_user.id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("Your account is already deleted. Check your inbox for more details.", "error")
+        logger.warning(f"User tried to reset their password for a member marked for deletion with ID '{current_user.id}'.")
+        return redirect(url_for("login_auth_bp.login"))
 
     # Redirect to profile & clear temp data in session & jwt when pressed 'back'
     if 'action' in request.args and request.args.get('action') == 'back':
@@ -791,7 +830,7 @@ def reset_password():
 # Delete account route
 @member_profile_bp.route("delete", methods=['GET', 'POST'])
 @login_required
-@limiter.limit("3 per hour")
+@limiter.limit("6 per hour")
 def delete():
     # Check if user is member
     check = check_member(fallback_endpoint='login_auth_bp.login')
@@ -815,6 +854,14 @@ def delete():
         logger.error(f"User account not found for email: {current_user.email}")
         return redirect(url_for('member_profile_bp.profile'))
     
+    # Check whether member is marked as deleted
+    deleted_account = DeletedAccount.query.get(current_user.id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("Your account is already deleted. Check your inbox for more details.", "error")
+        logger.warning(f"User tried to delete a member marked for deletion with ID '{current_user.id}'.")
+        return redirect(url_for("login_auth_bp.login"))
+    
     form = DeleteMemberForm()
     if request.method == "POST" and form.validate_on_submit():
         # Retrieve input
@@ -823,10 +870,10 @@ def delete():
         # Try sending email using utility send_email function
         email_body = render_template("emails/delete_email.html", username=current_user.username, reason=reason)
         if send_email(current_user.email, "Account Deletion", html_body=email_body):
-            Member.delete(current_user.id)
+            Member.mark_for_deletion(id=user.id, reason=reason)
             clear_unwanted_session_keys(ESSENTIAL_KEYS)
             flash("Successfully deleted your account!", "success")
-            logger.info(f"Successfully deleted member '{current_user.username}'")
+            logger.info(f"Member '{current_user.username}' successfully marked their own account as deleted.")
         else:
             flash("An error occurred while deleting your account.", "error")
             logger.error(f"Failed to send email to inform member '{current_user.username}' that their account has been deleted.")

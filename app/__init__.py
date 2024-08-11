@@ -189,15 +189,50 @@ def refresh_admin_keys():
         print(f"Error refreshing admin keys: {e}")
 
 
+# Function to delete accounts that are marked as deleted
+def delete_accounts_marked_for_deletion():
+    from app.models import Admin, Member, DeletedAccount
+    try:
+        cutoff_date = datetime.now() - timedelta(days=30)
+        accounts_to_delete = DeletedAccount.query.filter(DeletedAccount.deleted_at <= cutoff_date).all()
+
+        for deleted_account in accounts_to_delete:
+            # Determine if admin or member
+            admin = Admin.query.get(deleted_account.id)
+            member = Member.query.get(deleted_account.id)
+
+            if admin:
+                # Delete the admin account and related records
+                Admin.delete(admin.id)
+                print(f"Admin account with ID '{admin.id}' deleted after being marked for deletion.")
+            elif member:
+                # Delete the member account and related records
+                Member.delete(member.id)
+                print(f"Member account with ID '{member.id}' deleted after being marked for deletion.")
+            else:
+                print(f"No valid Admin or Member found for ID '{deleted_account.id}', skipping deletion.")
+            
+        # Commit all deletions
+        if accounts_to_delete:
+            db.session.commit()
+            print("Successfully deleted accounts that were marked for deletion 30 or more days ago.")
+        else:
+            print("No accounts were needed to be deleted.")
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error occurred during deletion of accounts marked for deletion: {e}")
+
+
 # Start scheduler function to run functions periodically
 def start_scheduler(app: Flask):
     global scheduler
     with app.app_context():
-        scheduler.add_job(create_app_context_wrapper(app, check_payment_status), 'interval', minutes=10)
         scheduler.add_job(create_app_context_wrapper(app, generate_new_master_keys), 'interval', days=7)
         scheduler.add_job(create_app_context_wrapper(app, delete_expired_master_keys), 'interval', days=7)
         scheduler.add_job(create_app_context_wrapper(app, refresh_admin_keys), 'interval', days=1)
+        scheduler.add_job(create_app_context_wrapper(app, delete_accounts_marked_for_deletion), 'interval', days=1)
         scheduler.add_job(create_app_context_wrapper(app, update_order_statuses), 'interval', minutes=10)
+        scheduler.add_job(create_app_context_wrapper(app, check_payment_status), 'interval', minutes=10)
         scheduler.start()
 
 

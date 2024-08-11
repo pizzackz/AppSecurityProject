@@ -96,6 +96,7 @@ class LockAdminForm(FlaskForm):
 
 # Delete admin form
 class DeleteAdminForm(FlaskForm):
+    reason = TextAreaField("Reason", validators=[DataRequired()])
     master_key = StringField("Re-enter Master Key", validators=[DataRequired()])
     recaptcha = RecaptchaField()
 

@@ -9,8 +9,8 @@ from flask_jwt_extended import unset_jwt_cookies
 from flask_login import login_required, current_user
 from flask_limiter import RateLimitExceeded
 
-from app import limiter
-from app.models import Member, LockedAccount, PasswordResetToken, Log_account, Log_general, Log_transaction
+from app import db, limiter
+from app.models import Member, LockedAccount, PasswordResetToken, DeletedAccount, Log_account, Log_general, Log_transaction
 from app.forms.forms import LockDeleteMemberForm
 from app.utils import invalidate_user_sessions, clean_input, send_email, check_admin, check_session_keys, clear_unwanted_session_keys, get_image_url
 
@@ -60,12 +60,6 @@ def handle_rate_limit_exceeded(e):
     logger.warning(f"Rate limit exceeded for {request.endpoint} in member_control_bp")
 
     match request.endpoint:
-        case 'member_control_bp.view_members':
-            flash("Too many attempts to view members. Please wait before trying again.", "error")
-            logger.warning(f"Rate limit exceeded on view members route.")
-        case 'member_control_bp.view_member_details':
-            flash("Too many attempts to view member details. Please wait before trying again.", "error")
-            logger.warning(f"Rate limit exceeded on view member details route.")
         case 'member_control_bp.lock_member':
             flash("Too many attempts to lock member accounts. Please wait before trying again.", "error")
             logger.warning(f"Rate limit exceeded on lock member route.")
@@ -81,9 +75,6 @@ def handle_rate_limit_exceeded(e):
         case 'member_control_bp.send_password_link':
             flash("Too many attempts to send password reset link. Please wait before trying again.", "error")
             logger.warning(f"Rate limit exceeded on send password link route.")
-        case 'member_control_bp.view_activities':
-            flash("Too many attempts to view activities. Please wait before trying again.", "error")
-            logger.warning(f"Rate limit exceeded on view activities route.")
         case _:
             flash("You have exceeded the rate limit. Please wait before trying again.", "error")
             logger.warning(f"Rate limit exceeded on an unidentified route.")
@@ -95,7 +86,6 @@ def handle_rate_limit_exceeded(e):
 # View members route
 @member_control_bp.route("/", methods=['GET', 'POST'])
 @login_required
-@limiter.limit("20 per hour")
 def view_members():
     # Check if user is admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
@@ -115,8 +105,9 @@ def view_members():
         logger.info(f"Member '{member_id}' selected for viewing details.")
         return redirect(url_for("member_control_bp.view_member_details"))
 
-    # Fetch all member accounts
-    members = Member.query.all()
+    # Fetch all member accounts that are not marked for deletion
+    deleted_member_ids = db.session.query(DeletedAccount.id).subquery()
+    members = Member.query.filter(Member.id.notin_(deleted_member_ids)).all()
 
     # Define which attributes to display in member list view
     member_list_data = [{
@@ -143,7 +134,6 @@ def view_members():
 # Specific member account view route
 @member_control_bp.route("/view", methods=['GET', 'POST'])
 @login_required
-@limiter.limit("10 per hour")
 def view_member_details():
     # Check if user is admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
@@ -168,6 +158,14 @@ def view_member_details():
         clear_unwanted_session_keys(ESSENTIAL_KEYS)
         flash("Member account not found.", "error")
         logger.warning(f"Member account with ID '{member_id}' not found.")
+        return redirect(url_for("member_control_bp.view_members"))
+    
+    # Check whether member is marked as deleted
+    deleted_account = DeletedAccount.query.get(member_id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("This member account has already been marked for deletion.", "error")
+        logger.warning(f"Admin '{current_user.username}' tried to view details of a member that is marked for deletion with ID '{member_id}'")
         return redirect(url_for("member_control_bp.view_members"))
 
     # Properly handle different actions
@@ -244,7 +242,7 @@ def view_member_details():
 # Lock member route
 @member_control_bp.route("/view/lock", methods=['GET', 'POST'])
 @login_required
-@limiter.limit("5 per hour")
+@limiter.limit("10 per hour")
 def lock_member():
     # Check if user is admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
@@ -287,10 +285,18 @@ def lock_member():
     member_id = session.get("member_id")
     member = Member.query.get(member_id)
     if not member:
-        clear_unwanted_session_keys(MEMBER_SPECIFIC_ESSENTIAL_KEYS)
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
         flash("Couldn't find the member account to lock", "error")
         logger.error(f"Admin '{current_user.username}' tried lock a member without providing the id for an existing account")
-        return redirect(url_for("member_control_bp.view_member_details"))
+        return redirect(url_for("member_control_bp.view_members"))
+    
+    # Check whether member is marked as deleted
+    deleted_account = DeletedAccount.query.get(member_id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("This member account has already been marked for deletion.", "error")
+        logger.warning(f"Admin '{current_user.username}' tried to lock a member that is marked for deletion with ID '{member_id}'")
+        return redirect(url_for("member_control_bp.view_members"))
     
     # Check whether account is not locked
     locked_account = LockedAccount.query.get(member_id)
@@ -338,7 +344,7 @@ def lock_member():
 # Unlock member account
 @member_control_bp.route("/view/unlock", methods=['GET'])
 @login_required
-@limiter.limit("5 per hour")
+@limiter.limit("10 per hour")
 def unlock_member():
     # Check if user is admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
@@ -360,10 +366,18 @@ def unlock_member():
     member_id = session.get("member_id")
     member = Member.query.get(member_id)
     if not member:
-        clear_unwanted_session_keys(MEMBER_SPECIFIC_ESSENTIAL_KEYS)
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
         flash("Couldn't find the member account to unlock", "error")
         logger.error(f"Admin '{current_user.username}' tried unlocking a member without providing the id for an existing account")
-        return redirect(url_for("member_control_bp.view_member_details"))
+        return redirect(url_for("member_control_bp.view_members"))
+    
+    # Check whether member is marked as deleted
+    deleted_account = DeletedAccount.query.get(member_id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("This member account has already been marked for deletion.", "error")
+        logger.warning(f"Admin '{current_user.username}' tried to unlock a member that is marked for deletion with ID '{member_id}'")
+        return redirect(url_for("member_control_bp.view_members"))
     
     # Check whether account is locked
     locked_account = LockedAccount.query.get(member_id)
@@ -395,7 +409,7 @@ def unlock_member():
 # Revoke subscription plan route
 @member_control_bp.route("/view/revoke_plan", methods=['GET', 'POST'])
 @login_required
-@limiter.limit("3 per hour")
+@limiter.limit("6 per hour")
 def revoke_plan():
     # Check if user is admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
@@ -438,10 +452,18 @@ def revoke_plan():
     member_id = session.get("member_id")
     member = Member.query.get(member_id)
     if not member:
-        clear_unwanted_session_keys(MEMBER_SPECIFIC_ESSENTIAL_KEYS)
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
         flash("Couldn't find the member account to revoke the plan for.", "error")
         logger.error(f"Admin '{current_user.username}' tried revoke subscription for member without providing the id for an existing account")
-        return redirect(url_for("member_control_bp.view_member_details"))
+        return redirect(url_for("member_control_bp.view_members"))
+    
+    # Check whether member is marked as deleted
+    deleted_account = DeletedAccount.query.get(member_id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("This member account has already been marked for deletion.", "error")
+        logger.warning(f"Admin '{current_user.username}' tried to revoke subscription for a member that is marked for deletion with ID '{member_id}'")
+        return redirect(url_for("member_control_bp.view_members"))
     
     # Check whether member is actually a premium member
     if member.subscription_plan != "premium":
@@ -490,7 +512,7 @@ def revoke_plan():
 # Delete member route
 @member_control_bp.route("/view/delete", methods=['GET', 'POST'])
 @login_required
-@limiter.limit("3 per hour")
+@limiter.limit("6 per hour")
 def delete_member():
     # Check if user is admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
@@ -533,10 +555,18 @@ def delete_member():
     member_id = session.get("member_id")
     member = Member.query.get(member_id)
     if not member:
-        clear_unwanted_session_keys(MEMBER_SPECIFIC_ESSENTIAL_KEYS)
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
         flash("Couldn't find the member account to delete.", "error")
         logger.error(f"Admin '{current_user.username}' tried delete the member without providing the id for an existing account")
-        return redirect(url_for("member_control_bp.view_member_details"))
+        return redirect(url_for("member_control_bp.view_members"))
+    
+    # Check whether member is marked as deleted
+    deleted_account = DeletedAccount.query.get(member_id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("This member account has already been marked for deletion.", "error")
+        logger.warning(f"Admin '{current_user.username}' tried to delete a member that is already marked for deletion with ID '{member_id}'")
+        return redirect(url_for("member_control_bp.view_members"))
 
     form = LockDeleteMemberForm()
     if request.method == "POST" and form.validate_on_submit():
@@ -552,10 +582,10 @@ def delete_member():
         # Try sending email using utility send_email function
         email_body = render_template("emails/delete_email.html", username=current_user.username, reason=reason)
         if send_email(member.email, "Deleted Account", html_body=email_body):
-            Member.delete(member_id)
+            Member.mark_for_deletion(id=member_id, reason=reason)
             clear_unwanted_session_keys(ESSENTIAL_KEYS)
             flash("Successfully deleted member account!", "success")
-            logger.info(f"Admin '{current_user.username}' successfully deleted member with member id of '{id}'")
+            logger.info(f"Admin '{current_user.username}' successfully marked member for deletion with member id of '{id}'")
             # Invalidate all logged in sessions except for current
             invalidate_user_sessions(member_id, False)
             return redirect(url_for("member_control_bp.view_members"))
@@ -571,7 +601,7 @@ def delete_member():
 # Send reset password link route
 @member_control_bp.route("/view/send_password_link", methods=['GET'])
 @login_required
-@limiter.limit("5 per hour")
+@limiter.limit("10 per hour")
 def send_password_link():
     # Check if user is admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
@@ -604,10 +634,18 @@ def send_password_link():
     member_id = session.get("member_id")
     member = Member.query.get(member_id)
     if not member:
-        clear_unwanted_session_keys(MEMBER_SPECIFIC_ESSENTIAL_KEYS)
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
         flash("Couldn't find the member account to send reset password link to.", "error")
         logger.error(f"Admin '{current_user.username}' tried to send reset password link to a member without providing the id for an existing account")
-        return redirect(url_for("member_control_bp.view_member_details"))
+        return redirect(url_for("member_control_bp.view_members"))
+    
+    # Check whether member is marked as deleted
+    deleted_account = DeletedAccount.query.get(member_id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("This member account has already been marked for deletion.", "error")
+        logger.warning(f"Admin '{current_user.username}' tried to send reset password link to a member that is marked for deletion with ID '{member_id}'")
+        return redirect(url_for("member_control_bp.view_members"))
 
     # Generate secure token for password reset
     email = member.email
@@ -633,7 +671,6 @@ def send_password_link():
 # View activity logs
 @member_control_bp.route("/view/activities")
 @login_required
-@limiter.limit("20 per hour")
 def view_activities():
     # Check if user is admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
@@ -666,10 +703,18 @@ def view_activities():
     member_id = session.get("member_id")
     member = Member.query.get(member_id)
     if not member:
-        clear_unwanted_session_keys(MEMBER_SPECIFIC_ESSENTIAL_KEYS)
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
         flash("Couldn't find the member account to view activities for.", "error")
-        logger.error(f"Admin '{current_user.username}' tried to view activites for the member without providing the id for an existing account")
-        return redirect(url_for("member_control_bp.view_member_details"))
+        logger.error(f"Admin '{current_user.username}' tried to view activites of a member without providing the id for an existing account")
+        return redirect(url_for("member_control_bp.view_members"))
+    
+    # Check whether member is marked as deleted
+    deleted_account = DeletedAccount.query.get(member_id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("This member account has already been marked for deletion.", "error")
+        logger.warning(f"Admin '{current_user.username}' tried to view activities of a member that is marked for deletion with ID '{member_id}'")
+        return redirect(url_for("member_control_bp.view_members"))
     
     # Querying for a specific user's logs
     log_general_entries = Log_general.query.filter_by(user_id=member_id).all()

@@ -26,10 +26,6 @@ def handle_rate_limit_exceeded(e):
     logger.warning(f"Rate limit exceeded for {request.endpoint} in signup_auth_bp")
 
     match request.endpoint:
-        case 'signup_auth_bp.signup':
-            flash("Too many signup attempts. Please wait a moment before trying again.", "error")
-            logger.warning(f"User exceeded rate limit on signup route.")
-            return redirect(url_for("general_bp.home"))
         case 'signup_auth_bp.send_otp':
             flash("Too many OTP requests. Please wait a moment before trying again.", "error")
             logger.warning(f"User exceeded rate limit on send OTP route.")
@@ -52,7 +48,6 @@ def handle_rate_limit_exceeded(e):
 
 # Initial signup route
 @signup_auth_bp.route('/', methods=['GET', 'POST'])
-@limiter.limit("5 per hour")
 @logout_if_logged_in
 def signup():
     """
@@ -86,7 +81,7 @@ def signup():
 
 # Send otp route
 @signup_auth_bp.route('/send_otp', methods=["GET"])
-@limiter.limit("3 per 10 minutes")
+@limiter.limit("10 per 10 minutes")
 @jwt_required()
 def send_otp():
     # Check if the session is expired
@@ -159,7 +154,7 @@ def send_otp():
 
 # Verify email route
 @signup_auth_bp.route("/verify_email", methods=["GET", "POST"])
-@limiter.limit("3 per 10 minutes")
+@limiter.limit("10 per 10 minutes")
 @jwt_required()
 def verify_email():
     # Redirect to signup & clear temp data in session & jwt when pressed 'back'
@@ -230,7 +225,7 @@ def verify_email():
 
 # Set password route
 @signup_auth_bp.route("/set_password", methods=["GET", "POST"])
-@limiter.limit("5 per hour")
+@limiter.limit("10 per hour")
 @jwt_required()
 def set_password():
     # Redirect to signup & clear temp data in session & jwt when pressed 'back'
@@ -289,7 +284,7 @@ def set_password():
 
 # Set extra info route
 @signup_auth_bp.route("/extra_info", methods=["GET", "POST"])
-@limiter.limit("5 per hour")
+@limiter.limit("10 per hour")
 @jwt_required()
 def extra_info():
     # Check not expired session and correct signup_stage == extra_info

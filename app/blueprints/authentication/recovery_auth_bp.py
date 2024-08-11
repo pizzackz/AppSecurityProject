@@ -27,10 +27,6 @@ def handle_rate_limit_exceeded(e):
     logger.warning(f"Rate limit exceeded for {request.endpoint} in recovery_auth_bp")
 
     match request.endpoint:
-        case 'recovery_auth_bp.recovery':
-            flash("Too many recovery attempts. Please wait a moment before trying again.", "error")
-            logger.warning(f"User exceeded rate limit on recovery route.")
-            return redirect(url_for("general_bp.home"))
         case 'recovery_auth_bp.send_otp':
             flash("Too many OTP requests. Please wait a moment before trying again.", "error")
             logger.warning(f"User exceeded rate limit on send OTP route.")
@@ -65,7 +61,6 @@ def handle_rate_limit_exceeded(e):
 
 # Recovery route - Phase 1
 @recovery_auth_bp.route("/", methods=['GET', 'POST'])
-@limiter.limit("3 per hour")
 @logout_if_logged_in
 def recovery():
     """
@@ -97,6 +92,14 @@ def recovery():
             flash("No account exists with this email.", "error")
             logger.warning(f"Recovery attempt with non-existent email: {email}")
             return redirect(url_for("recovery_auth_bp.recovery"))
+    
+        # Check if account is deleted
+        if user.account_status.is_deleted:
+            flash("No account exists with this email.", "error")
+            logger.warning(f"Recovery attempt for account marked for deletion with email of '{email}'.")
+            response = redirect(url_for("recovery_auth_bp.recovery"))
+            unset_jwt_cookies(response)
+            return response
         
         # Check if account is locked
         if user.account_status.is_locked:
@@ -131,7 +134,7 @@ def recovery():
 
 # Send otp route - Recovery phase 2.1
 @recovery_auth_bp.route('/send_otp', methods=['GET'])
-@limiter.limit("3 per 10 minutes")
+@limiter.limit("10 per 10 minutes")
 @jwt_required()
 def send_otp():
     # Check if the session is expired
@@ -168,6 +171,14 @@ def send_otp():
         flash("An error occurred. Please restart the recovery process.", "error")
         logger.error(f"User account not found for email: {identity['recovery_email']}")
         return redirect(url_for('recovery_auth_bp.recovery'))
+    
+    # Check if account is deleted
+    if user.account_status.is_deleted:
+        flash("An error occurred. Please restart the recovery process.", "error")
+        logger.warning(f"Recovery attempt (send otp) for account marked for deletion with email of '{identity['recovery_email']}'.")
+        response = redirect(url_for("recovery_auth_bp.recovery"))
+        unset_jwt_cookies(response)
+        return response
 
     # Generate otp
     identity = get_jwt_identity()
@@ -213,7 +224,7 @@ def send_otp():
 
 # Verify email route - Recovery phase 2.2
 @recovery_auth_bp.route("/verify_email", methods=["GET", "POST"])
-@limiter.limit("3 per 10 minutes")
+@limiter.limit("10 per 10 minutes")
 @jwt_required()
 def verify_email():
     # Redirect to recovery & clear temp data in session & jwt when pressed 'back'
@@ -285,7 +296,7 @@ def verify_email():
 
 # Recovery options route - Recovery phase 3
 @recovery_auth_bp.route('/recovery_options', methods=['GET', 'POST'])
-@limiter.limit("3 per hour")
+@limiter.limit("10 per hour")
 @jwt_required()
 def recovery_options():
     # Redirect to recovery & clear temp data in session & jwt when pressed 'back'
@@ -336,7 +347,7 @@ def recovery_options():
 
 # Send username route
 @recovery_auth_bp.route('/send_username', methods=['GET'])
-@limiter.limit("3 per hour")
+@limiter.limit("10 per hour")
 @jwt_required()
 def send_username():
     # Check session not expired & recovery_stage == send_username
@@ -400,7 +411,7 @@ def send_username():
 
 # Recover username route - Username successfully sent to email
 @recovery_auth_bp.route("/recover_username", methods=['GET'])
-@limiter.limit("3 per hour")
+@limiter.limit("10 per hour")
 @jwt_required()
 def recover_username():
     # Check session not expired & recovery_stage == recover_username
@@ -447,7 +458,7 @@ def recover_username():
 
 # Send password link route
 @recovery_auth_bp.route('/send_password_link', methods=['GET'])
-@limiter.limit("3 per hour")
+@limiter.limit("6 per hour")
 @jwt_required()
 def send_password_link():
     # Check session not expired & recovery_stage == send_username
@@ -501,7 +512,7 @@ def send_password_link():
 
 # Reset password route
 @recovery_auth_bp.route("/reset_password", methods=['GET', 'POST'])
-@limiter.limit("5 per hour")
+@limiter.limit("6 per hour")
 def reset_password():
     # Check whether token for reset password exist
     token = request.args.get('token')
@@ -562,7 +573,7 @@ def reset_password():
 
 # Reset success route - Inform user password has been reset successfully
 @recovery_auth_bp.route("/reset_success", methods=['GET'])
-@limiter.limit("3 per hour")
+@limiter.limit("6 per hour")
 def reset_success():
     return render_template(f"{TEMPLATE_FOLDER}/reset_success.html")
 

@@ -11,7 +11,7 @@ from flask_limiter import RateLimitExceeded
 from werkzeug.security import generate_password_hash
 
 from app import db, limiter
-from app.models import Admin, MasterKey, LockedAccount, PasswordResetToken, Log_account, Log_transaction, Log_general
+from app.models import Admin, MasterKey, LockedAccount, PasswordResetToken, DeletedAccount, Log_account, Log_transaction, Log_general
 from app.forms.forms import CreateAdminForm, LockAdminForm, DeleteAdminForm
 from app.forms.auth_forms import OtpForm
 from app.utils import invalidate_user_sessions, logout_if_logged_in, clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_session_keys, check_expired_session, set_session_data, check_auth_stage, check_jwt_values, get_image_url
@@ -127,7 +127,7 @@ def handle_rate_limit_exceeded(e):
 # Initial route to authroise "admin" user into admin control pages using master key
 @admin_control_bp.route("/", methods=['GET', 'POST'])
 @logout_if_logged_in
-@limiter.limit("5 per hour")
+@limiter.limit("10 per hour")
 def start():
     # Clear all session data and jwt tokens
     clear_unwanted_session_keys()
@@ -206,7 +206,7 @@ def start():
 
 # Admin control view admins route for viewing all admin accounts
 @admin_control_bp.route("/1", methods=['GET', 'POST'])
-@limiter.limit("20 per hour")
+@limiter.limit("40 per hour")
 def view_admins():
     # Conduct essential checks to manage access control
     check_result = admin_control_checks()
@@ -230,8 +230,9 @@ def view_admins():
         logger.info(f"Admin '{admin_id}' selected for viewing details.")
         return redirect(url_for("admin_control_bp.view_admin_details"))
 
-    # Fetch all admin accounts
-    admins = Admin.query.all()
+    # Fetch all admin accounts that are not marked for deletion
+    deleted_admin_ids = db.session.query(DeletedAccount.id).subquery()
+    admins = Admin.query.filter(Admin.id.notin_(deleted_admin_ids)).all()
 
     # Define which attributes to display in admin list view
     admin_list_data = [{
@@ -256,7 +257,7 @@ def view_admins():
 
 # Specific admin account view route
 @admin_control_bp.route("/2", methods=['GET', 'POST'])
-@limiter.limit("10 per hour")
+@limiter.limit("20 per hour")
 def view_admin_details():
     # Conduct essential checks to manage access control
     check_result = admin_control_checks()
@@ -281,6 +282,14 @@ def view_admin_details():
         clear_unwanted_session_keys(ESSENTIAL_KEYS)
         flash("Admin account not found.", "error")
         logger.warning(f"Admin account with ID '{admin_id}' not found.")
+        return redirect(url_for("admin_control_bp.view_admins"))
+    
+    # Check whether admin is marked as deleted
+    deleted_account = DeletedAccount.query.get(admin_id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("This admin account has already been marked for deletion.", "error")
+        logger.warning(f"User tried to view details of an admin that is marked for deletion with ID '{admin_id}'")
         return redirect(url_for("admin_control_bp.view_admins"))
 
     # Properly handle different actions
@@ -351,7 +360,7 @@ def view_admin_details():
 
 # Lock admin route
 @admin_control_bp.route("/2/lock_admin", methods=['GET', 'POST'])
-@limiter.limit("5 per hour")
+@limiter.limit("10 per hour")
 def lock_admin():
     # Conduct essential checks to manage access control
     check_result = admin_control_checks()
@@ -383,10 +392,18 @@ def lock_admin():
     admin_id = session.get("admin_id")
     admin = Admin.query.get(admin_id)
     if not admin:
-        clear_unwanted_session_keys(ADMIN_SPECIFIC_ESSENTIAL_KEYS)
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
         flash("Couldn't find the admin account to lock", "error")
         logger.error(f"User tried lock an admin without providing the id for an existing account")
-        return redirect(url_for("admin_control_bp.view_admin_details"))
+        return redirect(url_for("admin_control_bp.view_admins"))
+    
+    # Check whether admin is marked as deleted
+    deleted_account = DeletedAccount.query.get(admin_id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("This admin account has already been marked for deletion.", "error")
+        logger.warning(f"User tried to lock an admin that is marked for deletion with ID '{admin_id}'")
+        return redirect(url_for("admin_control_bp.view_admins"))
     
     # Check whether account is not locked
     locked_account = LockedAccount.query.get(admin_id)
@@ -429,7 +446,7 @@ def lock_admin():
 
 # Unlock admin route
 @admin_control_bp.route("/2/unlock_admin", methods=['GET'])
-@limiter.limit("5 per hour")
+@limiter.limit("10 per hour")
 def unlock_admin():
     # Conduct essential checks to manage access control
     check_result = admin_control_checks()
@@ -451,10 +468,18 @@ def unlock_admin():
     admin_id = session.get("admin_id")
     admin = Admin.query.get(admin_id)
     if not admin:
-        clear_unwanted_session_keys(ADMIN_SPECIFIC_ESSENTIAL_KEYS)
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
         flash("Couldn't find the admin account to unlock", "error")
         logger.error(f"User tried to unlock an admin without providing the id for an existing account")
-        return redirect(url_for("admin_control_bp.view_admin_details"))
+        return redirect(url_for("admin_control_bp.view_admins"))
+    
+    # Check whether admin is marked as deleted
+    deleted_account = DeletedAccount.query.get(admin_id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("This admin account has already been marked for deletion.", "error")
+        logger.warning(f"User tried to unlock an admin that is marked for deletion with ID '{admin_id}'")
+        return redirect(url_for("admin_control_bp.view_admins"))
     
     # Check wether account is actually locked
     locked_account = LockedAccount.query.get(admin_id)
@@ -485,7 +510,7 @@ def unlock_admin():
 
 # Delete admin route
 @admin_control_bp.route("/2/delete_admin", methods=['GET', 'POST'])
-@limiter.limit("3 per hour")
+@limiter.limit("6 per hour")
 def delete_admin():
     # Conduct essential checks to manage access control
     check_result = admin_control_checks()
@@ -518,23 +543,32 @@ def delete_admin():
     admin = Admin.query.get(admin_id)
     if not admin:
         clear_unwanted_session_keys(ESSENTIAL_KEYS)
-        flash("Couldn't find the admin account to delete", "error")
+        flash("Couldn't find the admin account to delete or account is already deleted", "error")
         logger.error(f"User tried deleting an admin without providing the id for an existing account")
         return redirect(url_for("admin_control_bp.view_admins"))
     
+    # Check whether admin is marked as deleted
+    deleted_account = DeletedAccount.query.get(admin_id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("This admin account has already been marked for deletion.", "error")
+        logger.warning(f"User tried to delete an admin that is already marked for deletion with ID '{admin_id}'")
+        return redirect(url_for("admin_control_bp.view_admins"))
+
     form = DeleteAdminForm()
     if request.method == "POST" and form.validate_on_submit():
-        # Check if have input
-        form_data = request.form.get("master_key")
+        # Check if have master key input
+        form_data = request.form.get("master_key") and request.form.get("reason")
         if not form_data:
             response = redirect(url_for("admin_control_bp.start"))
             unset_jwt_cookies(response)
             return response
 
-        # Sanitise input
+        # Sanitise inputs
+        reason = clean_input(form.reason.data)
         master_key_input = clean_input(form_data)
 
-        # Check if input has exactly length of 64 characters
+        # Check if master key has exactly length of 64 characters
         if len(form_data) != 64:
             flash("Invalid master key!", "error")
             logger.warning(f"A user tried to enter a fake admin key with length of '{len(form_data)}' characters.")
@@ -561,10 +595,10 @@ def delete_admin():
         # Try sending email using utility send_email function
         email_body = render_template("emails/admin_delete_email.html", username=admin.username)
         if send_email(admin.email, "Deleted Account", html_body=email_body):
-            Admin.delete(admin_id)
+            Admin.mark_for_deletion(id=admin_id, reason=reason)
             clear_unwanted_session_keys(ESSENTIAL_KEYS)
             flash("Successfully deleted admin account!", "success")
-            logger.info(f"Successfully deleted admin with admin id of '{id}'")        
+            logger.info(f"Successfully marked admin for deletion with admin id of '{id}'")        
             # Invalidate all logged in sessions except for current
             invalidate_user_sessions(admin_id, False)
             return redirect(url_for("admin_control_bp.view_admins"))
@@ -579,7 +613,7 @@ def delete_admin():
 
 # Send reset password link route
 @admin_control_bp.route("/2/send_password_link", methods=['GET'])
-@limiter.limit("5 per hour")
+@limiter.limit("10 per hour")
 def send_password_link():
     # Conduct essential checks to manage access control
     check_result = admin_control_checks()
@@ -601,10 +635,18 @@ def send_password_link():
     admin_id = session.get("admin_id")
     admin = Admin.query.get(admin_id)
     if not admin:
-        clear_unwanted_session_keys(ADMIN_SPECIFIC_ESSENTIAL_KEYS)
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
         flash("Couldn't find the admin account to send reset password link to", "error")
         logger.error(f"User tried to send reset password link to an admin without providing the id for an existing account")
-        return redirect(url_for("admin_control_bp.view_admin_details"))
+        return redirect(url_for("admin_control_bp.view_admins"))
+    
+    # Check whether admin is marked as deleted
+    deleted_account = DeletedAccount.query.get(admin_id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("This admin account has already been marked for deletion.", "error")
+        logger.warning(f"User tried to send reset password link to an admin that is marked for deletion with ID '{admin_id}'")
+        return redirect(url_for("admin_control_bp.view_admins"))
     
     # Check whether account is not locked
     locked_account = LockedAccount.query.get(admin_id)
@@ -637,7 +679,7 @@ def send_password_link():
 
 # Re-generate admin key route
 @admin_control_bp.route("/2/generate_admin_key", methods=['GET'])
-@limiter.limit("5 per hour")
+@limiter.limit("10 per hour")
 def generate_admin_key():
     # Conduct essential checks to manage access control
     check_result = admin_control_checks()
@@ -659,10 +701,18 @@ def generate_admin_key():
     admin_id = session.get("admin_id")
     admin = Admin.query.get(admin_id)
     if not admin:
-        clear_unwanted_session_keys(ADMIN_SPECIFIC_ESSENTIAL_KEYS)
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
         flash("Couldn't find the admin account to regenerate admin key for", "error")
         logger.error(f"User tried to regenerate admin key for an admin without providing the id for an existing account")
-        return redirect(url_for("admin_control_bp.view_admin_details"))
+        return redirect(url_for("admin_control_bp.view_admins"))
+    
+    # Check whether admin is marked as deleted
+    deleted_account = DeletedAccount.query.get(admin_id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("This admin account has already been marked for deletion.", "error")
+        logger.warning(f"User tried to regenerate admin key for an admin that is marked for deletion with ID '{admin_id}'")
+        return redirect(url_for("admin_control_bp.view_admins"))
     
     # Check whether account is not locked
     locked_account = LockedAccount.query.get(admin_id)
@@ -689,7 +739,7 @@ def generate_admin_key():
 
 # View activity logs
 @admin_control_bp.route("/2/view_activities")
-@limiter.limit("20 per hour")
+@limiter.limit("40 per hour")
 def view_activities():
     # Conduct essential checks to manage access control
     check_result = admin_control_checks()
@@ -711,10 +761,18 @@ def view_activities():
     admin_id = session.get("admin_id")
     admin = Admin.query.get(admin_id)
     if not admin:
-        clear_unwanted_session_keys(ADMIN_SPECIFIC_ESSENTIAL_KEYS)
-        flash("Couldn't find the admin account to unlock", "error")
-        logger.error(f"User tried to unlock an admin without providing the id for an existing account")
-        return redirect(url_for("admin_control_bp.view_admin_details"))
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("Couldn't find the admin account to view activities for", "error")
+        logger.error(f"User tried to view activities of an admin without providing the id for an existing account")
+        return redirect(url_for("admin_control_bp.view_admins"))
+    
+    # Check whether admin is marked as deleted
+    deleted_account = DeletedAccount.query.get(admin_id)
+    if deleted_account:
+        clear_unwanted_session_keys(ESSENTIAL_KEYS)
+        flash("This admin account has already been marked for deletion.", "error")
+        logger.warning(f"User tried to view activities of an admin that is marked for deletion with ID '{admin_id}'")
+        return redirect(url_for("admin_control_bp.view_admins"))
     
     # Querying for a specific user's logs
     log_general_entries = Log_general.query.filter_by(user_id=admin_id).all()
@@ -729,7 +787,7 @@ def view_activities():
 
 # Admin creation route for creating new admins (requires 2FA with OTP sent to email)
 @admin_control_bp.route("/3", methods=['GET', 'POST'])
-@limiter.limit("3 per hour")
+@limiter.limit("6 per hour")
 def create_admin():
     # Conduct essential checks to manage access control
     check_result = admin_control_checks()
@@ -759,7 +817,7 @@ def create_admin():
 
 # Send otp route
 @admin_control_bp.route('/3/send_otp', methods=["GET"])
-@limiter.limit("5 per 10 minutes")
+@limiter.limit("10 per 10 minutes")
 @jwt_required()
 def send_otp():
     # Conduct essential checks to manage access control
@@ -833,7 +891,7 @@ def send_otp():
 
 # Verify email route
 @admin_control_bp.route("/3/verify_email", methods=["GET", "POST"])
-@limiter.limit("5 per 10 minutes")
+@limiter.limit("10 per 10 minutes")
 @jwt_required()
 def verify_email():
     # Redirect to create admin & clear temp data in session & jwt when pressed 'back'
@@ -903,5 +961,4 @@ def verify_email():
 
     # Render the verify email template
     return render_template(f'{TEMPLATE_FOLDER}/verify_email.html', form=form, otp_expiry=otp_expiry)
-
 

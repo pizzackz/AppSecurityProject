@@ -1,10 +1,12 @@
 import re
-import io
 import bleach
-import imghdr
+import logging
 from wtforms import ValidationError
 from app.models import User
 from email_validator import validate_email, EmailNotValidError
+
+
+logger = logging.getLogger('tastefully')
 
 
 # Function to sanitise data first before validating
@@ -31,7 +33,9 @@ def unique_username(form, field):
     Raises:
         ValidationError: If the username is already in use.
     """
-    if User.query.filter_by(username=sanitise_data(field.data)).first():
+    if user := User.query.filter_by(username=sanitise_data(field.data)).first():
+        if user.account_status.is_deleted:
+            logger.warning(f"Attempted to signup for an account with same username '{sanitise_data(field.data)}' as an account that is marked for deletion.")
         raise ValidationError("Username is already in use. Please choose another one.")
 
 
@@ -46,7 +50,9 @@ def unique_email(form, field):
     Raises:
         ValidationError: If the email is already in use.
     """
-    if User.query.filter_by(email=sanitise_data(field.data)).first():
+    if user := User.query.filter_by(email=sanitise_data(field.data)).first():
+        if user.account_status.is_deleted:
+            logger.warning(f"Attempted to signup for an account with same email '{sanitise_data(field.data)}' as an account that is marked for deletion.")
         raise ValidationError("Email is already in use. Please choose another one.")
 
 
