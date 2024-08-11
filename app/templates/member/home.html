@@ -2,7 +2,80 @@
 {% extends "base.html" %}
 
 {% block title %}Home{% endblock %}
-
-{% block content %}
-    <h1>Member Homepage</h1>
+{% block css %}
+    {{ super() }}
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
 {% endblock %}
+{% block content %}
+<body>
+    <br>
+    <br>
+    <header>
+        <h1>Welcome to TasteFully!</h1>
+        <p>Homemade meals made TasteFully.</p>
+    </header>
+
+    <div>
+        <main>
+            <section class="update-news">
+                <div class="content">
+                    <h2>Welcome to the TasteFully family!</h2>
+                    <h5>Thank you for joining us!</h5>
+                    <br>
+                    <p>
+                        We're thrilled to have you as part of the TasteFully community! Whether you're a seasoned home cook or just
+                        starting your culinary journey, you've made the right choice in selecting the freshest ingredients delivered straight to
+                        your kitchen.
+                    </p>
+                    <br>
+                    <h3>What's next?</h3>
+                    <br>As a new member, you now have access to a suite of features designed to enhance your cooking experience:
+                    <ul style="list-style-type:circle">
+                        <li>Recipe Database: Dive into our extensive collection of recipes, ranging from the usual coffee shop delights to global sensations.
+                        </li>
+                        <li>Community Forum: Connect with fellow food enthusiasts in our members-only forum. Share tips, swap recipes, ask questions,
+                            and learn from others in a supportive, passionate community.</li>
+                        <li>Feedback & Suggestions: We value your input! Use our feedback section to share your thoughts on our products,
+                            suggest new ingredients or recipes, and help us improve your TasteFully experience.</li>
+                        <li>Recipe Chatbot: Need help in the kitchen? Our Recipe Chatbot is your personal cooking assistant, available exclusively to Premium Members.
+                            Ask for ingredient substitutions, cooking times, or even step-by-step guidance while you cook – all in real time!</li>
+                    </ul>
+                    <br>
+                    <h3>Upgrade Premium Membership</h3>
+                    <br>Ready to take your home cooking to the next level? Our Premium Membership offers exclusive benefits that make
+                    your culinary experience even more enjoyable and personalized.
+                    <br><br>Premium Perks Include:
+                    <ul style="list-style-type:circle">
+                        <li>Exclusive Access to the Full Menu: Get a sneak peek at upcoming seasonal ingredients and premium products.
+                            As a Premium Member, you'll have first access to our menu to order food bundles for you to fully utilise our recipes.</li>
+                        <li>Premium Recipes: Elevate your meals with our collection of premium recipes. These recipes are crafted by top chefs and
+                            feature gourmet ingredients and advanced techniques that will impress any dinner guest.</li>
+                    </ul>
+
+                     <hr>
+                    <p>TasteFully<br>Homemade meals made TasteFully.</p>
+                </div>
+<!--                <div class="image-preview">-->
+<!--                    <img src="image.png" alt="Menu">-->
+<!--                    <img src="image.png" alt="Recipes">-->
+<!--                </div>-->
+
+
+            </section>
+
+            <section class="useful-links">
+                <h2>Useful links:</h2>
+                    <ul>
+                        <li><a href="{{ url_for('member_recipe_bp.recipe_database') }}">Access our recipes</a></li>
+                        <li><a href="{{ url_for('member_forum_bp.subreddit') }}">Visit our forum</a></li>
+                         <li><a href="{{ url_for('member_feedback_bp.feedback')}}">Let us know your feedback</a></li>
+                        <li><a href="{{ url_for('member_subscription_bp.plan_select') }}">Where to upgrade to premium</a></li>
+                    </ul>
+            </section>
+        </main>
+    </div>
+</body>
+
+
+{% endblock %}
+

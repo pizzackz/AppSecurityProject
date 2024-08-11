@@ -2,7 +2,63 @@
 {% extends "base.html" %}
 
 {% block title %}Home{% endblock %}
-
+{% block css %}
+    {{ super() }}
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+{% endblock %}
 {% block content %}
-    <h1>Guest Homepage</h1>
+<body>
+    <br>
+    <br>
+    <header>
+        <h1>Welcome to TasteFully!</h1>
+        <p>Homemade meals made TasteFully.</p>
+    </header>
+
+    <div>
+        <main>
+            <section class="update-news">
+                <div class="content">
+                    <h2>Welcome to the TasteFully family!</h2>
+                    <h5>Thank you for joining us!</h5>
+                    <br>
+
+                    <h3> Discover the Joy of Cooking at Home </h3>
+                    <p>Are you tired of the hassle of grocery shopping or struggling to find the freshest ingredients for your favorite recipes?
+                        Welcome to TasteFully, where we bring the farmer's market directly to your kitchen!
+                        Our mission is simple: to provide home cooks with top-quality recipes that inspire delicious meals every day.
+                    </p>
+                    <br>
+                    <h3>Join us!</h3>
+                    <br>Sign up to be a member today, and you will have access to a suite of features designed to enhance your cooking experience:
+                    <ul style="list-style-type:circle">
+                        <li>Community Forum: Connect with fellow food enthusiasts in our members-only forum. Share tips, swap recipes, ask questions,
+                            and learn from others in a supportive, passionate community.</li>
+                        <li>Feedback & Suggestions: We value your input! Use our feedback section to share your thoughts on our products,
+                            suggest new ingredients or recipes, and help us improve your TasteFully experience.</li>
+                        <li>Recipe Chatbot: Need help in the kitchen? Our Recipe Chatbot is your personal cooking assistant, available exclusively to Premium Members.
+                            Ask for ingredient substitutions, cooking times, or even step-by-step guidance while you cook – all in real time!</li>
+                    </ul>
+                    <br>
+                     <hr>
+                    <p>TasteFully<br>Homemade meals made TasteFully.</p>
+                </div>
+<!--                <div class="image-preview">-->
+<!--                    <img src="image.png" alt="Menu">-->
+<!--                    <img src="image.png" alt="Recipes">-->
+<!--                </div>-->
+
+
+            </section>
+
+            <section class="useful-links">
+                <h2>Useful links:</h2>
+                    <ul>
+                        <li><a href="{{ url_for('guest_recipe_bp.recipe_database') }}">Access our recipes</a></li>
+                        <li><a href="{{ url_for('signup_auth_bp.signup') }} ">Sign up with us</a></li>
+                    </ul>
+            </section>
+        </main>
+    </div>
+</body>
 {% endblock %}
