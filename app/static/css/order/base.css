@@ -175,6 +175,7 @@ a{
 
 .h1-line {
     position: relative;
+    text-align: left;
 }
 
 .h1-line::before{

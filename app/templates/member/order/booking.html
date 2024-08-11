@@ -5,7 +5,8 @@
 {% block css %}
 {{ super() }}
 <link href="{{ url_for('static', filename='css/order/order.css') }}" rel="stylesheet">
-<link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css' rel='stylesheet' /> <!-- Delivery CSS-->
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css' rel='stylesheet' />
+
 {% endblock %}
 
 {% block content %}
@@ -32,7 +33,7 @@
 <br>
 
     <div class="bigger-container center1">
-        <h1 class="h1-line" style="text-align:left;">Schedule Delivery</h1>
+        <h1 class="h1-line">Schedule Delivery</h1>
         <br>
         <div id='calendar'></div>
         <br>
@@ -74,23 +75,56 @@
 {{ super() }}
 <script nonce="{{ nonce }}" src="{{ url_for('static', filename='js/order_popup.js') }}"></script>
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js'></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var calendarEl = document.getElementById('calendar');
-        var calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
-            selectable: true,
-            validRange: {
-                start: new Date(new Date().setDate(new Date().getDate() + 3)).toISOString().split('T')[0],  // booking allowed 3 days from current date
-                end: new Date(new Date().setMonth(new Date().getMonth() + 2, 0)).toISOString().split('T')[0]
-            },
-            select: function(info) {
-                var start = info.startStr;
-                document.getElementById('delivery_date').value = start;
-            }
-        });
-        calendar.render();
+<script nonce="{{ nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        selectable: true,
+        headerToolbar: {
+            left: '',  // Remove the default navigation buttons
+            center: 'title',  // Keep the title in the center
+            right: 'today'  // Keep the "Today" button
+        },
+        validRange: {
+            start: new Date(new Date().setDate(new Date().getDate() + 3)).toISOString().split('T')[0],
+            end: new Date(new Date().setMonth(new Date().getMonth() + 2, 0)).toISOString().split('T')[0]
+        },
+        select: function(info) {
+            var start = info.startStr;
+            document.getElementById('delivery_date').value = start;
+        },
+        datesSet: function(info) {
+            // Triggered every time the date range is changed
+            console.log('Current month:', info.startStr);
+        }
     });
-</script>
+    calendar.render();
 
+    // Create the "Previous Month" button
+    var prevButton = document.createElement('button');
+    prevButton.textContent = 'Previous';
+    prevButton.className = 'my-custom-button-prev';  // Add any classes you like for styling
+    prevButton.onclick = function() {
+        calendar.prev();  // Navigate to the previous month
+        calendar.render();  // Force re-render after navigation
+    };
+
+    // Create the "Next Month" button
+    var nextButton = document.createElement('button');
+    nextButton.textContent = 'Next';
+    nextButton.className = 'my-custom-button-next';  // Add any classes you like for styling
+    nextButton.onclick = function() {
+        calendar.next();  // Navigate to the next month
+        calendar.render();  // Force re-render after navigation
+    };
+
+    // Append the custom buttons to the toolbar on the right side
+    var toolbarRight = document.querySelector('.fc-toolbar .fc-toolbar-chunk:last-child');
+    toolbarRight.appendChild(prevButton);
+    toolbarRight.appendChild(nextButton);
+});
+
+</script>
 {% endblock %}
+

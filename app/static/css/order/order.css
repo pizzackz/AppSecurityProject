@@ -38,3 +38,32 @@
 .invalid-feedback{
     text-align: left;
 }
+
+
+.fc-toolbar-chunk:last-child {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;  /* Align the buttons to the right */
+}
+
+.my-custom-button-prev, .my-custom-button-next {
+    color: white;
+    padding: 5px;
+    padding-right:15px;
+    padding-left:15px;
+    font-weight: bold;
+    transition: color 0.4s linear;
+    border:2px solid #057AFF;
+    border-radius: 5px;
+    background-color: #057AFF;
+    max-width: 300px;
+    margin-left: 10px;  /* Add space between the buttons */
+}
+
+.my-custom-button-prev:hover, .my-custom-button-next:hover {
+    color: #057AFF;
+    background-color: white;
+    text-decoration: underline;
+    text-decoration-thickness: 2px ;
+}
+
