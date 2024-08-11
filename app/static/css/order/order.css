@@ -47,6 +47,7 @@
 }
 
 .my-custom-button-prev, .my-custom-button-next {
+    cursor: pointer;
     color: white;
     padding: 5px;
     padding-right:15px;
@@ -65,5 +66,9 @@
     background-color: white;
     text-decoration: underline;
     text-decoration-thickness: 2px ;
+}
+
+.fc-daygrid-day {
+    cursor: pointer;
 }
 
