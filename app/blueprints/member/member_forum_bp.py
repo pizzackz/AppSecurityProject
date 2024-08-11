@@ -204,6 +204,7 @@ def post_details(post_id):
             return redirect(url_for('member_forum_bp.post_details', post_id=post_id))
         return render_template('member/forum/post_details.html', post=post, comments=comments, form=form)
     except praw.exceptions.PRAWException as e:
+        print("ran")
         logging.error(f"PRAWException: {e}")
         return f"Error fetching post information: {e}", 500
     except Exception as e:

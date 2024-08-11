@@ -723,7 +723,8 @@ def generate_admin_key():
         return redirect(url_for("admin_control_bp.view_admin_details"))
     
     # Generate a new admin key & try to send email
-    admin_key = admin.generate_admin_key()
+    admin.generate_admin_key()
+    admin_key = admin.admin_key
     email_body = render_template("emails/admin_key_email.html", username=admin.username, admin_key=admin_key)
     if send_email(admin.email, "New Admin Key", html_body=email_body):
         clear_unwanted_session_keys(ADMIN_SPECIFIC_ESSENTIAL_KEYS)
