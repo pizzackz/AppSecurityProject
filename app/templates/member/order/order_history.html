@@ -6,8 +6,6 @@
 {{ super() }}
 <link href="{{ url_for('static', filename='css/order/history.css') }}" rel="stylesheet">
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
-
-
 {% endblock %}
 
 {% block content %}
@@ -49,11 +47,11 @@
                       {% if order.status == 'Delivered' %}
                             <span class="text-muted">Delivered</span>
                         {% elif order.status in ['Order Placed'] %}
-                            <button type="button" class="but-red" onclick="openModal({{ order.id }})">
+                            <button type="button" class="but-red cancel-button" data-order-id="{{ order.id }}">
                                 Cancel Order
                             </button>
                         {% else %}
-                        <span class="text-muted">Not Cancellable</span>
+                            <span class="text-muted">Not Cancellable</span>
                         {% endif %}
                     </td>
                 </tr>
@@ -65,52 +63,60 @@
     {% endif %}
 </div>
 
-
 <!-- Custom Modal Structure -->
- <div id="cancelModal" class="modal">
-     <div class="modal-content">
-         <span class="close" onclick="closeModal()">&times;</span>
-         <div class="center1">
-             <h4>Confirm Cancellation</h4>
-             <br>
-             <p>Are you sure you want to cancel this order?</p>
+<div id="cancelModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <div class="center1">
+            <h4>Confirm Cancellation</h4>
             <br>
-             <form id="cancelOrderForm" action="{{ url_for('member_order_bp.cancel_order', order_id=1) }}" method="post">
-                 <input type="hidden" name="_csrf_token" id="_csrf_token" value="{{ csrf_token() }}">
-                 <button type="submit" class="but-red">Cancel Order</button>
-             </form>
-     </div>
-     </div>
- </div>
+            <p>Are you sure you want to cancel this order?</p>
+            <br>
+            <form id="cancelOrderForm" action="{{ url_for('member_order_bp.cancel_order', order_id=1) }}" method="post">
+                <input type="hidden" name="_csrf_token" id="_csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="but-red">Cancel Order</button>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    function openModal(orderId) {
+<script nonce="{{ nonce }}">
+    document.addEventListener("DOMContentLoaded", function() {
         var modal = document.getElementById('cancelModal');
-        var form = document.getElementById('cancelOrderForm');
+        var closeModalButton = document.querySelector('.close');
+        var cancelButtons = document.querySelectorAll('.cancel-button');
+        var cancelOrderForm = document.getElementById('cancelOrderForm');
 
-        // Construct the URL in JavaScript
-        var baseUrl = '{{ url_for("member_order_bp.cancel_order", order_id=0) }}';
-        form.action = baseUrl.replace('0', orderId); // Replace the '0' with the actual order ID
+        function openModal(orderId) {
+            var baseUrl = '{{ url_for("member_order_bp.cancel_order", order_id=0) }}';
+            cancelOrderForm.action = baseUrl.replace('0', orderId); // Replace the '0' with the actual order ID
+            modal.style.display = "block";
+        }
 
-        modal.style.display = "block";
-    }
-
-    function closeModal() {
-        var modal = document.getElementById('cancelModal');
-        modal.style.display = "none";
-    }
-
-    // Close the modal if the user clicks anywhere outside of it
-    window.onclick = function(event) {
-        var modal = document.getElementById('cancelModal');
-        if (event.target == modal) {
+        function closeModal() {
             modal.style.display = "none";
         }
-    }
+
+        // Attach event listeners
+        cancelButtons.forEach(function(button) {
+            button.addEventListener('click', function() {
+                var orderId = this.getAttribute('data-order-id');
+                openModal(orderId);
+            });
+        });
+
+        closeModalButton.addEventListener('click', closeModal);
+
+        // Close the modal if the user clicks anywhere outside of it
+        window.addEventListener('click', function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        });
+    });
 </script>
 {% endblock %}
-
