@@ -40,6 +40,7 @@ def display_logs():
 
 
 @admin_log_bp.route('/dashboard')
+@login_required
 def dashboard():
     return render_template('admin/logging/dashboard.html')
 

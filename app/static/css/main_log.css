@@ -33,10 +33,16 @@ h2 {
     margin-bottom: 15px;
 }
 
+.scrollable-table {
+    max-height: 300px; /* Set your desired height */
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
 .log-table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 20px;
 }
 
 .log-table th, .log-table td {
@@ -59,24 +65,4 @@ h2 {
 
 .log-table tr:hover {
     background-color: #f1f1f1;
-}
-
-@media (max-width: 768px) {
-    .log-table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-    }
-
-    .log-table th, .log-table td {
-        font-size: 0.85em;
-    }
-
-    h1 {
-        font-size: 1.5em;
-    }
-
-    h2 {
-        font-size: 1.25em;
-    }
 }

@@ -19,6 +19,19 @@
                 <div class="nav-item">
                     <a href="{{ url_for('member_control_bp.view_members') }}" class="nav-link">Members</a>
                 </div>
+                <!-- Dropdown for logs -->    
+                <li class="nav-item active dropdown">
+                    <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Logs</a>
+
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('admin_log_bp.display_logs') }}" >Log List</a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('admin_log_bp.dashboard') }}" >Dashboard</a>
+                        </li>
+                    </ul>
+                </li>
 
                 <!-- Dropdown for Recipes -->
                 <li class="nav-item active dropdown">

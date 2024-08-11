@@ -7,104 +7,121 @@
 {% include "includes/_admin_navbar.html" %}
 {% endblock %}
 
+{% block css %}
+  {{ super() }}
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/main_log.css')}}">
+{% endblock %}
+
 {% block content %}
-<div id="back-link">
-    <a href="{{ url_for('member_control_bp.view_member_details') }}" class="back-link text-blue-500 hover:underline flex items-center">
-        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-        Back to admin list
-    </a>
+<div class="log-container">
+    <div id="back-link">
+        <a href="{{ url_for('member_control_bp.view_member_details') }}" class="back-link text-blue-500 hover:underline flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            Back to admin list
+        </a>
+    </div>
+    <h1>Log Entries</h1>
+
+    <div class="log-section">
+        <h2>General Logs</h2>
+        {% if log_transaction_entries%}
+        <div class="scrollable-table">
+            <table class="log-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Date Time</th>
+                        <th>Priority Level</th>
+                        <th>User ID</th>
+                        <th>File Subdirectory</th>
+                        <th>Log Info</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in log_general_entries %}
+                    <tr>
+                        <td>{{ entry.id }}</td>
+                        <td>{{ entry.log_datetime }}</td>
+                        <td>{{ entry.priority_level }}</td>
+                        <td>{{ entry.user_id }}</td>
+                        <td>{{ entry.file_subdir }}</td>
+                        <td>{{ entry.log_info }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>There are no general logs associated with this member</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="log-section">
+        <h2>Account Logs</h2>
+        {% if log_transaction_entries%}
+        <div class="scrollable-table">
+            <table class="log-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Date Time</th>
+                        <th>Priority Level</th>
+                        <th>User ID</th>
+                        <th>File Subdirectory</th>
+                        <th>Log Info</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in log_account_entries %}
+                    <tr>
+                        <td>{{ entry.id }}</td>
+                        <td>{{ entry.log_datetime }}</td>
+                        <td>{{ entry.priority_level }}</td>
+                        <td>{{ entry.user_id }}</td>
+                        <td>{{ entry.file_subdir }}</td>
+                        <td>{{ entry.log_info }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>There are no transaction logs associated with this member</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="log-section">
+        <h2>Transaction Logs</h2>
+        {% if log_general_entries %}
+        <div class="scrollable-table">
+            <table class="log-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Date Time</th>
+                        <th>Priority Level</th>
+                        <th>User ID</th>
+                        <th>File Subdirectory</th>
+                        <th>Log Info</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in log_transaction_entries %}
+                    <tr>
+                        <td>{{ entry.id }}</td>
+                        <td>{{ entry.log_datetime }}</td>
+                        <td>{{ entry.priority_level }}</td>
+                        <td>{{ entry.user_id }}</td>
+                        <td>{{ entry.file_subdir }}</td>
+                        <td>{{ entry.log_info }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>There are no transaction logs associated with this member</p>
+            {% endif %}
+        </div>
+    </div>
 </div>
-
-<h1>Log Entries</h1>
-
-<h2>General Logs</h2>
-{% if log_general_entries %}
-<table>
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Date Time</th>
-            <th>Priority Level</th>
-            <th>User ID</th>
-            <th>File Subdirectory</th>
-            <th>Log Info</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for entry in log_general_entries %}
-        <tr>
-            <td>{{ entry.id }}</td>
-            <td>{{ entry.log_datetime }}</td>
-            <td>{{ entry.priority_level }}</td>
-            <td>{{ entry.user_id }}</td>
-            <td>{{ entry.file_subdir }}</td>
-            <td>{{ entry.log_info }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>There are no general logs associated with this member</p>
-{% endif %}
-
-<h2>Account Logs</h2>
-{% if log_account_entries %}
-<table>
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Date Time</th>
-            <th>Priority Level</th>
-            <th>User ID</th>
-            <th>File Subdirectory</th>
-            <th>Log Info</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for entry in log_account_entries %}
-        <tr>
-            <td>{{ entry.id }}</td>
-            <td>{{ entry.log_datetime }}</td>
-            <td>{{ entry.priority_level }}</td>
-            <td>{{ entry.user_id }}</td>
-            <td>{{ entry.file_subdir }}</td>
-            <td>{{ entry.log_info }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>There are no account logs associated with this member</p>
-{% endif %}
-
-<h2>Transaction Logs</h2>
-{% if log_transaction_entries%}
-<table>
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Date Time</th>
-            <th>Priority Level</th>
-            <th>User ID</th>
-            <th>File Subdirectory</th>
-            <th>Log Info</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for entry in log_transaction_entries %}
-        <tr>
-            <td>{{ entry.id }}</td>
-            <td>{{ entry.log_datetime }}</td>
-            <td>{{ entry.priority_level }}</td>
-            <td>{{ entry.user_id }}</td>
-            <td>{{ entry.file_subdir }}</td>
-            <td>{{ entry.log_info }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>There are no transaction logs associated with this member</p>
-{% endif %}
-
 {% endblock %}
