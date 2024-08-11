@@ -1,84 +1,95 @@
 <!DOCTYPE html>
 {% extends "base.html" %}
-{%block content%}
+{% block css %}
+  {{ super() }}
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/main_log.css')}}">
+{% endblock %}
+{% block content %}
+<div class="log-container">
     <h1>Log Entries</h1>
 
-    <h2>General Logs</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Date Time</th>
-                <th>Priority Level</th>
-                <th>User ID</th>
-                <th>File Subdirectory</th>
-                <th>Log Info</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for entry in log_general_entries %}
-            <tr>
-                <td>{{ entry.id }}</td>
-                <td>{{ entry.log_datetime }}</td>
-                <td>{{ entry.priority_level }}</td>
-                <td>{{ entry.user_id }}</td>
-                <td>{{ entry.file_subdir }}</td>
-                <td>{{ entry.log_info }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="log-section">
+        <h2>General Logs</h2>
+        <table class="log-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Date Time</th>
+                    <th>Priority Level</th>
+                    <th>User ID</th>
+                    <th>File Subdirectory</th>
+                    <th>Log Info</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in log_general_entries %}
+                <tr>
+                    <td>{{ entry.id }}</td>
+                    <td>{{ entry.log_datetime }}</td>
+                    <td>{{ entry.priority_level }}</td>
+                    <td>{{ entry.user_id }}</td>
+                    <td>{{ entry.file_subdir }}</td>
+                    <td>{{ entry.log_info }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-    <h2>Account Logs</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Date Time</th>
-                <th>Priority Level</th>
-                <th>User ID</th>
-                <th>File Subdirectory</th>
-                <th>Log Info</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for entry in log_account_entries %}
-            <tr>
-                <td>{{ entry.id }}</td>
-                <td>{{ entry.log_datetime }}</td>
-                <td>{{ entry.priority_level }}</td>
-                <td>{{ entry.user_id }}</td>
-                <td>{{ entry.file_subdir }}</td>
-                <td>{{ entry.log_info }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="log-section">
+        <h2>Account Logs</h2>
+        <table class="log-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Date Time</th>
+                    <th>Priority Level</th>
+                    <th>User ID</th>
+                    <th>File Subdirectory</th>
+                    <th>Log Info</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in log_account_entries %}
+                <tr>
+                    <td>{{ entry.id }}</td>
+                    <td>{{ entry.log_datetime }}</td>
+                    <td>{{ entry.priority_level }}</td>
+                    <td>{{ entry.user_id }}</td>
+                    <td>{{ entry.file_subdir }}</td>
+                    <td>{{ entry.log_info }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-    <h2>Transaction Logs</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Date Time</th>
-                <th>Priority Level</th>
-                <th>User ID</th>
-                <th>File Subdirectory</th>
-                <th>Log Info</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for entry in log_transaction_entries %}
-            <tr>
-                <td>{{ entry.id }}</td>
-                <td>{{ entry.log_datetime }}</td>
-                <td>{{ entry.priority_level }}</td>
-                <td>{{ entry.user_id }}</td>
-                <td>{{ entry.file_subdir }}</td>
-                <td>{{ entry.log_info }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-{%endblock%}
+    <div class="log-section">
+        <h2>Transaction Logs</h2>
+        <table class="log-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Date Time</th>
+                    <th>Priority Level</th>
+                    <th>User ID</th>
+                    <th>File Subdirectory</th>
+                    <th>Log Info</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in log_transaction_entries %}
+                <tr>
+                    <td>{{ entry.id }}</td>
+                    <td>{{ entry.log_datetime }}</td>
+                    <td>{{ entry.priority_level }}</td>
+                    <td>{{ entry.user_id }}</td>
+                    <td>{{ entry.file_subdir }}</td>
+                    <td>{{ entry.log_info }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

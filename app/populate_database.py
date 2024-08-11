@@ -29,9 +29,9 @@ def seed_database():
     create_fake_master_keys(3)
     create_admins()
     create_members()
-    create_fake_logs(Log_transaction, 20)
-    create_fake_logs(Log_account, 20)
-    create_fake_logs(Log_general, 20)
+    create_fake_logs(Log_transaction, 50)
+    create_fake_logs(Log_account, 50)
+    create_fake_logs(Log_general, 50)
     logging.info("Database initialised and test data added.")
 
 

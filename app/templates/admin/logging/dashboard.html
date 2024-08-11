@@ -5,11 +5,24 @@
  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
  <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {%endblock%}
-
+{% block css %}
+  {{ super() }}
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/dashboard.css')}}">
+{% endblock %}
 {%block title%}Performance Dashboard{%endblock%}
 {%block content%}
     <h1>Website Performance Dashboard</h1>
-    <canvas id="myChart" width="400" height="200"></canvas>
-</body>
-</html>
+    <div class="grid-container">
+        <div class="chart-container">
+            <canvas id="chart1"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="chart2"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="chart3"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="chart4"></canvas>
+        </div>
 {%endblock%}
