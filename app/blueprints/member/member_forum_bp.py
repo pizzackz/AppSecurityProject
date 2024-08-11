@@ -11,14 +11,14 @@ from flask import (
     jsonify
 )
 from flask_login import login_required, current_user
-import praw
+import praw, prawcore
 import logging
 import sqlite3
 import os
 from bleach import clean
 
 from app import db
-from app.models import Token, Post, Post_comments
+from app.models import Token, Post
 
 from app.forms.forms import ForumPost, PostComment
 
@@ -40,7 +40,7 @@ reddit = praw.Reddit(
 )
 
 
-scopes = ['read', 'identity', 'submit', 'comment']
+scopes = ['read', 'identity']
 
 
 def store_refresh_token(token, current_user):
@@ -56,9 +56,9 @@ def store_refresh_token(token, current_user):
         raise
 
 
-def get_refresh_token(user_id):
+def get_refresh_token(current_user):
     # Retrieve the latest refresh token for the user
-    token = Token.query.filter_by(user_id=user_id).order_by(Token.id.desc()).first()
+    token = Token.query.filter_by(user_id=current_user).order_by(Token.id.desc()).first()
     return token.refresh_token if token else None
 
 
@@ -92,12 +92,13 @@ def authorize_callback():
         # Clear old tokens and store new token
         Token.query.filter_by(user_id=current_user.id).delete()
         db.session.commit()
-        store_refresh_token(refresh_token, current_user.id)
+        store_refresh_token(refresh_token, current_user)
 
         return redirect(url_for('member_forum_bp.subreddit'))
-    except praw.exceptions.InvalidRequest as e:
-        logging.error(f"Invalid request error: {e}")
-        return f"Invalid request: {e}", 400
+    
+    except prawcore.exceptions.OAuthException as e:
+        logging.error(f"OAuth error: {e}")
+        return f"OAuth error: {e}", 400
     except praw.exceptions.PRAWException as e:
         logging.error(f"PRAWException: {e}")
         return f"PRAWException: {e}", 500
@@ -134,7 +135,7 @@ def subreddit():
 
     try:
         subreddit = reddit_user.subreddit('tastefullyfood')
-        posts = [post for post in subreddit.hot(limit=None)]
+        posts = [post for post in subreddit.hot(limit=5)]
         return render_template('member/forum/customer_forum.html', posts=posts)
     except praw.exceptions.PRAWException as e:
         logging.error(f"PRAWException: {e}")
