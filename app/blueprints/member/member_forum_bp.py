@@ -40,7 +40,7 @@ reddit = praw.Reddit(
 )
 
 
-scopes = ['read', 'identity']
+scopes = ['read', 'identity', 'submit']
 
 
 def store_refresh_token(token, current_user):
