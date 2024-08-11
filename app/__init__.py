@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from logging import Logger, StreamHandler, Formatter
 from dotenv import load_dotenv
 
-from flask import Flask, Response, g, request, jsonify, render_template
+from flask import Flask, Response, g, request, jsonify, render_template, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
 from flask_limiter import Limiter
@@ -348,8 +348,10 @@ def register_all_bp(app: Flask):
 
     @app.errorhandler(RateLimitExceeded)
     def rate_limit_exceeded(e):
-        if request.endpoint == 'recipe-creator-ai':
+        if request.endpoint == 'recipe-creator-ai' or request.endpoint == 'recipe-customise-ai':
             return jsonify({'content': 'Please wait for a moment before making another request.'}), 429
+        elif request.endpoint == 'create-recipe' and request.method == 'POST':
+            flash("Please wait for a while before creating another recipe", "error")
 
     register_auth_bp(app)
     register_member_bp(app)

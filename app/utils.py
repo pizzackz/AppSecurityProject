@@ -29,6 +29,9 @@ from app.models import User, ProfileImage, Log_account, Log_general, Log_transac
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+from bs4 import BeautifulSoup
+import re
+import html
 
 # Initialise variables
 logger: Logger = logging.getLogger('tastefully')
@@ -868,3 +871,11 @@ def get_performance_data():
         'traffic': 1200,       # number of requests
     }
     return data
+
+
+def decode_non_whitelisted_tags(html_content, whitelist):
+    # Create a pattern to match all tags not in the whitelist
+    non_whitelisted_pattern = r'&lt;(/?)(?!' + '|'.join(whitelist) + r'\b)[^&]*?&gt;'
+    print(non_whitelisted_pattern)
+    decoded_html = re.sub(non_whitelisted_pattern, lambda m: html.unescape(m.group()), html_content)
+    return decoded_html

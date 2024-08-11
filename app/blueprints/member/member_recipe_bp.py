@@ -11,12 +11,12 @@ from flask import (
 )
 import re
 import imghdr
-from app.models import Recipe, User, RecipeConfig
+from app.models import Recipe, RecipeConfig
 import os
 from sqlalchemy import or_, and_, case
 from flask_login import current_user, login_required
 from app import limiter
-from ...utils import scan_file_with_virustotal
+from ...utils import scan_file_with_virustotal, decode_non_whitelisted_tags
 from hashlib import sha256
 from app.forms.forms import CreateRecipeFormMember, RecipeSearch, AICreateRecipeForm, CustomiseRecipeForm
 from app import db
@@ -46,6 +46,8 @@ def is_image(filename):
 @member_recipe_bp.route("/recipe_database", methods=["GET", "POST"])
 @login_required
 def recipe_database():
+    if current_user.type == 'admin':
+        return redirect(url_for('admin_recipe_bp.recipe_database'))
     print(db)  # Checking Database Status
     form = RecipeSearch()
 
@@ -164,7 +166,10 @@ def recipe_database():
 
 @member_recipe_bp.route('/create_recipe', methods=['GET', 'POST'])
 @login_required
+@limiter.limit('10 per minute')
 def create_recipe():
+    if current_user.type == 'admin':
+        return redirect(url_for('admin_recipe_bp.create_recipe'))
     form = CreateRecipeFormMember()
     if request.method == "POST":
         try:
@@ -219,11 +224,13 @@ def create_recipe():
             if len(instructions) > 1000:
                 flash('Instructions cannot be more than 1000 characters', 'error')
                 return redirect(url_for('member_recipe_bp.create_recipe'))
+
+            whitelist = ['b', 'i', 'ul', 'ol', 'li', 'hr', 'p', 'strong', 'em', 'span']
+            instructions = decode_non_whitelisted_tags(instructions, whitelist)
             # Parse HTML
             soup = BeautifulSoup(instructions, 'html.parser')
 
             # Only allow whitelisted tags
-            whitelist = ['b', 'i', 'ul', 'ol', 'li', 'hr', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'em', 'span']
             for tag in soup.find_all(True):
                 if tag.name not in whitelist:
                     tag.decompose()
@@ -348,6 +355,8 @@ def create_recipe():
 @member_recipe_bp.route('/view_recipe/<recipe_id>', methods=['GET', 'POST'])
 @login_required
 def view_recipe(recipe_id):
+    if current_user.type == 'admin':
+        return redirect(url_for('admin_recipe_bp.view_recipe', recipe_id=recipe_id))
     recipe = Recipe.query.filter_by(id=recipe_id).first()
     if recipe == None:
         abort(404)
@@ -395,6 +404,8 @@ def view_recipe(recipe_id):
 @member_recipe_bp.route('/delete_recipe/<recipe_id>', methods=['GET', 'POST'])
 @login_required
 def delete_recipe(recipe_id):
+    if current_user.type == 'admin':
+        return redirect(url_for('admin_recipe_bp.delete_recipe', recipe_id=recipe_id))
     try:
         # Try to fetch the row with name 'locked_recipes'
         locked_recipes = RecipeConfig.query.filter_by(name='locked_recipes').first()
@@ -426,6 +437,8 @@ def delete_recipe(recipe_id):
 @member_recipe_bp.route('/update_recipe/<recipe_id>', methods=['GET', 'POST'])
 @login_required
 def update_recipe(recipe_id):
+    if current_user.type == 'admin':
+        return redirect(url_for('admin_recipe_bp.update_recipe', recipe_id=recipe_id))
     recipe = Recipe.query.filter_by(id=recipe_id).first()
     if recipe == None:
         abort(404)
@@ -473,15 +486,17 @@ def update_recipe(recipe_id):
             instructions = instructions.strip()
             if instructions == '':
                 flash('Instructions are empty!', 'error')
-                return redirect(url_for('member_recipe_bp.create_recipe'))
+                return redirect(url_for('member_recipe_bp.update_recipe', recipe_id=recipe_id))
             if len(instructions) > 1000:
                 flash('Instructions cannot be more than 1000 characters', 'error')
-                return redirect(url_for('member_recipe_bp.create_recipe'))
+                return redirect(url_for('member_recipe_bp.update_recipe', recipe_id=recipe_id))
+            print(instructions)
             # Parse HTML
+            whitelist = ['b', 'i', 'ul', 'ol', 'li', 'hr', 'p', 'strong', 'em', 'span']
+            instructions = decode_non_whitelisted_tags(instructions, whitelist)
             soup = BeautifulSoup(instructions, 'html.parser')
 
             # Only allow whitelisted tags
-            whitelist = ['b', 'i', 'ul', 'ol', 'li', 'hr', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'em', 'span']
             for tag in soup.find_all(True):
                 if tag.name not in whitelist:
                     tag.decompose()
@@ -497,43 +512,43 @@ def update_recipe(recipe_id):
         if calories != '':
             if type(calories) != int:
                 flash('Calories must be an integer', 'error')
-                return redirect(url_for('member_recipe_bp.create_recipe'))
+                return redirect(url_for('member_recipe_bp.update_recipe', recipe_id=recipe_id))
             if calories < 0:
                 flash('Calories cannot be negative', 'error')
-                return redirect(url_for('member_recipe_bp.create_recipe'))
+                return redirect(url_for('member_recipe_bp.update_recipe', recipe_id=recipe_id))
             if calories > 3000:
                 flash('Calories cannot be more than 3000', 'error')
-                return redirect(url_for('member_recipe_bp.create_recipe'))
+                return redirect(url_for('member_recipe_bp.update_recipe', recipe_id=recipe_id))
 
         # PROCESS PREP TIME
         if prep_time != '':
             if type(prep_time) != int:
                 flash('Prep time must be an integer', 'error')
-                return redirect(url_for('member_recipe_bp.create_recipe'))
+                return redirect(url_for('member_recipe_bp.update_recipe', recipe_id=recipe_id))
             if prep_time < 0:
                 flash('Prep time cannot be negative', 'error')
-                return redirect(url_for('member_recipe_bp.create_recipe'))
+                return redirect(url_for('member_recipe_bp.update_recipe', recipe_id=recipe_id))
             if prep_time > 300:
                 flash('Prep time cannot be more than 300 minutes', 'error')
-                return redirect(url_for('member_recipe_bp.create_recipe'))
+                return redirect(url_for('member_recipe_bp.update_recipe', recipe_id=recipe_id))
 
         # PROCESS RECIPE TYPE
-        if recipe_type != 'Standard' and recipe_type != 'Premium':
+        if recipe_type != 'Standard' and recipe_type != 'Private':
             flash('Invalid recipe type', 'error')
-            return redirect(url_for('member_recipe_bp.create_recipe'))
+            return redirect(url_for('member_recipe_bp.update_recipe', recipe_id=recipe_id))
 
         # PROCESS INGREDIENTS
         try:
             ingredients = ingredients.split(',')
         except:
             flash('Error processing ingredients', 'error')
-            return redirect(url_for('member_recipe_bp.create_recipe'))
+            return redirect(url_for('member_recipe_bp.update_recipe', recipe_id=recipe_id))
 
         # Clean data
         if ingredients != []:
             if len(ingredients) > 15:
                 flash('Maximum 15 ingredients allowed', 'error')
-                return redirect(url_for('member_recipe_bp.create_recipe'))
+                return redirect(url_for('member_recipe_bp.update_recipe', recipe_id=recipe_id))
             # If not pass regex, redirect
             regex = r'^[a-zA-Z ]+$'  # Regex pattern allowing only letters and spaces
             print(ingredients)
@@ -541,14 +556,14 @@ def update_recipe(recipe_id):
                 ingredients[i] = (ingredients[i]).strip()
                 if ingredients[i] == '':
                     flash('Ingredients are empty!', 'error')
-                    return redirect(url_for('member_recipe_bp.create_recipe'))
+                    return redirect(url_for('member_recipe_bp.update_recipe', recipe_id=recipe_id))
                 if not re.fullmatch(regex, ingredients[i]):
                     print(f'Error here, {ingredients[i]}')
                     flash('Only letters and spaces allowed', 'error')
-                    return redirect(url_for('member_recipe_bp.create_recipe'))
+                    return redirect(url_for('member_recipe_bp.update_recipe', recipe_id=recipe_id))
                 if len(ingredients[i]) > 20:
                     flash('Ingredient cannot be more than 20 characters', 'error')
-                    return redirect(url_for('member_recipe_bp.create_recipe'))
+                    return redirect(url_for('member_recipe_bp.update_recipe', recipe_id=recipe_id))
                 ingredients[i] = (ingredients[i]).lower()
             ingredient_cleaned = ''
 
@@ -561,7 +576,7 @@ def update_recipe(recipe_id):
         if picture.filename != '':
             if not is_image(picture):
                 flash('Invalid image format', 'error')
-                return redirect(url_for('member_recipe_bp.create_recipe'))
+                return redirect(url_for('member_recipe_bp.update_recipe', recipe_id=recipe_id))
             # Delete old image
             try:
                 os.remove(os.path.join('app/static/images_recipe', recipe.picture))
@@ -572,7 +587,7 @@ def update_recipe(recipe_id):
             if 'data' in scan_result and scan_result['data'].get('attributes', {}).get('last_analysis_stats', {}).get(
                     'malicious', 0) > 0:
                 flash('The uploaded file is potentially malicious and has not been saved.', 'error')
-                return redirect(url_for('member_recipe_bp.create_recipe'))
+                return redirect(url_for('member_recipe_bp.update_recipe', recipe_id=recipe_id))
             picture_filename = picture2.filename
             picture_filename = picture_filename.split('.')
             picture_name = sha256(name.encode()).hexdigest()
@@ -619,6 +634,8 @@ def update_recipe(recipe_id):
 @member_recipe_bp.route('/ai_recipe_creator', methods=['GET', 'POST'])
 @login_required
 def ai_recipe_creator():
+    if current_user.type == 'admin':
+        return redirect(url_for('admin_recipe_bp.ai_recipe_creator'))
     form = AICreateRecipeForm()
     identity = {'username': current_user.username, 'user_id': current_user.id}
     token = create_access_token(identity=identity)
@@ -720,6 +737,8 @@ def recipe_creator_ai():
 @member_recipe_bp.route('/customise_recipe/<recipe_id>')
 @login_required
 def customise_recipe(recipe_id):
+    if current_user.type == 'admin':
+        return redirect(url_for('admin_recipe_bp.customise_recipe', recipe_id=recipe_id))
     form = CustomiseRecipeForm()
     recipe = Recipe.query.filter_by(id=recipe_id).first()
     if recipe.type == 'Private' and recipe.user_created_id != current_user.id:

@@ -26,6 +26,7 @@
         <h1 id="general_information_title">General Information</h1><br>
         <form class="justify-content-center" method="post" enctype="multipart/form-data" id="create_recipe_form">
             {{ form.csrf_token }}
+            {{ form.hidden_tag() }}
             <div class="form-group mb-3 recipe-form-input">
                 {{ render_field(form.name, class="form-control", id="name", placeholder="Teriyaki Chicken") }}
             </div>
@@ -70,7 +71,7 @@
             <div id="button-section">
                 <a href="{{ url_for('admin_recipe_bp.recipe_database', id=id) }}" class="btn btn-secondary mt-3 mb-4">Back to
                     Home</a>
-                <input type="submit" class="btn btn-primary mt-3 mb-4" value="Update Recipe">
+                <input id="submit_button" type="submit" class="btn btn-primary mt-3 mb-4" value="Update Recipe">
             </div>
         </form>
 

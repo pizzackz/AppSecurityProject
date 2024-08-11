@@ -16,7 +16,7 @@ import os
 from sqlalchemy import or_, and_
 from app.populate_recipes import populate_recipes
 from hashlib import sha256
-from ...utils import scan_file_with_virustotal
+from ...utils import scan_file_with_virustotal, decode_non_whitelisted_tags
 from flask_login import current_user
 
 from datetime import datetime, timedelta
@@ -26,8 +26,8 @@ from bs4 import BeautifulSoup
 from flask_jwt_extended import jwt_required, create_access_token, set_access_cookies
 import google.generativeai as genai
 from flask_login import login_required
+import html
 
-# import html
 # import json
 # from PIL import Image
 # import flask_sqlalchemy
@@ -218,12 +218,16 @@ def create_recipe():
             if len(instructions) > 1000:
                 flash('Instructions cannot be more than 1000 characters', 'error')
                 return redirect(url_for('admin_recipe_bp.create_recipe'))
+            # Only allow whitelist tags
+            whitelist = ['b', 'i', 'ul', 'ol', 'li', 'hr', 'p', 'strong', 'em', 'span']
+            instructions = decode_non_whitelisted_tags(instructions, whitelist)
+
             # Parse HTML
             soup = BeautifulSoup(instructions, 'html.parser')
 
             # Only allow whitelisted tags
-            whitelist = ['b', 'i', 'ul', 'ol', 'li', 'hr', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'em', 'span']
-            for tag in soup.find_all(True):
+            for tag in soup.find_all():
+                print(tag)
                 if tag.name not in whitelist:
                     tag.decompose()
 
@@ -234,7 +238,6 @@ def create_recipe():
 
             instructions = soup.prettify(formatter='minimal')
             print(instructions)
-            print('instructions printed')
 
             # PROCESS CALORIES
             if type(calories) != int:
@@ -462,11 +465,12 @@ def update_recipe(recipe_id):
                 flash('Instructions cannot be more than 1000 characters', 'error')
                 return redirect(url_for('admin_recipe_bp.create_recipe'))
             # Parse HTML
-            soup = BeautifulSoup(instructions, 'html.parser')
+            whitelist = ['b', 'i', 'ul', 'ol', 'li', 'hr', 'p', 'strong', 'em', 'span']
+            instructions = decode_non_whitelisted_tags(instructions, whitelist)
 
-            # Only allow whitelisted tags
-            whitelist = ['b', 'i', 'ul', 'ol', 'li', 'hr', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'em', 'span']
+            soup = BeautifulSoup(instructions, 'html.parser')
             for tag in soup.find_all(True):
+                print('Tag is', tag)
                 if tag.name not in whitelist:
                     tag.decompose()
 
