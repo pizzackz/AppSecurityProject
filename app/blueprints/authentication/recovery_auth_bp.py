@@ -5,9 +5,10 @@ from datetime import datetime, timedelta, timezone
 from logging import Logger
 from flask import Blueprint, request, redirect, render_template, url_for, flash, session
 from flask_jwt_extended import create_access_token, set_access_cookies, unset_jwt_cookies, get_jwt, get_jwt_identity, jwt_required
+from flask_limiter import RateLimitExceeded
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from app import db
+from app import db, limiter
 from app.models import User, LockedAccount, PasswordResetToken
 from app.forms.auth_forms import EmailForm, OtpForm, RecoverOptionsForm, ResetPasswordForm
 from app.utils import invalidate_user_sessions, logout_if_logged_in, clean_input, clear_unwanted_session_keys, generate_otp, send_email, check_auth_stage, check_jwt_values
@@ -19,8 +20,52 @@ logger: Logger = logging.getLogger('tastefully')
 TEMPLATE_FOLDER = "authentication/recovery"
 
 
+# Account recovery specific rate exceedance handler
+@recovery_auth_bp.errorhandler(RateLimitExceeded)
+def handle_rate_limit_exceeded(e):
+    # Log the rate limit exceedance for the specific blueprint
+    logger.warning(f"Rate limit exceeded for {request.endpoint} in recovery_auth_bp")
+
+    match request.endpoint:
+        case 'recovery_auth_bp.recovery':
+            flash("Too many recovery attempts. Please wait a moment before trying again.", "error")
+            logger.warning(f"User exceeded rate limit on recovery route.")
+            return redirect(url_for("general_bp.home"))
+        case 'recovery_auth_bp.send_otp':
+            flash("Too many OTP requests. Please wait a moment before trying again.", "error")
+            logger.warning(f"User exceeded rate limit on send OTP route.")
+        case 'recovery_auth_bp.verify_email':
+            flash("Too many OTP verification attempts. Please wait before trying again.", "error")
+            logger.warning(f"User exceeded rate limit on verify email route.")
+        case 'recovery_auth_bp.send_username':
+            flash("Too many attempts to send username. Please wait before trying again.", "error")
+            logger.warning(f"User exceeded rate limit on send username route.")
+        case 'recovery_auth_bp.send_password_link':
+            flash("Too many attempts to send password reset link. Please wait before trying again.", "error")
+            logger.warning(f"User exceeded rate limit on send password link route.")
+        case 'recovery_auth_bp.reset_password':
+            flash("Too many password reset attempts. Please wait before trying again.", "error")
+            logger.warning(f"User exceeded rate limit on reset password route.")
+        case 'recovery_auth_bp.recovery_options':
+            flash("Too many recovery options attempts. Please wait before trying again.", "error")
+            logger.warning(f"User exceeded rate limit on recovery options route.")
+        case 'recovery_auth_bp.recover_username':
+            flash("Too many attempts to recover username. Please wait before trying again.", "error")
+            logger.warning(f"User exceeded rate limit on recover username route.")
+        case 'recovery_auth_bp.reset_success':
+            flash("Too many attempts to view the reset success page. Please wait before trying again.", "error")
+            logger.warning(f"User exceeded rate limit on reset success route.")
+        case _:
+            flash("You have exceeded the rate limit. Please wait a moment before trying again.", "error")
+            logger.warning(f"User exceeded rate limit on an unidentified route.")
+
+    # Redirect to the recovery page as a fallback
+    return redirect(url_for("recovery_auth_bp.recovery"))
+
+
 # Recovery route - Phase 1
 @recovery_auth_bp.route("/", methods=['GET', 'POST'])
+@limiter.limit("3 per hour")
 @logout_if_logged_in
 def recovery():
     """
@@ -86,6 +131,7 @@ def recovery():
 
 # Send otp route - Recovery phase 2.1
 @recovery_auth_bp.route('/send_otp', methods=['GET'])
+@limiter.limit("3 per 10 minutes")
 @jwt_required()
 def send_otp():
     # Check if the session is expired
@@ -167,6 +213,7 @@ def send_otp():
 
 # Verify email route - Recovery phase 2.2
 @recovery_auth_bp.route("/verify_email", methods=["GET", "POST"])
+@limiter.limit("3 per 10 minutes")
 @jwt_required()
 def verify_email():
     # Redirect to recovery & clear temp data in session & jwt when pressed 'back'
@@ -238,6 +285,7 @@ def verify_email():
 
 # Recovery options route - Recovery phase 3
 @recovery_auth_bp.route('/recovery_options', methods=['GET', 'POST'])
+@limiter.limit("3 per hour")
 @jwt_required()
 def recovery_options():
     # Redirect to recovery & clear temp data in session & jwt when pressed 'back'
@@ -288,6 +336,7 @@ def recovery_options():
 
 # Send username route
 @recovery_auth_bp.route('/send_username', methods=['GET'])
+@limiter.limit("3 per hour")
 @jwt_required()
 def send_username():
     # Check session not expired & recovery_stage == send_username
@@ -351,6 +400,7 @@ def send_username():
 
 # Recover username route - Username successfully sent to email
 @recovery_auth_bp.route("/recover_username", methods=['GET'])
+@limiter.limit("3 per hour")
 @jwt_required()
 def recover_username():
     # Check session not expired & recovery_stage == recover_username
@@ -397,6 +447,7 @@ def recover_username():
 
 # Send password link route
 @recovery_auth_bp.route('/send_password_link', methods=['GET'])
+@limiter.limit("3 per hour")
 @jwt_required()
 def send_password_link():
     # Check session not expired & recovery_stage == send_username
@@ -450,6 +501,7 @@ def send_password_link():
 
 # Reset password route
 @recovery_auth_bp.route("/reset_password", methods=['GET', 'POST'])
+@limiter.limit("5 per hour")
 def reset_password():
     # Check whether token for reset password exist
     token = request.args.get('token')
@@ -510,6 +562,7 @@ def reset_password():
 
 # Reset success route - Inform user password has been reset successfully
 @recovery_auth_bp.route("/reset_success", methods=['GET'])
+@limiter.limit("3 per hour")
 def reset_success():
     return render_template(f"{TEMPLATE_FOLDER}/reset_success.html")
 

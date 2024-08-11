@@ -285,7 +285,7 @@ class Admin(User):
             db.session.rollback()
             logger.error(f"An error occurred while creating admin: {e}")
             return None
-    
+
     # To delete admin
     @staticmethod
     def delete(id: Column[int]):

@@ -9,9 +9,10 @@ from logging import Logger
 from flask import Blueprint, request, session, redirect, render_template, flash, url_for, make_response
 from flask_jwt_extended import create_access_token, set_access_cookies, unset_jwt_cookies, get_jwt, get_jwt_identity, jwt_required
 from flask_login import login_required, current_user
+from flask_limiter import RateLimitExceeded
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from app import db
+from app import db, limiter
 from app.models import User, Admin, ProfileImage
 from app.forms.profile_forms import ProfileForm
 from app.forms.auth_forms import OtpForm, ResetPasswordForm, PasswordForm
@@ -26,9 +27,47 @@ TEMPLATE_FOLDER = "admin/profile"
 ESSENTIAL_KEYS = {'_user_id', '_fresh', '_id'}
 
 
+# Admin profile specific rate limite exceedance handler
+@admin_profile_bp.errorhandler(RateLimitExceeded)
+def handle_rate_limit_exceeded(e):
+    # Log the rate limit exceedance for the specific blueprint
+    logger.warning(f"Rate limit exceeded for {request.endpoint} in admin_profile_bp")
+
+    match request.endpoint:
+        case 'admin_profile_bp.profile':
+            flash("Too many attempts to access your profile. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on profile route.")
+            return redirect(url_for("general_bp.home"))
+        case 'admin_profile_bp.send_otp':
+            flash("Too many OTP requests. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on send OTP route.")
+        case 'admin_profile_bp.verify_email':
+            flash("Too many OTP verification attempts. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on verify email route.")
+        case 'admin_profile_bp.save_changes':
+            flash("Too many attempts to save changes. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on save changes route.")
+        case 'admin_profile_bp.set_password':
+            flash("Too many attempts to set your password. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on set password route.")
+        case 'admin_profile_bp.reset_password':
+            flash("Too many attempts to reset your password. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on reset password route.")
+        case 'admin_profile_bp.send_admin_key':
+            flash("Too many attempts to send your admin key. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on send admin key route.")
+        case _:
+            flash("You have exceeded the rate limit. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on an unidentified route.")
+
+    # Redirect to the admin profile page as a fallback
+    return redirect(url_for("admin_profile_bp.profile"))
+
+
 # Base profile route
 @admin_profile_bp.route("/", methods=['GET', 'POST'])
 @login_required
+@limiter.limit("15 per hour")
 def profile():
     clear_unwanted_session_keys(ESSENTIAL_KEYS)
 
@@ -197,6 +236,7 @@ def profile():
 @admin_profile_bp.route("/send_otp", methods=['GET'])
 @jwt_required()
 @login_required
+@limiter.limit("5 per 10 minutes")
 def send_otp():
     # Check if the user is a admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
@@ -302,6 +342,7 @@ def send_otp():
 @admin_profile_bp.route("/verify_email", methods=["GET", "POST"])
 @jwt_required()
 @login_required
+@limiter.limit("5 per 10 minutes")
 def verify_email():
     # Check if the user is a admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
@@ -425,6 +466,7 @@ def verify_email():
 @admin_profile_bp.route("/save_changes", methods=['GET'])
 @jwt_required()
 @login_required
+@limiter.limit("10 per hour")
 def save_changes():
     # Check if the user is a admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
@@ -516,6 +558,7 @@ def save_changes():
 @admin_profile_bp.route("/set_password", methods=['GET', 'POST'])
 @jwt_required()
 @login_required
+@limiter.limit("5 per hour")
 def set_password():
     # Check if user is admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
@@ -624,6 +667,7 @@ def set_password():
 @admin_profile_bp.route("/reset_password", methods=['GET', 'POST'])
 @jwt_required()
 @login_required
+@limiter.limit("5 per hour")
 def reset_password():
     # Check if user is admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
@@ -731,6 +775,7 @@ def reset_password():
 # Send admin key route
 @admin_profile_bp.route("/send_admin_key", methods=['GET'])
 @login_required
+@limiter.limit("3 per hour")
 def send_admin_key():
     # Check if the user is a admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')

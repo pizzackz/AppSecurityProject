@@ -59,7 +59,7 @@ class Config:
     }
 
     # Rate Limiting
-    RATELIMIT_DEFAULT = ["20000 per day", "2000 per hour"]
+    RATELIMIT_DEFAULT = ["10000 per day", "500 per hour"]
     RATELIMIT_STORAGE_URL = "memory://"  # Store rate limit counters in memory
 
     # Secure headers
@@ -71,7 +71,7 @@ class Config:
 
     # Email configuration
     SMTP_SERVER = os.getenv('SMTP_SERVER')
-    SMTP_PORT = int(os.getenv('SMTP_PORT'))
+    SMTP_PORT = int(os.getenv('SMTP_PORT', "587"))
     EMAIL_USERNAME = os.getenv('EMAIL_USERNAME')
     EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD')
     FROM_EMAIL = os.getenv('FROM_EMAIL')

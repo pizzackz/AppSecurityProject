@@ -10,10 +10,11 @@ from typing import Union, Dict, Optional
 from flask import Blueprint, request, session, redirect, render_template, flash, url_for, make_response
 from flask_jwt_extended import create_access_token, set_access_cookies, unset_jwt_cookies, get_jwt, get_jwt_identity, jwt_required
 from flask_login import login_user
+from flask_limiter import RateLimitExceeded
 from werkzeug.security import check_password_hash
 from google_auth_oauthlib.flow import Flow
 
-from app import db, login_manager
+from app import db, login_manager, limiter
 from app.config.config import Config
 from app.models import User, Member, Admin, LockedAccount
 from app.forms.auth_forms import LoginForm, OtpForm, ConfirmNewMemberForm, ConfirmGoogleLinkForm, ConfirmDeleteForm
@@ -69,7 +70,7 @@ def load_user(user_id: int) -> Union[User, Member, Admin]:
 
 
 # Successful Google Sign-in aftermath case handlers
-# Display case based messages
+# Display case-based messages
 def display_case_messages(flash_message: str, log_message: str):
     flash(flash_message, "error")
     logger.error(log_message)
@@ -178,8 +179,52 @@ def handle_defective_cases(user_by_email: Optional[User], user_by_username: Opti
     return None
 
 
+# Login-specific rate limit exceedance handler
+@login_auth_bp.errorhandler(RateLimitExceeded)
+def handle_rate_limit_exceeded(e):
+    # Log the rate limit exceedance for the specific blueprint
+    logger.warning(f"Rate limit exceeded for {request.endpoint} in login_auth_bp")
+
+    match request.endpoint:
+        case 'login_auth_bp.login':
+            flash("Too many login attempts. Please wait a moment before trying again.", "error")
+            logger.warning(f"User exceeded rate limit on login route.")
+            return redirect(url_for("general_bp.home"))
+        case 'login_auth_bp.send_otp':
+            flash("Too many OTP requests. Please wait a moment before trying again.", "error")
+            logger.warning(f"User exceeded rate limit on send OTP route.")
+        case 'login_auth_bp.verify_email':
+            flash("Too many OTP verification attempts. Please wait before trying again.", "error")
+            logger.warning(f"User exceeded rate limit on verify email route.")
+        case 'login_auth_bp.google_login':
+            flash("Too many Google login attempts. Please wait before trying again.", "error")
+            logger.warning(f"User exceeded rate limit on Google login route.")
+        case 'login_auth_bp.google_callback':
+            flash("Too many attempts to authenticate with Google. Please wait before trying again.", "error")
+            logger.warning(f"User exceeded rate limit on Google callback route.")
+        case 'login_auth_bp.link_google':
+            flash("Too many attempts to link Google account. Please wait before trying again.", "error")
+            logger.warning(f"User exceeded rate limit on link Google route.")
+        case 'login_auth_bp.confirm_new_member_account':
+            flash("Too many attempts to confirm new account. Please wait before trying again.", "error")
+            logger.warning(f"User exceeded rate limit on confirm new member account route.")
+        case 'login_auth_bp.final_login':
+            flash("Too many login attempts. Please wait a moment before trying again.", "error")
+            logger.warning(f"User exceeded rate limit on final login route.")
+        case 'login_auth_bp.confirm_delete':
+            flash("Too many attempts to delete the account. Please wait before trying again.", "error")
+            logger.warning(f"User exceeded rate limit on confirm delete route.")
+        case _:
+            flash("You have exceeded the rate limit. Please wait a moment before trying again.", "error")
+            logger.warning(f"User exceeded rate limit on an unidentified route.")
+
+    # Redirect to the login page as a fallback
+    return redirect(url_for("login_auth_bp.login"))
+
+
 # Initial login route
 @login_auth_bp.route("/", methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
 @logout_if_logged_in
 def login():
     """
@@ -270,6 +315,7 @@ def login():
 
 # Send otp route
 @login_auth_bp.route("/send_otp", methods=['GET'])
+@limiter.limit("3 per 10 minutes")
 @jwt_required()
 def send_otp():
     # Check if the session is expired
@@ -343,6 +389,7 @@ def send_otp():
 
 # Verify email route
 @login_auth_bp.route("/verify_email", methods=["GET", "POST"])
+@limiter.limit("3 per 10 minutes")
 @jwt_required()
 def verify_email():
     # Redirect to login & clear temp data in session & jwt when pressed 'back'
@@ -417,6 +464,7 @@ def verify_email():
 
 # Google login route
 @login_auth_bp.route("/google_login", methods=['GET'])
+@limiter.limit("10 per hour")
 def google_login():
     # Create OAuth 2.0 flow object
     flow = Flow.from_client_config(
@@ -445,6 +493,7 @@ def google_login():
 
 # Route to handle Google callback
 @login_auth_bp.route("/google_callback", methods=['GET'])
+@limiter.limit("10 per hour")
 def google_callback():
     # Handle Google Sign-in cancel request
     if 'error' in request.args:
@@ -508,6 +557,7 @@ def google_callback():
 
 # Create new account route - Using google credentials
 @login_auth_bp.route("/confirm_new_member_account", methods=['GET', 'POST'])
+@limiter.limit("3 per hour")
 @jwt_required()
 def confirm_new_member_account():
     # Check for correct JWT identity keys and claims
@@ -579,6 +629,7 @@ def confirm_new_member_account():
 
 # Linking Google account route
 @login_auth_bp.route("/link_google", methods=['GET', 'POST'])
+@limiter.limit("5 per hour")
 @jwt_required()
 def link_google():
     # Check for correct JWT identity keys
@@ -648,6 +699,7 @@ def link_google():
 
 # Final login route
 @login_auth_bp.route("/final_login", methods=['GET'])
+@limiter.limit("10 per hour")
 @jwt_required()
 def final_login():
     # Check for correct JWT identity keys
@@ -713,6 +765,7 @@ def final_login():
 
 # Confirm delete upon locked account login route
 @login_auth_bp.route("/confirm_delete", methods=['GET', 'POST'])
+@limiter.limit("5 per hour")
 @jwt_required()
 def confirm_delete():
     # Check for correct JWT identity keys

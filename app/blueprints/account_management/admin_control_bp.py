@@ -7,9 +7,10 @@ from typing import Optional, Set
 
 from flask import Blueprint, request, session, redirect, render_template, flash, url_for, make_response, Response
 from flask_jwt_extended import create_access_token, set_access_cookies, unset_jwt_cookies, get_jwt, get_jwt_identity, jwt_required
+from flask_limiter import RateLimitExceeded
 from werkzeug.security import generate_password_hash
 
-from app import db
+from app import db, limiter
 from app.models import Admin, MasterKey, LockedAccount, PasswordResetToken, Log_account, Log_transaction, Log_general
 from app.forms.forms import CreateAdminForm, LockAdminForm, DeleteAdminForm
 from app.forms.auth_forms import OtpForm
@@ -73,9 +74,60 @@ def admin_control_checks(keys_to_keep: Optional[Set[str]] = None) -> Optional[Re
     return None
 
 
+# Admin account management specific rate limit exceedance handler
+@admin_control_bp.errorhandler(RateLimitExceeded)
+def handle_rate_limit_exceeded(e):
+    # Log the rate limit exceedance for the specific blueprint
+    logger.warning(f"Rate limit exceeded for {request.endpoint} in admin_control_bp")
+
+    match request.endpoint:
+        case 'admin_control_bp.start':
+            flash("Too many attempts to access admin control. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on start route.")
+        case 'admin_control_bp.view_admins':
+            flash("Too many attempts to view admins. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on view admins route.")
+        case 'admin_control_bp.view_admin_details':
+            flash("Too many attempts to view admin details. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on view admin details route.")
+        case 'admin_control_bp.lock_admin':
+            flash("Too many attempts to lock admin accounts. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on lock admin route.")
+        case 'admin_control_bp.unlock_admin':
+            flash("Too many attempts to unlock admin accounts. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on unlock admin route.")
+        case 'admin_control_bp.delete_admin':
+            flash("Too many attempts to delete admin accounts. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on delete admin route.")
+        case 'admin_control_bp.send_password_link':
+            flash("Too many attempts to send password reset link. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on send password link route.")
+        case 'admin_control_bp.generate_admin_key':
+            flash("Too many attempts to generate admin keys. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on generate admin key route.")
+        case 'admin_control_bp.view_activities':
+            flash("Too many attempts to view activities. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on view activities route.")
+        case 'admin_control_bp.create_admin':
+            flash("Too many attempts to create admin accounts. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on create admin route.")
+        case 'admin_control_bp.send_otp':
+            flash("Too many OTP requests. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on send OTP route.")
+        case 'admin_control_bp.verify_email':
+            flash("Too many OTP verification attempts. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on verify email route.")
+        case _:
+            flash("You have exceeded the rate limit. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on an unidentified route.")
+
+    # Redirect to the admin control start page as a fallback
+    return redirect(url_for("admin_control_bp.start"))
+
 # Initial route to authroise "admin" user into admin control pages using master key
 @admin_control_bp.route("/", methods=['GET', 'POST'])
 @logout_if_logged_in
+@limiter.limit("5 per hour")
 def start():
     # Clear all session data and jwt tokens
     clear_unwanted_session_keys()
@@ -154,6 +206,7 @@ def start():
 
 # Admin control view admins route for viewing all admin accounts
 @admin_control_bp.route("/1", methods=['GET', 'POST'])
+@limiter.limit("20 per hour")
 def view_admins():
     # Conduct essential checks to manage access control
     check_result = admin_control_checks()
@@ -203,6 +256,7 @@ def view_admins():
 
 # Specific admin account view route
 @admin_control_bp.route("/2", methods=['GET', 'POST'])
+@limiter.limit("10 per hour")
 def view_admin_details():
     # Conduct essential checks to manage access control
     check_result = admin_control_checks()
@@ -297,6 +351,7 @@ def view_admin_details():
 
 # Lock admin route
 @admin_control_bp.route("/2/lock_admin", methods=['GET', 'POST'])
+@limiter.limit("5 per hour")
 def lock_admin():
     # Conduct essential checks to manage access control
     check_result = admin_control_checks()
@@ -374,6 +429,7 @@ def lock_admin():
 
 # Unlock admin route
 @admin_control_bp.route("/2/unlock_admin", methods=['GET'])
+@limiter.limit("5 per hour")
 def unlock_admin():
     # Conduct essential checks to manage access control
     check_result = admin_control_checks()
@@ -429,6 +485,7 @@ def unlock_admin():
 
 # Delete admin route
 @admin_control_bp.route("/2/delete_admin", methods=['GET', 'POST'])
+@limiter.limit("3 per hour")
 def delete_admin():
     # Conduct essential checks to manage access control
     check_result = admin_control_checks()
@@ -522,6 +579,7 @@ def delete_admin():
 
 # Send reset password link route
 @admin_control_bp.route("/2/send_password_link", methods=['GET'])
+@limiter.limit("5 per hour")
 def send_password_link():
     # Conduct essential checks to manage access control
     check_result = admin_control_checks()
@@ -579,6 +637,7 @@ def send_password_link():
 
 # Re-generate admin key route
 @admin_control_bp.route("/2/generate_admin_key", methods=['GET'])
+@limiter.limit("5 per hour")
 def generate_admin_key():
     # Conduct essential checks to manage access control
     check_result = admin_control_checks()
@@ -630,6 +689,7 @@ def generate_admin_key():
 
 # View activity logs
 @admin_control_bp.route("/2/view_activities")
+@limiter.limit("20 per hour")
 def view_activities():
     # Conduct essential checks to manage access control
     check_result = admin_control_checks()
@@ -669,6 +729,7 @@ def view_activities():
 
 # Admin creation route for creating new admins (requires 2FA with OTP sent to email)
 @admin_control_bp.route("/3", methods=['GET', 'POST'])
+@limiter.limit("3 per hour")
 def create_admin():
     # Conduct essential checks to manage access control
     check_result = admin_control_checks()
@@ -698,6 +759,7 @@ def create_admin():
 
 # Send otp route
 @admin_control_bp.route('/3/send_otp', methods=["GET"])
+@limiter.limit("5 per 10 minutes")
 @jwt_required()
 def send_otp():
     # Conduct essential checks to manage access control
@@ -771,6 +833,7 @@ def send_otp():
 
 # Verify email route
 @admin_control_bp.route("/3/verify_email", methods=["GET", "POST"])
+@limiter.limit("5 per 10 minutes")
 @jwt_required()
 def verify_email():
     # Redirect to create admin & clear temp data in session & jwt when pressed 'back'

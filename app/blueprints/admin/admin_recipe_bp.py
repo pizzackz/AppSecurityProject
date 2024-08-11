@@ -42,6 +42,7 @@ admin_recipe_bp = Blueprint("admin_recipe_bp", __name__)
 genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
 model = genai.GenerativeModel('gemini-1.5-flash')
 
+
 def is_image(filename):
     # Check if the file is an image
     image_type = imghdr.what(filename)
@@ -49,7 +50,6 @@ def is_image(filename):
         return True, image_type
     else:
         return False, None
-
 
 
 # Recipe Pages
@@ -153,6 +153,7 @@ def recipe_database():
     items_on_page = Recipe.query.order_by(db.case((Recipe.type == 'private', 0),else_=1)).paginate(page=page, per_page=per_page)
 
     return render_template("admin/recipe/recipe_database.html", form=form, recipes=items_on_page, total_pages=total_pages, page=page)
+
 
 @admin_recipe_bp.route('/admin/create_recipe', methods=['GET', 'POST'])
 @login_required
@@ -371,6 +372,7 @@ def view_recipe(recipe_id):
     }
     return render_template('admin/recipe/recipe_view2.html', recipe=recipe_data)
 
+
 @admin_recipe_bp.route('/admin/delete_recipe/<recipe_id>', methods=['GET', 'POST'])
 @login_required
 def delete_recipe(recipe_id):
@@ -401,6 +403,7 @@ def delete_recipe(recipe_id):
     db.session.delete(recipe)
     db.session.commit()
     return redirect(url_for('admin_recipe_bp.recipe_database'))
+
 
 @admin_recipe_bp.route('/admin/update_recipe/<recipe_id>', methods=['GET', 'POST'])
 @login_required
@@ -599,6 +602,7 @@ def update_recipe(recipe_id):
 
     return render_template('admin/recipe/recipe_update.html', form=form, ingredients=ingredients)
 
+
 @admin_recipe_bp.route('/admin/recipe_dashboard')
 @login_required
 def recipe_dashboard():
@@ -640,6 +644,7 @@ def recipe_dashboard():
     set_access_cookies(response, token)
     return response
 
+
 @admin_recipe_bp.route('/api/recipe_info', methods=['GET'])
 @login_required
 @jwt_required()
@@ -662,6 +667,7 @@ def recipe_info():
 
     return jsonify({'content':recipe_count_last_12_hours})
 
+
 @admin_recipe_bp.route('/admin/lock_recipes')
 @login_required
 def lock_recipes():
@@ -682,6 +688,7 @@ def lock_recipes():
     db.session.commit()
     flash('Recipes locked', 'info')
     return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
+
 
 @admin_recipe_bp.route('/admin/unlock_recipes')
 @login_required
@@ -704,6 +711,7 @@ def unlock_recipes():
     flash('Recipes unlocked', 'info')
     return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
 
+
 @admin_recipe_bp.route('/admin/populate_recipes')
 @login_required
 def populate_recipes_database():
@@ -713,6 +721,7 @@ def populate_recipes_database():
     populate_recipes()
     flash('Populated recipe', 'info')
     return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
+
 
 @admin_recipe_bp.route('/admin/reset_recipes')
 @login_required
@@ -733,6 +742,7 @@ def reset_recipes():
     flash('Database reset', 'info')
     return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
 
+
 @admin_recipe_bp.route('/admin/reset_deleted_recipes')
 @login_required
 def reset_deleted_recipes():
@@ -749,6 +759,7 @@ def reset_deleted_recipes():
     db.session.commit()
     flash('Deleted Database reset', 'info')
     return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
+
 
 @admin_recipe_bp.route('/admin/deleted_recipe_database', methods=['GET', 'POST'])
 @login_required
@@ -846,6 +857,7 @@ def deleted_recipe_database():
 
     return render_template("admin/recipe/recipe_database_deleted.html", form=form, recipes=items_on_page, total_pages=total_pages, page=page)
 
+
 # View deleted recipes
 @admin_recipe_bp.route('/admin/view_deleted_recipe/<recipe_id>', methods=['GET', 'POST'])
 @login_required
@@ -872,6 +884,7 @@ def view_deleted_recipe(recipe_id):
     }
     return render_template('admin/recipe/recipe_view_deleted.html', recipe=recipe_data)
 
+
 @admin_recipe_bp.route('/admin/delete_recipe_forever/<recipe_id>', methods=['GET', 'POST'])
 @login_required
 def delete_recipe_forever(recipe_id):
@@ -888,6 +901,7 @@ def delete_recipe_forever(recipe_id):
     db.session.commit()
     return redirect(url_for('admin_recipe_bp.deleted_recipe_database'))
 
+
 @admin_recipe_bp.route('/admin/restore_recipe/<recipe_id>', methods=['GET', 'POST'])
 @login_required
 def restore_recipe(recipe_id):
@@ -902,6 +916,7 @@ def restore_recipe(recipe_id):
     db.session.commit()
     return redirect(url_for('admin_recipe_bp.recipe_database'))
 
+
 @admin_recipe_bp.route('/admin/ai_recipe_creator', methods=['GET'])
 @login_required
 def ai_recipe_creator():
@@ -914,6 +929,7 @@ def ai_recipe_creator():
     response = make_response(render_template('admin/recipe/recipe_ai_creator.html', form=form))
     set_access_cookies(response, token)
     return response
+
 
 @admin_recipe_bp.route('/admin/customise_recipe/<recipe_id>')
 @login_required

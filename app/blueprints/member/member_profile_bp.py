@@ -9,26 +9,64 @@ from logging import Logger
 from flask import Blueprint, request, session, redirect, render_template, flash, url_for, make_response
 from flask_jwt_extended import create_access_token, set_access_cookies, unset_jwt_cookies, get_jwt, get_jwt_identity, jwt_required
 from flask_login import login_required, current_user, logout_user
+from flask_limiter import RateLimitExceeded
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from app import db
+from app import db, limiter
 from app.models import User, Member, ProfileImage
 from app.forms.profile_forms import ProfileForm, DeleteMemberForm
 from app.forms.auth_forms import OtpForm, ResetPasswordForm, PasswordForm
 from app.utils import invalidate_user_sessions, clean_input, generate_otp, send_email, check_auth_stage, check_jwt_values, check_member, clear_unwanted_session_keys, get_image_url, upload_pfp, reset_pfp
 
 
+# Initialise variables
 member_profile_bp: Blueprint = Blueprint("member_profile_bp", __name__, url_prefix="/profile")
 logger: Logger = logging.getLogger('tastefully')
-
-# Initialise variables
 TEMPLATE_FOLDER = "member/profile"
 ESSENTIAL_KEYS = {'_user_id', '_fresh', '_id'}
+
+
+# Member profile specific rate limit exceedance handler
+@member_profile_bp.errorhandler(RateLimitExceeded)
+def handle_rate_limit_exceeded(e):
+    # Log the rate limit exceedance for the specific blueprint
+    logger.warning(f"Rate limit exceeded for {request.endpoint} in member_profile_bp")
+
+    match request.endpoint:
+        case 'member_profile_bp.profile':
+            flash("Too many attempts to access your profile. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on profile route.")
+            return redirect(url_for("general_bp.home"))
+        case 'member_profile_bp.send_otp':
+            flash("Too many OTP requests. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on send OTP route.")
+        case 'member_profile_bp.verify_email':
+            flash("Too many OTP verification attempts. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on verify email route.")
+        case 'member_profile_bp.save_changes':
+            flash("Too many attempts to save changes. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on save changes route.")
+        case 'member_profile_bp.set_password':
+            flash("Too many attempts to set your password. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on set password route.")
+        case 'member_profile_bp.reset_password':
+            flash("Too many attempts to reset your password. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on reset password route.")
+        case 'member_profile_bp.delete':
+            flash("Too many attempts to delete your account. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on delete account route.")
+        case _:
+            flash("You have exceeded the rate limit. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on an unidentified route.")
+
+    # Redirect to the member profile page as a fallback
+    return redirect(url_for("member_profile_bp.profile"))
 
 
 # Base profile route
 @member_profile_bp.route("/", methods=['GET', 'POST'])
 @login_required
+@limiter.limit("15 per hour")
 def profile():
     clear_unwanted_session_keys(ESSENTIAL_KEYS)
 
@@ -214,6 +252,7 @@ def profile():
 @member_profile_bp.route("/send_otp", methods=['GET'])
 @jwt_required()
 @login_required
+@limiter.limit("5 per 10 minutes")
 def send_otp():
     # Check if the user is a member
     check = check_member(fallback_endpoint='login_auth_bp.login')
@@ -319,6 +358,7 @@ def send_otp():
 @member_profile_bp.route("/verify_email", methods=["GET", "POST"])
 @jwt_required()
 @login_required
+@limiter.limit("5 per 10 minutes")
 def verify_email():
     # Check if the user is a member
     check = check_member(fallback_endpoint='login_auth_bp.login')
@@ -442,6 +482,7 @@ def verify_email():
 @member_profile_bp.route("/save_changes", methods=['GET'])
 @jwt_required()
 @login_required
+@limiter.limit("10 per hour")
 def save_changes():
     # Check if the user is a member
     check = check_member(fallback_endpoint='login_auth_bp.login')
@@ -533,6 +574,7 @@ def save_changes():
 @member_profile_bp.route("/set_password", methods=['GET', 'POST'])
 @jwt_required()
 @login_required
+@limiter.limit("5 per hour")
 def set_password():
     # Check if user is member
     check = check_member(fallback_endpoint='login_auth_bp.login')
@@ -641,6 +683,7 @@ def set_password():
 @member_profile_bp.route("/reset_password", methods=['GET', 'POST'])
 @jwt_required()
 @login_required
+@limiter.limit("5 per hour")
 def reset_password():
     # Check if user is member
     check = check_member(fallback_endpoint='login_auth_bp.login')
@@ -748,6 +791,7 @@ def reset_password():
 # Delete account route
 @member_profile_bp.route("delete", methods=['GET', 'POST'])
 @login_required
+@limiter.limit("3 per hour")
 def delete():
     # Check if user is member
     check = check_member(fallback_endpoint='login_auth_bp.login')

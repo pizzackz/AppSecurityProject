@@ -7,7 +7,9 @@ from datetime import datetime
 from flask import Blueprint, Response, request, session, redirect, render_template, flash, url_for, make_response
 from flask_jwt_extended import unset_jwt_cookies
 from flask_login import login_required, current_user
+from flask_limiter import RateLimitExceeded
 
+from app import limiter
 from app.models import Member, LockedAccount, PasswordResetToken, Log_account, Log_general, Log_transaction
 from app.forms.forms import LockDeleteMemberForm
 from app.utils import invalidate_user_sessions, clean_input, send_email, check_admin, check_session_keys, clear_unwanted_session_keys, get_image_url
@@ -51,9 +53,49 @@ def check_admin_key(value: str, current_user, fallback_endpoint: str) -> Optiona
     return None
 
 
+# Member account management specific rate exceedance handler
+@member_control_bp.errorhandler(RateLimitExceeded)
+def handle_rate_limit_exceeded(e):
+    # Log the rate limit exceedance for the specific blueprint
+    logger.warning(f"Rate limit exceeded for {request.endpoint} in member_control_bp")
+
+    match request.endpoint:
+        case 'member_control_bp.view_members':
+            flash("Too many attempts to view members. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on view members route.")
+        case 'member_control_bp.view_member_details':
+            flash("Too many attempts to view member details. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on view member details route.")
+        case 'member_control_bp.lock_member':
+            flash("Too many attempts to lock member accounts. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on lock member route.")
+        case 'member_control_bp.unlock_member':
+            flash("Too many attempts to unlock member accounts. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on unlock member route.")
+        case 'member_control_bp.revoke_plan':
+            flash("Too many attempts to revoke subscription plans. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on revoke plan route.")
+        case 'member_control_bp.delete_member':
+            flash("Too many attempts to delete member accounts. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on delete member route.")
+        case 'member_control_bp.send_password_link':
+            flash("Too many attempts to send password reset link. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on send password link route.")
+        case 'member_control_bp.view_activities':
+            flash("Too many attempts to view activities. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on view activities route.")
+        case _:
+            flash("You have exceeded the rate limit. Please wait before trying again.", "error")
+            logger.warning(f"Rate limit exceeded on an unidentified route.")
+
+    # Redirect to the view members page as a fallback
+    return redirect(url_for("member_control_bp.view_members"))
+
+
 # View members route
 @member_control_bp.route("/", methods=['GET', 'POST'])
 @login_required
+@limiter.limit("20 per hour")
 def view_members():
     # Check if user is admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
@@ -101,6 +143,7 @@ def view_members():
 # Specific member account view route
 @member_control_bp.route("/view", methods=['GET', 'POST'])
 @login_required
+@limiter.limit("10 per hour")
 def view_member_details():
     # Check if user is admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
@@ -201,6 +244,7 @@ def view_member_details():
 # Lock member route
 @member_control_bp.route("/view/lock", methods=['GET', 'POST'])
 @login_required
+@limiter.limit("5 per hour")
 def lock_member():
     # Check if user is admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
@@ -294,6 +338,7 @@ def lock_member():
 # Unlock member account
 @member_control_bp.route("/view/unlock", methods=['GET'])
 @login_required
+@limiter.limit("5 per hour")
 def unlock_member():
     # Check if user is admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
@@ -350,6 +395,7 @@ def unlock_member():
 # Revoke subscription plan route
 @member_control_bp.route("/view/revoke_plan", methods=['GET', 'POST'])
 @login_required
+@limiter.limit("3 per hour")
 def revoke_plan():
     # Check if user is admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
@@ -444,6 +490,7 @@ def revoke_plan():
 # Delete member route
 @member_control_bp.route("/view/delete", methods=['GET', 'POST'])
 @login_required
+@limiter.limit("3 per hour")
 def delete_member():
     # Check if user is admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
@@ -524,6 +571,7 @@ def delete_member():
 # Send reset password link route
 @member_control_bp.route("/view/send_password_link", methods=['GET'])
 @login_required
+@limiter.limit("5 per hour")
 def send_password_link():
     # Check if user is admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')
@@ -585,6 +633,7 @@ def send_password_link():
 # View activity logs
 @member_control_bp.route("/view/activities")
 @login_required
+@limiter.limit("20 per hour")
 def view_activities():
     # Check if user is admin
     check = check_admin(fallback_endpoint='login_auth_bp.login')

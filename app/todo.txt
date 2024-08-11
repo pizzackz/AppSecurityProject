@@ -1,19 +1,17 @@
 General:
     Replace logging mechanisms to use logger provided by Jacen
-    Write handlers for possible status codes (401, 404, 421, 429, 500)
-    Review & enhance session handling mechanisms
-    Allow messages to be displayed when accessing pages that user is not allowed to
+
+Models:
+    Replace deletion logic to just be a simple flag stating deletion
 
 Signup:
     Implement rate limiting for OTP requests
-    Link to guest recipes page
-    
+
 Recovery:
     Implement rate limiting for OTP requests, recovery requests
 
 Login:
     Implement rate limiting for login requests
-    Link to guest recipes page
 
 Admin Account Management:
     Frontend nonsense (table sorting, filtering)

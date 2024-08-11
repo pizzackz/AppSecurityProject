@@ -32,7 +32,11 @@ csrf: CSRFProtect = CSRFProtect()
 db: SQLAlchemy = SQLAlchemy()
 jwt: JWTManager = JWTManager()
 login_manager: LoginManager = LoginManager()
-limiter: Limiter = Limiter(key_func=get_remote_address, default_limits=Config.RATELIMIT_DEFAULT, storage_uri=Config.RATELIMIT_STORAGE_URL)
+limiter: Limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=Config.RATELIMIT_DEFAULT,
+    storage_uri=Config.RATELIMIT_STORAGE_URL
+)
 profile_pictures = UploadSet("profilepictures", IMAGES)
 scheduler = BackgroundScheduler()
 
