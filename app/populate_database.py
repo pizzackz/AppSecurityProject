@@ -15,7 +15,6 @@ logger = logging.getLogger("tastefully")
 DEMO_EMAILS = [
     "ongzhaohan03@gmail.com",
     "animatorpizzaguy74@gmail.com",
-    "ongzhaohan04@gmail.com",
     "3rvynlok@gmail.com",
     "rayfeer8@gmail.com",
     "jacenratnam131@gmail.com"
