@@ -214,7 +214,7 @@ def create_fake_logs(model, num_logs):
             log_datetime=now - timedelta(hours=fake.random_int(min=0, max=24)),
             priority_level=fake.random_element(elements=('Critical', 'Error', 'Info')),
             user_id=users[fake.random_int(min=0, max=len(users)-1)].id,
-            file_subdir=fake.file_path(depth=6),
+            file_subdir=fake.file_path(depth=4),
             log_info=fake.sentence(nb_words=10)
         )
         db.session.add(log)
