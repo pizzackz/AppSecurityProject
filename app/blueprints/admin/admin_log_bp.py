@@ -194,7 +194,7 @@ def performance4():
         end_time = now - timedelta(hours=i - 2)
         count = sum(
             1 for log in log_account 
-            if start_time <= log.log_datetime < end_time and log.priority_level == 'Info'
+            if start_time <= log.log_datetime < end_time and log.priority_level == 'Error'
         )
         action_count_last_24_hours.append(count)
 
