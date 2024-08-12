@@ -347,7 +347,18 @@ def cancel_order(order_id):
             elif order.status in ['Order Placed']:
                 order.status = 'Cancelled'
                 db.session.commit()
-                flash('Your order has been successfully cancelled.', 'success')
+                email_body = render_template("emails/cancel_order_email.html",
+                                             username=current_user.username,
+                                             address=order.address,
+                                             postal_code=order.postal_code,
+                                             phone_number=order.phone_number,
+                                             delivery_date=order.delivery_date,
+                                             delivery_time=order.delivery_time)
+                if send_email(current_user.email, "Order Cancellation", html_body=email_body):
+                    flash('Your order has been successfully cancelled.', 'success')
+                    logger.info(f"Receipt sent to {current_user.email}")
+
+
             else:
                 flash('Order cannot be cancelled.', 'error')
         else:

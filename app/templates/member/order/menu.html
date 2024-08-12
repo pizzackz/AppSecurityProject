@@ -7,6 +7,11 @@
 <link href="{{ url_for('static', filename='css/order/menu.css') }}" rel="stylesheet">
 <link rel="stylesheet" type="text/css"
     href="https://cdn.jsdelivr.net/npm/bootsdivap-icons@1.11.2/font/bootsdivap-icons.min.css">
+<style>
+    hr{
+    border: 2px solid;
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -32,7 +37,12 @@
 </div>
 <br>
 <h1 class="center1">Menu</h1>
-
+<p class="center1">Disclaimer: Meal Bundles include only ingredients for you cook at home.</p>
+<hr>
+<br>
+{% if menu_items|length == 0 %}
+    <h2 class="center1">No menu items available</h2>
+{% endif %}
 <div class="big-container">
     {% for menu_item in menu_items %}
         <div class="container">

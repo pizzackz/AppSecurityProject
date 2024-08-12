@@ -231,7 +231,7 @@ def start_scheduler(app: Flask):
         scheduler.add_job(create_app_context_wrapper(app, delete_expired_master_keys), 'interval', days=7)
         scheduler.add_job(create_app_context_wrapper(app, refresh_admin_keys), 'interval', days=1)
         scheduler.add_job(create_app_context_wrapper(app, delete_accounts_marked_for_deletion), 'interval', days=1)
-        scheduler.add_job(create_app_context_wrapper(app, update_order_statuses), 'interval', minutes=10)
+        scheduler.add_job(create_app_context_wrapper(app, update_order_statuses), 'interval', minutes=1)
         scheduler.add_job(create_app_context_wrapper(app, check_payment_status), 'interval', minutes=10)
         scheduler.start()
 
@@ -242,20 +242,19 @@ def update_order_statuses():
     from app.models import Order  # Importing here to avoid circular dependency
     try:
         now = datetime.now()
-        today = datetime.now().date()
+        today = now.date()
         orders_to_update = Order.query.filter_by(status='Order Placed').all()
 
         for order in orders_to_update:
             delivery_datetime = datetime.combine(order.delivery_date, order.delivery_time)
 
             # If the delivery date and time has passed, mark as 'Delivered'
+            print(f"Order ID: {order.id}, Now: {now}, Delivery DateTime: {delivery_datetime}")
             if now > delivery_datetime:
                 order.status = 'Delivered'
             # If it's one day before the delivery date, mark as 'Preparing'
-            elif order.status == 'Order Placed' and order.delivery_date == today + timedelta(days=1):
+            elif order.delivery_date == today + timedelta(days=1):
                 order.status = 'Preparing'
-            elif order.delivery_date < today:
-                order.status = 'Delivered'
 
         db.session.commit()
         print(f"Order statuses updated to 'Preparing' and 'Delivered' where applicable.")
