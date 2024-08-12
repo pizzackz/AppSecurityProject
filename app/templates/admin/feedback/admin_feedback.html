@@ -24,16 +24,17 @@
             </tr>
         </thead>
         <tbody>
-            {% for Feedback in feedback %}
+            {% for feedback in feedbacks %}
             <tr>
-                <td>{{ Feedback.id }}</td>
-                <td>{{ Feedback.name }}</td>
-                <td>{{ Feedback.category }}</td>
-                <td>{{ Feedback.rating }}</td>
-                <td>{{ Feedback.comment }}</td>
-                <td>{{ Feedback.created_at }}</td>
+                <td>{{ feedback.id }}</td>
+                <td>{{ feedback.name }}</td>
+                <td>{{ feedback.category }}</td>
+                <td>{{ feedback.rating }}</td>
+                <td>{{ feedback.comment }}</td>
+                <td>{{ feedback.created_at }}</td>
                 <td>
                     <form action="{{ url_for('admin_feedback_bp.delete_feedback', feedback_id=feedback.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this feedback?');">
+                        <input display="hidden" type="hidden" name="_csrf_token" id="_csrf_token" value="{{ csrf_token() }}">
                         <input type="submit" value="Delete" class="btn btn-danger">
                     </form>
                 </td>

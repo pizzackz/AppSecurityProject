@@ -297,9 +297,11 @@ def register_admin_bp(app: Flask):
         from app.blueprints.admin.admin_profile_bp import admin_profile_bp
         from app.blueprints.admin.admin_log_bp import admin_log_bp
         from app.blueprints.admin.admin_feedback_bp import admin_feedback_bp
+        from app.blueprints.admin.admin_forum_bp import admin_forum_bp
         app.register_blueprint(admin_profile_bp)
         app.register_blueprint(admin_log_bp)
         app.register_blueprint(admin_feedback_bp)
+        app.register_blueprint(admin_forum_bp)
 
 # Register account control blueprints
 def register_account_control_bp(app: Flask):

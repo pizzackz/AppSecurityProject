@@ -21,6 +21,7 @@ from app import db
 from app.models import Token, Post
 from app import limiter
 from app.forms.forms import ForumPost, PostComment
+from app.utils import log_trans
 
 member_forum_bp = Blueprint("member_forum_bp", __name__)
 
@@ -50,9 +51,9 @@ def store_refresh_token(token, current_user):
         new_token = Token(user_id=current_user.id, refresh_token=token)
         db.session.add(new_token)
         db.session.commit()
-        logging.debug(f"Stored token for user_id {current_user.id}: {token}")
+        log_trans("Info", "general", current_user.id, f"Stored token for user_id {current_user.id}: {token}")
     except Exception as e:
-        logging.error(f"Error storing refresh token: {e}")
+        log_trans("Error", "general", current_user.id, f"Error storing refresh token: {e}")
         db.session.rollback()
         raise
 
@@ -60,6 +61,7 @@ def store_refresh_token(token, current_user):
 def get_refresh_token(user_id: int):
     # Retrieve the latest refresh token for the user
     token = Token.query.filter_by(user_id=user_id).order_by(Token.id.desc()).first()
+    log_trans("Info", "general", user_id, "Retrieving refresh token")
     return token.refresh_token if token else None
 
 
@@ -70,7 +72,7 @@ def authorize():
     session['oauth_state'] = state
     auth_url = reddit.auth.url(scopes, state, 'permanent')
     logging.debug(f"Authorization URL: {auth_url}")
-    print(auth_url)
+    log_trans("Info", "general", current_user.id, "User id authorise")
     return redirect(auth_url)
 
 
@@ -83,12 +85,14 @@ def authorize_callback():
 
     if not code or state != stored_state:
         return "Error: No code returned", 400
+    log_trans("Error", "general", current_user.id, f"Authorization code: {code}")
     logging.debug(f"Authorization code: {code}")
 
     try:
         # Get the refresh token
         refresh_token = reddit.auth.authorize(code)
         logging.debug(f"Refresh Token: {refresh_token}")
+        log_trans("Info", "general", current_user.id, f"Refresh Token: {refresh_token}")
 
         # Clear old tokens and store new token
         Token.query.filter_by(user_id=current_user.id).delete()
@@ -99,12 +103,15 @@ def authorize_callback():
     
     except prawcore.exceptions.OAuthException as e:
         logging.error(f"OAuth error: {e}")
+        log_trans("Error", "general", f"OAuth error: {e}")
         return f"OAuth error: {e}", 400
     except praw.exceptions.PRAWException as e:
         logging.error(f"PRAWException: {e}")
+        log_trans("Error", "general", f"PRAWException: {e}")
         return f"PRAWException: {e}", 500
     except Exception as e:
         logging.error(f"Unexpected error: {e}")
+        log_trans("Error", "general", f"Unexpected error: {e}")
         return f"Error during authorization: {e}", 500
 
 
@@ -121,6 +128,7 @@ def get_reddit_instance(user_id: int):
             )
         except praw.exceptions.InvalidToken as e:
             logging.error(f"Invalid token error: {e}")
+            log_trans("Error", "general", f"Invalid token error: {e}")
             return None
     else:
         return None
@@ -140,9 +148,11 @@ def subreddit():
         return render_template('member/forum/customer_forum.html', posts=posts)
     except praw.exceptions.PRAWException as e:
         logging.error(f"PRAWException: {e}")
+        log_trans("Error", "general", f"PRAWException: {e}")
         return f"Error fetching subreddit information: {e}", 500
     except Exception as e:
         logging.error(f"Unexpected error: {e}")
+        log_trans("Error", f"Unexpected error: {e}")
         return f"Error fetching subreddit information: {e}", 500
 
 
@@ -171,10 +181,11 @@ def create_post():
             db.session.add(new_post)
             db.session.commit()
 
-            
+            log_trans("Info", "general", f"{user_id} created post")
             return redirect(url_for('member_forum_bp.subreddit'))
         except Exception as e:
             logging.error(f"Error creating post: {e}")
+            log_trans("Error", "general", f"Error creating post: {e}")
             flash(f"Error creating post: {e}", 'danger')
 
     return render_template("member/forum/create_post.html", form=forum)
@@ -202,14 +213,16 @@ def post_details(post_id):
             # Add a new comment to Reddit
             submission.reply(comment)
             flash('Your comment has been added!', 'success')
+            log_trans("Info", "general", f"{current_user.id} posted a comment on {post}")
             return redirect(url_for('member_forum_bp.post_details', post_id=post_id))
         return render_template('member/forum/post_details.html', post=post, comments=comments, form=form)
     except praw.exceptions.PRAWException as e:
-        print("ran")
+        log_trans("Error", "general", f"PRAWException: {e}")
         logging.error(f"PRAWException: {e}")
         return f"Error fetching post information: {e}", 500
     except Exception as e:
         logging.error(f"Unexpected error: {e}")
+        log_trans("Error", "general", f"Unexpected error: {e}")
         return f"Error fetching post information: {e}", 500
 
 
@@ -243,4 +256,5 @@ def load_more_posts():
 
         return jsonify(posts_list)
     except Exception as e:
+        log_trans("Error", "general", "Error")
         return jsonify({"error": str(e)}), 500

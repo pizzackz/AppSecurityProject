@@ -58,9 +58,12 @@
 
                     <ul class="dropdown-menu">
                         <li>
-                            <a class="dropdown-item" href="">Forum Posts</a>
+                            <a class="dropdown-item" href="{{ url_for('admin_forum_bp.admin_forum') }}">Forum Posts</a>
                         </li>
                     </ul>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_feedback_bp.admin_feedback') }}">Feedback</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('general_bp.about', id=id) }}">About</a>

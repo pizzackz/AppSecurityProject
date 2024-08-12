@@ -118,7 +118,7 @@ def get_reddit_instance(user_id):
         return None
 
 
-scopes = ['read', 'identity', 'submit', 'comment','modposts'] 
+scopes = ['read', 'identity', 'submit', 'modposts'] 
 
 
 @admin_forum_bp.route("/admin/forum")
