@@ -829,24 +829,33 @@ def invalidate_user_sessions(user_id: int, exclude_current: bool = False) -> Non
 
 
 # Store logs for 3 kinds (general, transaction based, account related) of logs in database
+import os
+import inspect
+
 def log_trans(priority_level, category, user_id, info):
-    # Get the subdirectory (without the root directory)
-    subdirectory = os.path.dirname(__file__)
-    if category=='general':
+    # Get the full path of the calling file
+    calling_file = inspect.stack()[1].filename
+
+    # Get the relative subdirectory of the calling file from the root
+    subdirectory = os.path.relpath(os.path.dirname(calling_file))
+
+    if category == 'general':
         new_log = Log_general(priority_level=priority_level, user_id=user_id, file_subdir=subdirectory, log_info=info)
-    elif category=='transaction':
+    elif category == 'transaction':
         new_log = Log_transaction(priority_level=priority_level, user_id=user_id, file_subdir=subdirectory, log_info=info)
-    elif category=='account':
+    elif category == 'account':
         new_log = Log_account(priority_level=priority_level, user_id=user_id, file_subdir=subdirectory, log_info=info)
     else:
-        print("Error! category can only be: \'general\', \'transactions\' or \'account\'")
+        print("Error! category can only be: 'general', 'transaction', or 'account'")
+        return 'error'
     
     try:
         db.session.add(new_log)
         db.session.commit()
-    except:
-        return 'empty'
-    
+    except Exception as e:
+        print(f"Failed to commit log: {e}")
+        return 'error'
+
 
 def get_performance_data():
     # This function should fetch and process data from your sources

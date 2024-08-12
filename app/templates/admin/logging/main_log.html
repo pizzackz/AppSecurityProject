@@ -8,8 +8,13 @@
 <div class="log-container">
     <h1>Log Entries</h1>
 
+    <!-- General Logs Section -->
     <div class="log-section">
         <h2>General Logs</h2>
+        <form method="GET" action="{{ url_for('admin_log_bp.display_logs') }}">
+            <input type="text" name="general_filter" placeholder="Filter logs by keyword" value="{{ request.args.get('general_filter', '') }}">
+            <button type="submit">Filter</button>
+        </form>
         <div class="scrollable-table">
             <table class="log-table">
                 <thead>
@@ -24,7 +29,7 @@
                 </thead>
                 <tbody>
                     {% for entry in log_general_entries %}
-                    <tr>
+                    <tr class="{% if entry.priority_level == 'Critical' %}critical{% elif entry.priority_level == 'Error' %}error{% endif %}">
                         <td>{{ entry.id }}</td>
                         <td>{{ entry.log_datetime }}</td>
                         <td>{{ entry.priority_level }}</td>
@@ -38,8 +43,13 @@
         </div>
     </div>
 
+    <!-- Account Logs Section -->
     <div class="log-section">
         <h2>Account Logs</h2>
+        <form method="GET" action="{{ url_for('admin_log_bp.display_logs') }}">
+            <input type="text" name="account_filter" placeholder="Filter logs by keyword" value="{{ request.args.get('account_filter', '') }}">
+            <button type="submit">Filter</button>
+        </form>
         <div class="scrollable-table">
             <table class="log-table">
                 <thead>
@@ -54,7 +64,7 @@
                 </thead>
                 <tbody>
                     {% for entry in log_account_entries %}
-                    <tr>
+                    <tr class="{% if entry.priority_level == 'Critical' %}critical{% elif entry.priority_level == 'Error' %}error{% endif %}">
                         <td>{{ entry.id }}</td>
                         <td>{{ entry.log_datetime }}</td>
                         <td>{{ entry.priority_level }}</td>
@@ -68,8 +78,13 @@
         </div>
     </div>
 
+    <!-- Transaction Logs Section -->
     <div class="log-section">
         <h2>Transaction Logs</h2>
+        <form method="GET" action="{{ url_for('admin_log_bp.display_logs') }}">
+            <input type="text" name="transaction_filter" placeholder="Filter logs by keyword" value="{{ request.args.get('transaction_filter', '') }}">
+            <button type="submit">Filter</button>
+        </form>
         <div class="scrollable-table">
             <table class="log-table">
                 <thead>
@@ -84,7 +99,7 @@
                 </thead>
                 <tbody>
                     {% for entry in log_transaction_entries %}
-                    <tr>
+                    <tr class="{% if entry.priority_level == 'Critical' %}critical{% elif entry.priority_level == 'Error' %}error{% endif %}">
                         <td>{{ entry.id }}</td>
                         <td>{{ entry.log_datetime }}</td>
                         <td>{{ entry.priority_level }}</td>
@@ -97,5 +112,6 @@
             </table>
         </div>
     </div>
+    
 </div>
 {% endblock %}

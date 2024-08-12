@@ -1,68 +1,85 @@
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f6f9;
-    color: #333;
-    margin: 0;
-    padding: 0;
+/* CSS for Highlighting Critical and Error Logs */
+.critical {
+    background-color: #f8d7da; /* Light red background for critical logs */
+    color: #721c24;            /* Dark red text for critical logs */
 }
 
-.log-container {
-    max-width: 1200px;
-    margin: 20px auto;
-    padding: 20px;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.error {
+    background-color: #fff3cd; /* Light yellow background for error logs */
+    color: #856404;            /* Dark yellow text for error logs */
 }
 
-h1 {
-    text-align: center;
-    font-size: 2em;
-    margin-bottom: 20px;
-}
-
-.log-section {
-    margin-bottom: 40px;
-}
-
-h2 {
-    font-size: 1.5em;
-    color: #0056b3;
-    border-bottom: 2px solid #0056b3;
-    padding-bottom: 5px;
-    margin-bottom: 15px;
-}
-
-.scrollable-table {
-    max-height: 300px; /* Set your desired height */
-    overflow-y: auto;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-.log-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
+/* General Styling for the Log Table */
 .log-table th, .log-table td {
-    padding: 12px;
-    border: 1px solid #ddd;
-    text-align: left;
-    font-size: 0.9em;
+    padding: 12px;            /* Padding for table cells */
+    border: 1px solid #ddd;   /* Light grey border for table cells */
+    text-align: left;         /* Left-align text in table cells */
+    font-size: 0.9em;         /* Slightly smaller font size for table text */
 }
 
+/* Styling for the Table Header */
 .log-table th {
-    background-color: #0056b3;
-    color: #fff;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    background-color: #0056b3; /* Dark blue background for table headers */
+    color: #fff;               /* White text color for table headers */
+    text-transform: uppercase; /* Uppercase text in headers */
+    letter-spacing: 0.05em;    /* Slightly increased letter spacing in headers */
 }
 
-.log-table tr:nth-child(even) {
-    background-color: #f9f9f9;
-}
-
+/* Hover Effect for Table Rows */
 .log-table tr:hover {
-    background-color: #f1f1f1;
+    background-color: #f1f1f1; /* Light grey background on row hover */
+}
+
+/* Scrollable Table Container */
+.scrollable-table {
+    max-height: 300px;         /* Set the max height for scrollable area */
+    overflow-y: auto;          /* Enable vertical scrolling */
+    width: 100%;               /* Ensures the table takes up 100% of the container's width */
+}
+
+/* Fixed Width for Each Log Section Frame */
+.log-section {
+    max-width: 1600px;          /* Set a fixed width for the log section */
+    margin-bottom: 20px;       /* Add some space between sections */
+}
+
+/* Container for the Log Sections */
+.log-container {
+    margin: 20px;              /* Margin around the log container */
+    padding: 20px;             /* Padding inside the log container */
+    background-color: #f9f9f9; /* Light grey background for the log container */
+    border-radius: 8px;        /* Rounded corners for the log container */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for the log container */
+}
+
+/* Heading Styles */
+.log-section h2 {
+    color: #333;               /* Dark grey color for section headings */
+    border-bottom: 2px solid #0056b3; /* Dark blue underline for section headings */
+    padding-bottom: 10px;      /* Padding below the heading text */
+    margin-bottom: 20px;       /* Margin below the heading */
+    font-size: 1.2em;          /* Slightly larger font size for section headings */
+}
+
+/* Input Field Styling for Filters */
+input[type="text"] {
+    padding: 8px;              /* Padding inside the input field */
+    border: 1px solid #ddd;    /* Light grey border for the input field */
+    border-radius: 4px;        /* Rounded corners for the input field */
+    width: 80%;                /* Input field takes up 80% of the available width */
+    margin-right: 10px;        /* Space between the input field and the button */
+}
+
+/* Button Styling for Filters */
+button[type="submit"] {
+    padding: 8px 12px;         /* Padding inside the button */
+    background-color: #0056b3; /* Dark blue background for the button */
+    color: #fff;               /* White text color for the button */
+    border: none;              /* Remove border from the button */
+    border-radius: 4px;        /* Rounded corners for the button */
+    cursor: pointer;           /* Pointer cursor on hover */
+}
+
+button[type="submit"]:hover {
+    background-color: #003d80; /* Darker blue on button hover */
 }

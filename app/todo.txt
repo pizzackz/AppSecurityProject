@@ -3,8 +3,6 @@ General:
 
 
 Jacen:
-    Have more charts that collect a wider range of data
-    Use rate limiter for my api
     Start collecting real data to be displayed
-    Format my logs better
     Create admin security tools
+
