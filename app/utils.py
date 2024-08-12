@@ -97,6 +97,7 @@ def send_email(to_email: str, subject: str, plaintext_body: Optional[str] = None
         
         # Ensure at least one body is provided
         if not plaintext_body and not html_body:
+            log_trans("Error", "general", None, "No email body provided")
             logger.error("No email body provided")
             return False
 
@@ -106,6 +107,7 @@ def send_email(to_email: str, subject: str, plaintext_body: Optional[str] = None
         server.login(EMAIL_USERNAME, EMAIL_PASSWORD)
         server.sendmail(FROM_EMAIL, to_email, msg.as_string())
         server.quit()
+        log_trans("Info", "general", f"Email sent to {to_email}")
         logger.info(f"Email sent to {to_email}")
 
         # For debugging purposes
@@ -117,18 +119,22 @@ def send_email(to_email: str, subject: str, plaintext_body: Optional[str] = None
         return True
 
     except smtplib.SMTPAuthenticationError as e:
+        log_trans("Error", "general", None, f"SMTP Authentication error: {str(e)}")
         logger.error(f"SMTP Authentication error: {str(e)}")
         return False
 
     except smtplib.SMTPConnectError as e:
+        log_trans("Error", "general", None, f"SMTP Connection error: {str(e)}")
         logger.error(f"SMTP Connection error: {str(e)}")
         return False
 
     except smtplib.SMTPException as e:
+        log_trans("Error", "general", None, f"SMTP error: {str(e)}")
         logger.error(f"SMTP error: {str(e)}")
         return False
 
     except Exception as e:
+        log_trans("Error", "general", None, f"Failed to send email: {str(e)}")
         logger.error(f"Failed to send email: {str(e)}")
         return False
 
@@ -221,6 +227,7 @@ def check_member(keys_to_keep: Optional[Set[str]] = None, fallback_endpoint: str
 
         # Flash message and log
         flash("You no access to this page.", "warning")
+        log_trans("Critical", "account", current_user.id, log_message)
         logger.warning(log_message)
         return response
 
@@ -253,6 +260,7 @@ def check_premium_member(keys_to_keep: Optional[Set[str]] = None, fallback_endpo
 
             # Flash message and log
             flash("You no access to this page.", "warning")
+            log_trans("Critical", "account", current_user.id, log_message)
             logger.warning(log_message)
             return response
 
@@ -285,6 +293,7 @@ def check_admin(keys_to_keep: Optional[Set[str]] = None, fallback_endpoint: str 
 
         # Flash message and log
         flash("You have no access to this page.", "warning")
+        log_trans("Critical", "account", current_user.id, log_message)
         logger.warning(log_message)
         return response
 
@@ -318,6 +327,7 @@ def check_session_keys(
         response = make_response(redirect(url_for(fallback_endpoint)))
         unset_jwt_cookies(response)
         flash(flash_message, 'error')
+        log_trans("Critical", "general", current_user.id if current_user.is_authenticated else None, f"{log_message}: missing session keys {missing_keys}")
         logger.error(f"{log_message}: missing session keys {missing_keys}")
         return response
     return None
@@ -353,6 +363,7 @@ def check_auth_stage(
         response = make_response(redirect(url_for(fallback_endpoint)))
         unset_jwt_cookies(response)
         flash(flash_message, 'error')
+        log_trans("Critical", "general", current_user.id if current_user.is_authenticated else None, f"{log_message}: '{auth_stage}' not in {allowed_stages}")
         logger.error(f"{log_message}: '{auth_stage}' not in {allowed_stages}")
         return response
     return None
@@ -385,6 +396,7 @@ def check_expired_session(
         response = make_response(redirect(url_for(fallback_endpoint)))
         unset_jwt_cookies(response)
         flash(flash_message, 'error')
+        log_trans("Critical", "general", current_user.id if current_user.is_authenticated else None, log_message)
         logger.error(log_message)
         return response
     return None
@@ -410,6 +422,7 @@ def check_jwt_identity(fallback_endpoint: str, flash_message: str, log_message: 
         response = make_response(redirect(url_for(fallback_endpoint)))
         unset_jwt_cookies(response)
         flash(flash_message, 'error')
+        log_trans("Critical", "general", current_user.id if current_user.is_authenticated else None, f"{log_message}: identity is missing or not a dict")
         logger.error(f"{log_message}: identity is missing or not a dict")
         return response
     return None
@@ -464,6 +477,7 @@ def check_jwt_claims(required_claims: List[str], fallback_endpoint: str, flash_m
         response = make_response(redirect(url_for(fallback_endpoint)))
         unset_jwt_cookies(response)
         flash(flash_message, 'error')
+        log_trans("Critical", "general", current_user.id if current_user.is_authenticated else None, f"{log_message}: missing claims {missing_claims}")
         logger.error(f"{log_message}: missing claims {missing_claims}")
         return response
     return None
@@ -570,12 +584,14 @@ def delete_old_profile_picture(profile_image: ProfileImage):
         try:
             if os.path.exists(file_path):
                 os.remove(file_path)
+                log_trans("Info", "account", current_user.id, f"Deleted old profile picture: {file_path}")
                 current_app.logger.info(f"Deleted old profile picture: {file_path}")
                 
             # Update the ProfileImage object to reflect the deletion
             profile_image.filename = "default.png"
             profile_image.source = "file_system"
         except Exception as e:
+            log_trans("Error", "account", current_user.id, f"Error deleting old profile picture {file_path}: {e}")
             current_app.logger.error(f"Error deleting old profile picture {file_path}: {e}")
 
 
@@ -628,6 +644,7 @@ def upload_pfp(user: User, profile_image: ProfileImage, new_profile_picture, fal
     """
     if not new_profile_picture:
         flash("Please provide a new profile picture to update it.", "info")
+        log_trans("Info", "account", user.id, f"User '{user.username}' tried to upload an empty image file.")
         logger.info(f"User '{user.username}' tried to upload an empty image file.")
         return redirect(url_for(fallback_endpoint))
 
@@ -637,6 +654,7 @@ def upload_pfp(user: User, profile_image: ProfileImage, new_profile_picture, fal
         scan_result = scan_file_with_virustotal(new_profile_picture, VIRUSTOTAL_API_KEY)
         if 'data' in scan_result and scan_result['data'].get('attributes', {}).get('last_analysis_stats', {}).get('malicious', 0) > 0:
             flash('The uploaded file is potentially malicious and has not been saved.', 'error')
+            log_trans("Critical", "account", user.id, f"Potentially malicious file upload attempted by user '{user.username}'.")
             logger.warning(f"Potentially malicious file upload attempted by user '{user.username}'.")
             return redirect(url_for(fallback_endpoint))
 
@@ -650,9 +668,11 @@ def upload_pfp(user: User, profile_image: ProfileImage, new_profile_picture, fal
         db.session.commit()
 
         flash("Successfully updated your profile picture!", "success")
+        log_trans("Info", "account", user.id, f"Profile picture successfully updated for user '{user.username}'")
         logger.info(f"Profile picture successfully updated for user '{user.username}'")
     except Exception as e:
         flash('An error occurred while uploading your profile picture. Please try again.', 'error')
+        log_trans("Error", "account", user.id, f"Error uploading profile picture for user '{user.username}': {e}")
         logger.error(f"Error uploading profile picture for user '{user.username}': {e}")
 
     return redirect(url_for(fallback_endpoint))
@@ -674,6 +694,7 @@ def reset_pfp(user: User, profile_image: ProfileImage, fallback_endpoint: str):
     """
     if profile_image.filename == "default.png":
         flash("Your profile image is already the default.", "info")
+        log_trans("Info", "account", user.id, f"User '{user.username}' tried to remove the default profile picture.")
         logger.info(f"User '{user.username}' tried to remove the default profile picture.")
         return redirect(url_for(fallback_endpoint))
 
@@ -683,9 +704,11 @@ def reset_pfp(user: User, profile_image: ProfileImage, fallback_endpoint: str):
         db.session.commit()
 
         flash("Your profile picture has been reset to the default.", "success")
+        log_trans("Info", "account", user.id, f"Removed profile picture for user '{user.username}'")
         current_app.logger.info(f"Removed profile picture for user '{user.username}'")
     except Exception as e:
         flash("An error occurred while resetting your profile picture. Please try again later.", "error")
+        log_trans("Error", "account", user.id, f"Error removing profile picture for user '{user.username}': {e}")
         current_app.logger.error(f"Error removing profile picture for user '{user.username}': {e}")
         return redirect(url_for(fallback_endpoint))
 
@@ -706,6 +729,7 @@ def get_image_url(user: User):
             if os.path.exists(image_path):
                 image_url = url_for('static', filename=f'uploads/profile_pictures/{user.profile_images.filename}')
             else:
+                log_trans("Warning", "account", user.id, f"Profile image for user {user.id} not found: {image_path}")
                 logger.warning(f"Profile image for user {user.id} not found: {image_path}")
         elif user.profile_images.source == 'google':
             image_url = user.profile_images.google_url
@@ -736,6 +760,7 @@ def get_virustotal_analysis_report(analysis_id: str, api_key: str) -> dict:
         else:
             raise Exception(f"Error retrieving analysis report from VirusTotal: {response.status_code} {response.text}")
     except Exception as e:
+        log_trans("Error", "general", current_user.id if current_user.is_authenticated else None, f"Error retrieving analysis report from VirusTotal: {e}")
         logger.error(f"Error retrieving analysis report from VirusTotal: {e}")
         return {}
 
@@ -772,6 +797,7 @@ def scan_file_with_virustotal(file: FileStorage, api_key: str) -> dict:
         else:
             raise Exception(f"Error uploading file to VirusTotal: {response.status_code} {response.text}")
     except Exception as e:
+        log_trans("Error", "general", current_user.id if current_user.is_authenticated else None, f"Error scanning file with VirusTotal: {e}")
         logger.error(f"Error scanning file with VirusTotal: {e}")
         return {}
 

@@ -89,6 +89,7 @@ def handle_ideal_case1(email: str, username: str, google_id: str, profile_pictur
     
     # Display messages
     flash("Please confirm if you want to create a new member account.", "info")
+    log_trans("Info", "account", None, "Redirecting to confirm new member account creation.")
     logger.info("Redirecting to confirm new member account creation.")
 
     return response
@@ -104,6 +105,7 @@ def handle_ideal_case2(user_by_email: User, username: str, email: str, profile_p
         db.session.commit()
     except Exception as e:
         flash(f"An error occurred while trying to log you in through Google. Please try again later.", "error")
+        log_trans("Error", "account", user_by_email.id, f"Error updating profile_images for user '{username}': {e}")
         logger.error(f"Error updating profile_images for user '{username}': {e}")
         return redirect(url_for('login_auth_bp.login'))
 
@@ -145,6 +147,7 @@ def handle_defective_case1(email, username, google_id, profile_picture, type: st
 
     # Display messages
     flash("Account exists but is not linked to your Google account. Would you like to link to your Google account?", "info")
+    log_trans("Info", "account", None, log_message)
     logger.info(log_message)
 
     return response
@@ -185,31 +188,40 @@ def handle_defective_cases(user_by_email: Optional[User], user_by_username: Opti
 def handle_rate_limit_exceeded(e):
     # Log the rate limit exceedance for the specific blueprint
     logger.warning(f"Rate limit exceeded for {request.endpoint} in login_auth_bp")
+    log_trans("Critical", "general", None, f"Rate limit exceeded for {request.endpoint} in login_auth_bp")
 
     match request.endpoint:
         case 'login_auth_bp.send_otp':
             flash("Too many OTP requests. Please wait a moment before trying again.", "error")
+            log_trans("Critical", "general", None, f"User exceeded rate limit on send OTP route.")
             logger.warning(f"User exceeded rate limit on send OTP route.")
         case 'login_auth_bp.verify_email':
             flash("Too many OTP verification attempts. Please wait before trying again.", "error")
+            log_trans("Critical", "general", None, f"User exceeded rate limit on verify email route.")
             logger.warning(f"User exceeded rate limit on verify email route.")
         case 'login_auth_bp.google_login':
             flash("Too many Google login attempts. Please wait before trying again.", "error")
+            log_trans("Critical", "general", None, f"User exceeded rate limit on Google login route.")
             logger.warning(f"User exceeded rate limit on Google login route.")
         case 'login_auth_bp.google_callback':
             flash("Too many attempts to authenticate with Google. Please wait before trying again.", "error")
+            log_trans("Critical", "general", None, f"User exceeded rate limit on Google callback route.")
             logger.warning(f"User exceeded rate limit on Google callback route.")
         case 'login_auth_bp.link_google':
             flash("Too many attempts to link Google account. Please wait before trying again.", "error")
+            log_trans("Critical", "general", None, f"User exceeded rate limit on link Google route.")
             logger.warning(f"User exceeded rate limit on link Google route.")
         case 'login_auth_bp.confirm_new_member_account':
             flash("Too many attempts to confirm new account. Please wait before trying again.", "error")
+            log_trans("Critical", "general", None, f"User exceeded rate limit on confirming new member account creation route.")
             logger.warning(f"User exceeded rate limit on confirm new member account route.")
         case 'login_auth_bp.confirm_delete':
             flash("Too many attempts to delete the account. Please wait before trying again.", "error")
+            log_trans("Critical", "general", None, f"User exceeded rate limit on confirm deletion of account route.")
             logger.warning(f"User exceeded rate limit on confirm delete route.")
         case _:
             flash("You have exceeded the rate limit. Please wait a moment before trying again.", "error")
+            log_trans("Critical", "general", None, f"User exceeded rate limit on an unidentified route.")
             logger.warning(f"User exceeded rate limit on an unidentified route.")
 
     # Redirect to the login page as a fallback
@@ -228,6 +240,7 @@ def login():
     if request.args.get("next"):
         print(f"session = {session}")
         no_access_url = request.args.get("next")
+        log_trans("Critical", "account", None, f"An unauthorised user tried to access '{no_access_url}'.")
         logger.warning(f"An unauthorised user tried to access '{no_access_url}'.")
         return redirect(url_for("login_auth_bp.login"))
 
