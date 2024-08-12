@@ -7,7 +7,7 @@ from flask import Blueprint, request, redirect, url_for, render_template, jsonif
 from app import db, csrf
 from sqlalchemy.sql import func
 from app.models import Payment, Member
-from app.utils import send_email
+from app.utils import send_email, log_trans
 from datetime import datetime, timedelta,timezone
 
 from flask_login import login_required, current_user
@@ -71,10 +71,10 @@ def create_checkout_session():
 
         return redirect(stripe_session.url, code=303)
     except stripe.error.StripeError as e:
-        logger.error(f"Stripe error: {e.user_message}")
+        log_trans("Error","transaction", current_user.id, f"Stripe error: {e.user_message}")
         return render_template('error/error_403.html'), 403
     except Exception as e:
-        logger.error(f"Error: {str(e)}")
+        log_trans("Error", "transaction", current_user.id, f"Error: str{e}")
         return render_template('error/error_403.html'), 403
 
 
@@ -90,8 +90,7 @@ def success():
     stripe_session_id = request.args.get('session_id')  # Get session_id passed in the success URL
 
     if not stripe_session_id:
-        logger.error("Missing Stripe session ID")
-
+        log_trans("Error", "transaction", current_user.id, f"Missing Stripe session ID")
         flash("An error occurred while processing your request. Please try again.", "error")
         return redirect(url_for('member_subscription_bp.plan_select', action='upgrade'))
 
@@ -125,13 +124,13 @@ def success():
 
             db.session.commit()
         else:
-            logger.error(f"No user found with ID {user_id}")
+            log_trans("Error", "transaction", current_user.id, f"No user found with ID {user_id}")
             return render_template('error/error_404.html'), 404
 
         # Ensure that the payment_intent exists in the stripe_session
         subscription_id = stripe_session.subscription
         if not subscription_id:
-            logger.error("Subscription ID is missing in the Stripe session")
+            log_trans("Error", "transaction", current_user.id, "Subscription ID is missing in the Stripe session")
             return render_template('error/error_400.html'), 400
 
         subscription = stripe.Subscription.retrieve(subscription_id)
@@ -157,24 +156,24 @@ def success():
 
             if send_email(current_user.email, "Subscription Receipt", html_body=email_body):
                 flash("A receipt has been sent to your email address.", 'info')
-                logger.info(f"Subscription Receipt sent to {current_user.email}")
+                log_trans("Info", "transaction", current_user.id, f"Subscription Receipt sent to {current_user.email}")
 
         else:
-            logger.error("No invoice found for the subscription")
+            log_trans("Error", "transaction", current_user.id, "No invoice found for the subscription")
             return render_template('error/error_404.html'), 404
 
     except stripe.error.InvalidRequestError as e:
-        logger.error(f"Invalid Stripe session ID: {stripe_session_id}")
+        log_trans("Error", "transaction", current_user.id, f"Invalid Stripe session ID: {stripe_session_id}")
         return render_template('error/error_400.html'), 400
     except Exception as e:
         db.session.rollback()  # Rollback the session to avoid any partial insertions
         if "Duplicate entry" in str(e):
-            logger.error(f"Duplicate entry: {str(e)}")
+            log_trans("Error", "transaction", current_user.id, f"Duplicate entry")
             return render_template('error/error_400.html'), 400
-        logger.error(f"Error retrieving Stripe session: {e}")
+        log_trans("Error", "transaction", current_user.id, f"Error retrieving Stripe session")
         return render_template('error/error_500.html'), 500
     except:
-        logger.error(f"Invalid stripe session ID: {stripe_session_id}")
+        log_trans("Error", "transaction", current_user.id, f"Invalid Stripe session ID: {stripe_session_id}")
         flash("An error occurred while processing your request. Please try again.", "error")
         return redirect(url_for('member_subscription_bp.plan_select', action='upgrade'))
 

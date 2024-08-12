@@ -9,37 +9,13 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.models import MenuItem, Order, OrderItem
 from app.forms.forms import OrderForm, MenuForm
 from app import db, csrf, limiter
-from app.utils import clean_input, get_session_data, set_session_data, clear_session_data, check_admin, check_premium_member, send_email
+from app.utils import clean_input, get_session_data, set_session_data, clear_session_data, check_admin, check_premium_member, send_email, log_trans
 from datetime import datetime, timedelta
 from io import BytesIO
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from app.models import MenuItem, db
 
-# # Create a logs directory if it doesn't exist
-# if not os.path.exists('logs'):
-#     os.makedirs('logs')
-
-# # Set up logging to a file
-# log_file_path = os.path.join('app/blueprints/member/logs', 'app.log')
-
-# logging.basicConfig(level=logging.INFO)
-# logger = logging.getLogger('flask_app')
-
-# # Check if handlers are already added
-# if not logger.handlers:
-#     file_handler = logging.FileHandler(log_file_path)
-#     file_handler.setLevel(logging.INFO)
-
-#     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-#     file_handler.setFormatter(formatter)
-#     logger.addHandler(file_handler)
-
-#     # Ensure the default logging to the console remains
-#     console_handler = logging.StreamHandler()
-#     console_handler.setLevel(logging.INFO)
-#     console_handler.setFormatter(formatter)
-#     logger.addHandler(console_handler)
 
 logger = logging.getLogger("tastefully")
 
@@ -146,7 +122,7 @@ def booking():
             return redirect(url_for('member_order_bp.menu'))
         # Security check: Ensure the user has completed the menu step
     except TypeError as t:
-        logger.error(f"Invalid session data: {t}")
+        log_trans("Error", "general", current_user.id, f"Invalid session data: {t}")
         flash("An error occurred while processing your request.", "error")
         return redirect(url_for('member_order_bp.menu'))
 
@@ -200,7 +176,7 @@ def order():
         delivery_date = session_data.get('delivery_date')
         delivery_time = session_data.get('delivery_time')
     except TypeError as t:
-        logger.error(f"Invalid session data: {t}")
+        log_trans("Error", "general", current_user.id, f"Invalid session data: {t}")
         flash("An error occurred while processing your request.", "error")
         return redirect(url_for('member_order_bp.menu'))
 
@@ -232,7 +208,7 @@ def order():
         items = MenuItem.query.filter(MenuItem.id.in_(selected_items)).all()
         item_names = [item.name for item in items]  # Extract item names for email
     except SQLAlchemyError as e:
-        logger.error(f"Database error when querying menu items: {e}")
+        log_trans("Error", "general", current_user.id, f"Database error when querying menu items: {e}")
         flash("An error occurred while processing your request.", "error")
         return redirect(url_for('member_order_bp.menu'))
 
@@ -274,7 +250,7 @@ def order():
                 postal_code = latest_order.postal_code
                 phone_number = latest_order.phone_number
             except SQLAlchemyError as e:
-                logger.error(f"Database error when retrieving the latest order: {e}")
+                log_trans("Error", "general", current_user.id, f"Database error when retrieving the last order: {e}")
                 flash('An error occurred while processing your request.', 'danger')
                 return redirect(url_for('member_order_bp.menu'))
 
@@ -289,19 +265,19 @@ def order():
 
             if send_email(current_user.email, "Order Receipt", html_body=email_body):
                 flash("A receipt has been sent to your email address.", 'info')
-                logger.info(f"Receipt sent to {current_user.email}")
+                log_trans("Info", "general", current_user.id, f"Receipt sent to {current_user.email}")
 
-            logger.info(f"Order {new_order.id} created successfully for customer {new_order.customer_name}.")
+            log_trans("Info", "general", current_user.id, f"Order {new_order.id} created successfully for customer {new_order.customer_name}.")
             print(f"Order {new_order.id} created successfully for customer {new_order.customer_name}.")
             clear_session_data(['selected_items', 'delivery_date', 'delivery_time'])
             return redirect(url_for('member_order_bp.success'))
 
         except SQLAlchemyError as e:
             db.session.rollback()
-            logger.error(f"Database error when creating order: {e}")
+            log_trans("Error", "general", current_user.id, f"Database error when creating order: {e}")
             flash("An error occurred while creating your order.", "danger")
         except Exception as e:
-            logger.error(f"Unexpected error: {e}")
+            log_trans("Error", "general", current_user.id, f"Unexpected error: {e}")
             flash("An unexpected error occurred.", "danger")
 
         return redirect(url_for('member_order_bp.success'))
@@ -310,7 +286,7 @@ def order():
         for field, errors in form.errors.items():
             for error in errors:
                 flash(f"Error in the {getattr(form, field).label.text} field - {error}", 'error')
-        logger.warning(f"Order form validation failed: {form.errors}")
+        log_trans("Error", "general", current_user.id, f"Order form validation failed: {form.errors}")
         flash('Please fill in all the required fields and captcha.', 'error')
 
     return render_template('member/order/orders.html', form=form, menu_items=items)
@@ -337,7 +313,6 @@ def cancel_order(order_id):
         return check
 
     csrf_token = request.form.get('csrf_token')
-    logger.info(f"Received CSRF token: {csrf_token}")
 
     try:
         order = Order.query.get(order_id)
@@ -356,7 +331,7 @@ def cancel_order(order_id):
                                              delivery_time=order.delivery_time)
                 if send_email(current_user.email, "Order Cancellation", html_body=email_body):
                     flash('Your order has been successfully cancelled.', 'success')
-                    logger.info(f"Receipt sent to {current_user.email}")
+                    log_trans("Info", "general", current_user.id, f"Receipt sent to {current_user.email}")
 
 
             else:
@@ -365,7 +340,7 @@ def cancel_order(order_id):
             flash('Order not found.', 'error')
     except SQLAlchemyError as e:
         db.session.rollback()
-        logger.error(f"Error cancelling order {order_id}: {e}")
+        log_trans("Error", "general", current_user.id, f"Error cancelling order {order_id}: {e}")
         flash('An error occurred while trying to cancel your order. Please try again.', 'danger')
 
     return redirect(url_for('member_order_bp.order_history'))
