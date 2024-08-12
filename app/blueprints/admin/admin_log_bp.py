@@ -22,7 +22,7 @@ from sqlalchemy import or_
 
 from app import db
 from app.models import Log_account, Log_general, Log_transaction
-from app.utils import get_performance_data
+from app.utils import get_performance_data, check_admin
 
 
 admin_log_bp = Blueprint("admin_log_bp", __name__, url_prefix='/admin/log')
@@ -31,6 +31,9 @@ admin_log_bp = Blueprint("admin_log_bp", __name__, url_prefix='/admin/log')
 @admin_log_bp.route('/main_log')    
 @login_required
 def display_logs():
+    check = check_admin(fallback_endpoint='login_auth_bp.login')
+    if check:
+        return check
     general_filter = request.args.get('general_filter', '')
     account_filter = request.args.get('account_filter', '')
     transaction_filter = request.args.get('transaction_filter', '')
@@ -86,6 +89,9 @@ def display_logs():
 @admin_log_bp.route('/dashboard')
 @login_required
 def dashboard():
+    check = check_admin(fallback_endpoint='login_auth_bp.login')
+    if check:
+        return check
     return render_template('admin/logging/dashboard.html')
 
 @admin_log_bp.route('/api/dashboard1')
