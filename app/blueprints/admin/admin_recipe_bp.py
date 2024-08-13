@@ -16,7 +16,7 @@ import os
 from sqlalchemy import or_, and_
 from app.populate_recipes import populate_recipes
 from hashlib import sha256
-from ...utils import scan_file_with_virustotal, decode_non_whitelisted_tags
+from ...utils import scan_file_with_virustotal, decode_non_whitelisted_tags, log_trans
 from flask_login import current_user
 
 from datetime import datetime, timedelta
@@ -175,7 +175,7 @@ def create_recipe():
             db.session.add(locked_recipes)
             db.session.commit()
         if locked_recipes.status == 'True':
-            flash('Action cannot be done at the moment.', 'danger')
+            flash('Action cannot be done at the moment.', 'error')
             return redirect(url_for('admin_recipe_bp.create_recipe'))
         # Handles invalidated form
         if not form.validate_on_submit():
@@ -343,6 +343,7 @@ def create_recipe():
             try:
                 db.session.add(new_recipe)
                 db.session.commit()
+                log_trans('Info', 'general', current_user.id, f'Created recipe {name}')
             except:
                 print('Error in creating recipe:')
                 flash('An error occurred while creating the recipe. Please try again.', 'danger')
@@ -394,17 +395,20 @@ def delete_recipe(recipe_id):
         db.session.add(locked_recipes)
         db.session.commit()
     if locked_recipes.status == 'True':
-        flash('Action cannot be done at the moment.', 'danger')
+        flash('Action cannot be done at the moment.', 'error')
         print(locked_recipes.status)
         return redirect(url_for('admin_recipe_bp.recipe_database'))
     recipe = Recipe.query.filter_by(id=recipe_id).first()
     if recipe == None:
+        log_trans('Error', 'general', current_user.id, 'Tried deleting a non-existent recipe')
         return redirect(url_for('admin_recipe_bp.recipe_database'))
     flash(f'{recipe.name} was deleted', 'info')
+    recipe_name = recipe.name
     old_recipe = RecipeDeleted(name=recipe.name, ingredients=recipe.ingredients, instructions=recipe.instructions, picture=recipe.picture, type=recipe.type, calories=recipe.calories, prep_time=recipe.prep_time, user_created=recipe.user_created, user_created_id=recipe.user_created_id , date_created=recipe.date_created)
     db.session.add(old_recipe)
     db.session.delete(recipe)
     db.session.commit()
+    log_trans('Info', 'general', current_user.id, f'Deleted recipe {recipe_name}')
     return redirect(url_for('admin_recipe_bp.recipe_database'))
 
 
@@ -431,7 +435,7 @@ def update_recipe(recipe_id):
             db.session.add(locked_recipes)
             db.session.commit()
         if locked_recipes.status == 'True':
-            flash('Action cannot be done at the moment.', 'danger')
+            flash('Action cannot be done at the moment.', 'error')
             return redirect(url_for('admin_recipe_bp.update_recipe'))
 
         name = form.name.data
@@ -592,8 +596,8 @@ def update_recipe(recipe_id):
         if recipe.type != recipe_type:
             recipe.type = recipe_type
             recipe.date_created = datetime.utcnow()
-
         db.session.commit()
+        log_trans('Info', 'general', current_user.id, f'Deleted recipe {name}')
         flash(f'{recipe.name} updated', 'info')
         return redirect(url_for('admin_recipe_bp.recipe_database'))
 
@@ -689,8 +693,12 @@ def lock_recipes():
 
     locked_recipes.status = 'True'
     print(locked_recipes.status)
-    db.session.commit()
-    flash('Recipes locked', 'info')
+    try:
+        db.session.commit()
+        log_trans('Info', 'general', current_user.id, f'Locked Recipes')
+        flash('Recipes locked', 'info')
+    except:
+        log_trans('Error', 'general', current_user.id, f'Problem Locking Recipes')
     return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
 
 
@@ -708,11 +716,14 @@ def unlock_recipes():
     if not locked_recipes:
         locked_recipes = RecipeConfig(name='locked_recipes', status='False')
         db.session.add(locked_recipes)
-
     locked_recipes.status = 'False'
     print(locked_recipes.status)
-    db.session.commit()
-    flash('Recipes unlocked', 'info')
+    try:
+        db.session.commit()
+        flash('Recipes unlocked', 'info')
+        log_trans('Info', 'general', current_user.id, f'Unlocked Recipes')
+    except:
+        log_trans('Error', 'general', current_user.id, f'Problem Unlocking Recipes')
     return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
 
 
@@ -722,8 +733,12 @@ def populate_recipes_database():
     if current_user.type != 'admin':
         # return 401 if user is not admin
         return jsonify({"message": "Unauthorized"}), 401
-    populate_recipes()
-    flash('Populated recipe', 'info')
+    try:
+        populate_recipes()
+        flash('Populated recipe', 'info')
+        log_trans('Info', 'general', current_user.id, f'Populated recipes')
+    except:
+        log_trans('Error', 'general', current_user.id, f'Problem populating recipes')
     return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
 
 
@@ -744,6 +759,7 @@ def reset_recipes():
         db.session.commit()
     db.session.commit()
     flash('Database reset', 'info')
+    log_trans('Info', 'general', current_user.id, f'Cleared all recipes')
     return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
 
 
@@ -762,6 +778,7 @@ def reset_deleted_recipes():
         db.session.delete(recipe)
     db.session.commit()
     flash('Deleted Database reset', 'info')
+    log_trans('Info', 'general', current_user.id, f'Cleared deleted recipes')
     return redirect(url_for('admin_recipe_bp.recipe_dashboard'))
 
 
@@ -896,13 +913,16 @@ def delete_recipe_forever(recipe_id):
         # return 401 if user is not admin
         return jsonify({"message": "Unauthorized"}), 401
     recipe = RecipeDeleted.query.filter_by(id=recipe_id).first()
+    recipe_name = recipe.name
     try:
         os.remove(os.path.join('app/static/images_recipe', recipe.picture))
     except:
         print('Picture not found')
+        log_trans('Error', 'general', current_user.id, f"Problems deleting {recipe_name}'s picture")
     flash(f'{recipe.name} was deleted forever', 'info')
     db.session.delete(recipe)
     db.session.commit()
+    log_trans('Info', 'general', current_user.id, f'Deleted {recipe_name} forever')
     return redirect(url_for('admin_recipe_bp.deleted_recipe_database'))
 
 
@@ -913,11 +933,13 @@ def restore_recipe(recipe_id):
         # return 401 if user is not admin
         return jsonify({"message": "Unauthorized"}), 401
     recipe = RecipeDeleted.query.filter_by(id=recipe_id).first()
+    recipe_name = recipe.name
     flash(f'{recipe.name} was restored', 'info')
     new_recipe = Recipe(name=recipe.name, ingredients=recipe.ingredients, instructions=recipe.instructions, picture=recipe.picture, type=recipe.type, calories=recipe.calories, prep_time=recipe.prep_time, user_created=recipe.user_created, user_created_id=recipe.user_created_id , date_created=recipe.date_created)
     db.session.add(new_recipe)
     db.session.delete(recipe)
     db.session.commit()
+    log_trans('Info', 'general', current_user.id, f'Restored {recipe_name} recipe')
     return redirect(url_for('admin_recipe_bp.recipe_database'))
 
 

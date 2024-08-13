@@ -16,7 +16,7 @@ import os
 from sqlalchemy import or_, and_, case
 from flask_login import current_user, login_required
 from app import limiter
-from ...utils import scan_file_with_virustotal, decode_non_whitelisted_tags
+from ...utils import scan_file_with_virustotal, decode_non_whitelisted_tags, log_trans
 from hashlib import sha256
 from app.forms.forms import CreateRecipeFormMember, RecipeSearch, AICreateRecipeForm, CustomiseRecipeForm
 from app import db
@@ -344,6 +344,7 @@ def create_recipe():
             try:
                 db.session.add(new_recipe)
                 db.session.commit()
+                log_trans('Info', 'general', current_user.id, f'Created {name} recipe')
             except:
                 print('Error in creating recipe:')
                 flash('An error occurred while creating the recipe. Please try again.', 'danger')
@@ -422,6 +423,7 @@ def delete_recipe(recipe_id):
         print(locked_recipes.status)
         return redirect(url_for('member_recipe_bp.recipe_database'))
     recipe = Recipe.query.filter_by(id=recipe_id).first()
+    recipe_name = recipe.name
     if recipe.type == 'Private' and recipe.user_created_id != current_user.id:
         flash('Action cannot be done', 'error')
         return redirect(url_for('member_recipe_bp.recipe_database'))
@@ -431,6 +433,7 @@ def delete_recipe(recipe_id):
     flash(f'{recipe.name} was deleted', 'info')
     db.session.delete(recipe)
     db.session.commit()
+    log_trans('Info', 'general', current_user.id, f'Deleted {recipe_name} recipe')
     return redirect(url_for('member_recipe_bp.recipe_database'))
 
 
@@ -618,6 +621,7 @@ def update_recipe(recipe_id):
             recipe.date_created = datetime.utcnow()
 
         db.session.commit()
+        log_trans('Info', 'general', current_user.id, f'Updated {name} recipe')
         flash(f'{recipe.name} updated', 'info')
         return redirect(url_for('member_recipe_bp.recipe_database'))
 
@@ -651,6 +655,8 @@ def ai_recipe_creator():
 def recipe_creator_ai():
     print(request.referrer)
     if request.referrer[request.referrer.rfind('/'):] != '/ai_recipe_creator':
+        return jsonify({"content": "Invalid request"})
+    if current_user == None:
         return jsonify({"content": "Invalid request"})
     # Get user inputs from json data
     print('AI Recipe Creator Activating')
@@ -707,8 +713,8 @@ def recipe_creator_ai():
 
     remarks = remarks.strip()
     if remarks != '':
-        if len(remarks) > 30:
-            return jsonify({'content': 'Remarks is too long. Please keep within 30 characters'})
+        if len(remarks) > 70:
+            return jsonify({'content': 'Remarks is too long. Please keep within 70 characters'})
         if not re.fullmatch(regex2, remarks):
             return jsonify({'content':'Only letters, spaces and commas allowed in remarks'})
 
@@ -732,6 +738,7 @@ def recipe_creator_ai():
     cleaned = cleaned.replace("**", "")
     cleaned = cleaned.replace("* ", "- ")
 
+    log_trans('Info', 'general', current_user.id, f'Made a request to recipe-creator-ai')
     return jsonify({'content': cleaned})
 
 @member_recipe_bp.route('/customise_recipe/<recipe_id>')
@@ -770,6 +777,12 @@ def recipe_customise_ai():
         return jsonify({"content": "Invalid request"})
     user_request = request.json.get('request')
     regex = r'^[a-zA-Z ]+$'  # Regex pattern allowing only letters and spaces
+    recipe = Recipe.query.filter_by(id=recipe_id).first()
+    if current_user.type != 'admin':
+        if recipe.type == 'Private' and recipe.user_created_id != current_user.id:
+            return jsonify({'content', 'Unauthorized action'})
+        if recipe.type == 'Premium' and current_user.subscription_plan != 'premium':
+            return jsonify({'content', 'Unauthorized action'})
     if user_request == '':
         return jsonify({'content': 'Please enter a request'})
     user_request = user_request.strip()
@@ -777,11 +790,6 @@ def recipe_customise_ai():
         return jsonify({'content': 'Request is too long. Please keep within 100 characters'})
     if not re.fullmatch(regex, user_request):
         return jsonify({'content':'Only letters and spaces allowed in request'})
-    recipe = Recipe.query.filter_by(id=recipe_id).first()
-    if recipe.type == 'Private' and recipe.user_created_id != current_user.id:
-        return jsonify({'content', 'Unauthorized action'})
-    if recipe.type == 'Premium' and current_user.subscription_plan != 'premium':
-        return jsonify({'content', 'Unauthorized action'})
     message = f"""
     You are a recipe customiser. The recipe below is the current recipe that you are customising:
     Name: {recipe.name}
@@ -798,4 +806,5 @@ def recipe_customise_ai():
     cleaned = cleaned.replace("**", "")
     cleaned = cleaned.replace("* ", "- ")
 
+    log_trans('Info', 'general', current_user.id, f'Made a request to recipe-customise-ai')
     return jsonify({'content': cleaned})

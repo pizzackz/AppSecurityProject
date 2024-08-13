@@ -384,6 +384,7 @@ def create_app() -> Flask:
         return render_template('error/error_500.html'), 500
 
     @app.errorhandler(401)
+    @jwt.unauthorized_loader
     def unauthorized(e):
         return render_template('error/error_401.html'), 401
 

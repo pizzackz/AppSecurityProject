@@ -93,7 +93,7 @@ recipes = [
         'name': 'Tacos al Pastor',
         'ingredients': 'Pork,Onion,Pineapple,Corn Tortillas,Cilantro,Lime,Chili Powder,Garlic Powder,Oregano,Salt',
         'instructions': '<p>1. Marinate pork in chili powder, garlic powder, oregano, and salt.</p><p>2. Cook pork with onions and pineapple until tender.</p><p>3. Warm tortillas and fill with pork mixture.</p><p>4. Top with cilantro and a squeeze of lime.</p>',
-        'picture': f'bfd9a66641a2c90a51fbe0301dfe9ee2df6fbc90ea7f164bdba7cf4cf964f161.jpg',
+        'picture': f'600c06d466ec7cbf33ea8e4229ac009ca41975149c23ebf7ee7bf99e82444ceb.jpg',
         'date_created': datetime.datetime.utcnow(),
         'user_created': 'taco_king',
         'user_created_id': 33445,
