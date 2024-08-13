@@ -778,6 +778,8 @@ def recipe_customise_ai():
     user_request = request.json.get('request')
     regex = r'^[a-zA-Z ]+$'  # Regex pattern allowing only letters and spaces
     recipe = Recipe.query.filter_by(id=recipe_id).first()
+    if recipe == None:
+        return jsonify({'content': 'Invalid Request'})
     if current_user.type != 'admin':
         if recipe.type == 'Private' and recipe.user_created_id != current_user.id:
             return jsonify({'content', 'Unauthorized action'})
