@@ -1,8 +1,0 @@
-General:
-    Replace logging mechanisms to use logger provided by Jacen
-
-
-Jacen:
-    Start collecting real data to be displayed
-    Create admin security tools
-
