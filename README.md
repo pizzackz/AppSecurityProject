@@ -14,7 +14,7 @@ and interactive forums where users can connect and share their culinary creation
 <ol>
     <li>In mySQL workbench, create a connection with the following details:<br>
     Name: <code>appsecproj_user</code><br>
-    Password: <code>password</code><br>
+    Password: <code>kH40KNgreUpZGPHiZGFoccqPc5E5jciof8dRvsro4tZ5TnSGrl</code><br>
     </li>
     <li>Create a schema <code>tastefully</code></li>
     <li>Run <code>pip install -r requirements.txt</code> to install the required modules</li>
