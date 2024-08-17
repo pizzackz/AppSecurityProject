@@ -76,7 +76,7 @@ Recipe Database Routes are different for each user
       working on
       <li>
           <code>__init__.py</code> Defines <code>create_app()</code> that
-          allows our app to run, acts as mdeium for all imports
+          allows our app to run, acts as medium for all imports
       </li>
       <li>
           <code>config.py</code> Defines <code>Config</code> class that
@@ -124,20 +124,9 @@ Recipe Database Routes are different for each user
       </li>
       <li>
           <code>uploads</code> strictly for files that users upload &amp;
-          to be stored. Create new folders to categorise user uploaded
-          files. Since we're using a database, there might not be a need
-          for this.
+          to be stored.
       </li>
   </ul>
-
-  <h2>Commands:</h2>
-  <ol>
-      <li><code>Ctrl + `</code> Open terminal &lpar;VSCode&rpar;, for PyCharm use <code>Alt + F12</code></li>
-      <li><code>python.exe -m pip install --upgrade pip</code> Upgarde pip installer</li>
-      <li><code>python3.12 -m venv venv</code> Create virtual environment using Python 3.12</li>
-      <li><code>venv/Scripts/activate</code> Activate virtual environment</li>
-      <li><code>deactivate</code> Deactivate virtual environment</li>
-      <li><code>pip list</code> Check installed packages &amp; verisons</li>
       <li><code>pip install -r requirements.txt</code> Install all packages with correct versions from <code>requirements.txt</code></li>
       <li><code>pip freeze &gt; requirements.txt</code> Update dependencies if installed others that are not stated</li>
       <li><code>python -u run.py</code> Run flask application</li>
