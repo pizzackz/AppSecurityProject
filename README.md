@@ -1,70 +1,51 @@
-  <h2>Guidelines</h2>
-  <ol>
-      <li><b>[IMPORTANT]</b> Export all your data into a data file for others to use as sample data
-        <ul>
-          <li>Import the sample data into your own MySQL server and use that for testing</li>
-          <li>Make sure that your MySQL server already has a root client using password
-            <code>password123</code> and inside it, there's a schema/ database named <code>tastefully</code>
-          </li>
-        </ul>
-      </li>
-      <br />  
-      <li>Do not commit &amp; push your own virtual environments</li>
-      <br />
-      <li>
-          Always commit &amp; push after each development session
-          <ul>
-              <li>
-                  If you have installed &amp; used any new packages,
-                  please update <code>requirements.txt</code> so everyone
-                  can run the app smoothly
-              </li>
-              <li>
-                  Note: Only include what you 'pip installed', DO NOT run the
-                  command <code>pip freeze > requirements.txt</code> because that will "dirty"
-                  our <code>requirements.txt</code><br>
-                  <ul>
-                    <li style="list-style-type:disc;">
-                      All other packages that the installed packages need will be
-                      installed once you run <code>pip install -r requirements.txt</code>
-                      provided said packages are already within <code>requirements.txt</code>
-                    </li>
-                  </ul>
-              </li>
-          </ul>
-      </li>
-      <br />
-      <li>
-          Use snake casing for most names &lpar;filenames, folder names,
-          variables, functions&rpar;
-          <ul>
-              <li>For Python classes, use pascal casing</li>
-              <li>For HTML, CSS &amp; Javascript, use camel casing</li>
-          </ul>
-      </li>
-      <br />
-      <li>
-          Prefix HTML template names according to which role can see that
-          template
-          <ul>
-              <li>
-                  For members, we&apos;ll assume standard members
-                  &lpar;<code>member_</code>&rpar;, use
-                  &lpar;<code>pmember_</code>&rpar; for premium members
-              </li>
-          </ul>
-      </li>
-      <br />
-      <li>
-          Refrain from working on someone else&apos;s section unless you
-          really think your work fits there
-      </li>
-      <br />
-      <li>
-          Please modularise everything into the form of functions for
-          reusability &amp; it also helps with readability
-      </li>
-  </ol>
+# Tastefully
+
+## About
+Tastefully (Our Web Application) is a platform for users to create and share recipes, 
+and sell food bundles into an all in one sustainable meal service. 
+Our business model is a subscription plan that provides a 30-day supply 
+of sustainable food bundles, including fresh ingredients, delivered directly 
+to our users’ home. Subscribers also gain access to exclusive Premium recipes. 
+Additionally, our platform features a robust recipe discovery and sharing sections, 
+and interactive forums where users can connect and share their culinary creations
+
+
+<h2>How to Set Up and Use</h2>
+<ol>
+    <li>In mySQL workbench, create a connection with the following details:<br>
+    Name: <code>appsecproj_user</code><br>
+    Password: <code>kH40KNgreUpZGPHiZGFoccqPc5E5jciof8dRvsro4tZ5TnSGrl</code><br>
+    </li>
+    <li>Create a schema <code>tastefully</code></li>
+    <li>Run <code>pip install -r requirements.txt</code> to install the required modules</li>
+    <li>Run <code>python -u run.py</code> to start the application</li>
+</ol>
+
+
+# TO NOTE
+
+## User Account Management (Zhao Han)
+
+### For creating Admin Accounts:
+<ol>
+<li>Go to <code>/start</code></li>
+<li>Find the masterkey in MySQL workbench, located in the <code>master_key</code> table</li>
+<li>Enter the masterkey</li>
+<li>Follow the process</li>
+</ol>
+
+## Recipes (Miguel)
+
+### Privileges of Each User Group:
+**Admins**: CRUD all recipes (Including Private), Access to AI Recipe Creator and Recipe Customiser, and Recipe Dashboard<br>
+**Members (Standard)**: CRUD their own recipes (Including Private), Access to AI Recipe Creator and Recipe Customiser<br>
+**Members (Premium)**: CRUD their own recipes (Including Private) and can view premium recipes, Access to AI Recipe Creator and Recipe Customiser<br>
+**Guest**: Can only view standard recipes
+
+To Note:
+Recipe Database Routes are different for each user 
+
+
 
   <h2>Directory guide</h2>
   <p>
@@ -95,7 +76,7 @@
       working on
       <li>
           <code>__init__.py</code> Defines <code>create_app()</code> that
-          allows our app to run, acts as mdeium for all imports
+          allows our app to run, acts as medium for all imports
       </li>
       <li>
           <code>config.py</code> Defines <code>Config</code> class that
@@ -143,20 +124,9 @@
       </li>
       <li>
           <code>uploads</code> strictly for files that users upload &amp;
-          to be stored. Create new folders to categorise user uploaded
-          files. Since we're using a database, there might not be a need
-          for this.
+          to be stored.
       </li>
   </ul>
-
-  <h2>Commands:</h2>
-  <ol>
-      <li><code>Ctrl + `</code> Open terminal &lpar;VSCode&rpar;, for PyCharm use <code>Alt + F12</code></li>
-      <li><code>python.exe -m pip install --upgrade pip</code> Upgarde pip installer</li>
-      <li><code>python3.12 -m venv venv</code> Create virtual environment using Python 3.12</li>
-      <li><code>venv/Scripts/activate</code> Activate virtual environment</li>
-      <li><code>deactivate</code> Deactivate virtual environment</li>
-      <li><code>pip list</code> Check installed packages &amp; verisons</li>
       <li><code>pip install -r requirements.txt</code> Install all packages with correct versions from <code>requirements.txt</code></li>
       <li><code>pip freeze &gt; requirements.txt</code> Update dependencies if installed others that are not stated</li>
       <li><code>python -u run.py</code> Run flask application</li>
