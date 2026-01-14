@@ -116,7 +116,6 @@ class Member(User):
     id = db.Column(Integer, ForeignKey("user.id"), primary_key=True)
     subscription_plan = db.Column(String(50), default="standard", nullable=False)
     subscription_end_date = db.Column(DateTime, nullable=True)
-
     orders = db.relationship('Order', backref='member', lazy=True)
 
     # Joined Table Inheritance polymorphic properties
